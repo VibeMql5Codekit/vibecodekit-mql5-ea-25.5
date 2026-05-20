@@ -214,8 +214,12 @@ def render_section_header(title: str, icon: str = "chevron") -> str:
 
 def render_manifesto(content: DocContent) -> str:
     """Render the hero / manifesto card (huge claim + decorative icons)."""
+    # PR-18.3: dropped the legacy ``「 」`` CJK corner brackets — Chrome
+    # headless (PDF export) has no font with the bracket glyphs and
+    # rendered them as tofu squares. The HTML class name ``title-jp`` is
+    # kept for CSS back-compat (it now just means "subtitle").
     title_jp = (
-        f'<p class="title-jp">「{escape(content.title_jp)}」</p>'
+        f'<p class="title-jp">{escape(content.title_jp)}</p>'
         if content.title_jp else ""
     )
     title_en = (

@@ -225,8 +225,16 @@ def test_render_markdown_includes_inputs_table() -> None:
 def test_render_markdown_includes_take_notes() -> None:
     md = render_markdown(build_doc_content(_full_spec(), _MQ5_SAMPLE, _build_meta()))
     assert "## Lưu ý quan trọng" in md
-    # Severity prefixes.
-    assert "ℹ️" in md or "⚠️" in md or "🔥" in md
+    # PR-18.3: severity prefixes are plain Vietnamese text labels
+    # (emoji rendered as tofu in headless-Chrome PDF export).
+    assert (
+        "[Lưu ý]" in md
+        or "[Cảnh báo]" in md
+        or "[Nguy hiểm]" in md
+    )
+    # Belt-and-braces: the legacy emoji prefixes must not leak through.
+    for emoji in ("ℹ️", "⚠️", "🔥", "ℹ", "⚠", "🔥"):
+        assert emoji not in md, f"legacy emoji {emoji!r} leaked into markdown"
 
 
 def test_render_markdown_uses_english_labels_when_lang_en() -> None:
@@ -243,13 +251,89 @@ def test_render_markdown_uses_english_labels_when_lang_en() -> None:
 
 def test_render_markdown_contains_no_japanese_decorative_text() -> None:
     """PR-18.2 contract: the Vietnamese docs must not leak the
-    legacy Japanese subtitle decorations (``ポートフォリオ`` etc.)."""
+    legacy Japanese subtitle decorations (``ポートフォリオ`` etc.).
+
+    PR-18.3 extends this: the ``「 」`` CJK corner brackets that PR-18.2
+    initially kept for visual flair are also dropped, because Chrome
+    headless (used to export the PDF) has no font for them and renders
+    them as tofu □ squares."""
     md = render_markdown(build_doc_content(_full_spec(), _MQ5_SAMPLE, _build_meta()))
     for jp in ("ポートフォリオ", "システム", "アーキテクチャ"):
         assert jp not in md
-    # Vietnamese subtitle is present (visual aesthetic preserved by
-    # 「 」 brackets but content is Vietnamese):
-    assert "「Danh mục」" in md or "「Hệ thống」" in md
+    # PR-18.3: CJK corner brackets must NOT appear (would tofu in PDF).
+    assert "「" not in md
+    assert "」" not in md
+    # The Vietnamese subtitle itself is still present, just without
+    # the decorative brackets:
+    assert "_Danh mục_" in md or "_Hệ thống_" in md
+
+
+def test_render_markdown_has_no_chars_that_tofu_in_headless_chrome_pdf() -> None:
+    """PR-18.3 regression: the markdown (and therefore the PDF rendered
+    from the parallel HTML) must not contain any character that lives
+    outside the basic Latin / Latin-1 / Vietnamese-Latin / common-symbol
+    set. The user reported tofu □ squares in the PDF caused by ``「`` /
+    ``」`` corner brackets and ``ℹ️ ⚠️ 🔥`` emoji — this test pins that
+    class of bug shut so it can't regress silently.
+
+    Identifiers (``InpMagic``, ``CRiskGuard``, ``OnTick``) are ASCII and
+    pass through. Vietnamese diacritics are in U+00C0..U+1EFF. A small
+    allowlist of decorative symbols (``→ · — …``) is permitted because
+    they render in every default browser/PDF font.
+    """
+    from scripts.vibecodekit_mql5.ea_docs import render_markdown
+    md = render_markdown(build_doc_content(_full_spec(), _MQ5_SAMPLE, _build_meta()))
+
+    # Vietnamese Latin block (U+00C0..U+024F + U+1E00..U+1EFF).
+    def _is_safe(cp: int) -> bool:
+        if cp < 128:
+            return True  # ASCII
+        if 0x00C0 <= cp <= 0x024F:
+            return True  # Latin Extended-A/B (covers Đ, Ư, Ơ etc.)
+        if 0x1E00 <= cp <= 0x1EFF:
+            return True  # Latin Extended Additional (Vietnamese diacritics)
+        # A tiny set of decorative symbols we use in headers/captions.
+        if chr(cp) in "→·—…«»·°":
+            return True
+        return False
+
+    unsafe = sorted({(hex(ord(c)), c) for c in md if not _is_safe(ord(c))})
+    assert not unsafe, (
+        f"Markdown contains characters that would render as tofu in "
+        f"headless-Chrome PDF export: {unsafe!r}"
+    )
+
+
+def test_render_html_document_has_no_chars_that_tofu_in_headless_chrome_pdf() -> None:
+    """PR-18.3 regression on the HTML path. ``render_html_document``
+    is the source the PDF exporter feeds to headless Chrome — anything
+    outside the safe Latin / Vietnamese / common-symbol set risks
+    rendering as a tofu □ square in the PDF output.
+
+    This complements ``..._has_no_chars_that_tofu_in_headless_chrome_pdf``
+    above: that one covers the Markdown rendered for git/agent
+    consumption, this one covers the HTML rendered for PDF export.
+    """
+    html_out = render_html_document(
+        build_doc_content(_full_spec(), _MQ5_SAMPLE, _build_meta())
+    )
+
+    def _is_safe(cp: int) -> bool:
+        if cp < 128:
+            return True
+        if 0x00C0 <= cp <= 0x024F:
+            return True
+        if 0x1E00 <= cp <= 0x1EFF:
+            return True
+        if chr(cp) in "→·—…«»·°":
+            return True
+        return False
+
+    unsafe = sorted({(hex(ord(c)), c) for c in html_out if not _is_safe(ord(c))})
+    assert not unsafe, (
+        f"HTML contains characters that would render as tofu in "
+        f"headless-Chrome PDF export: {unsafe!r}"
+    )
 
 
 def test_render_markdown_overview_layers_localized_to_vietnamese() -> None:
