@@ -121,8 +121,11 @@ _TIMELINE_CAPTIONS = {
 }
 
 # Decorative subtitle that sits above the manifesto card's main claim.
-# Was Japanese decorative text in PR-15/16; user requested 100% Vietnamese
-# in the Vietnamese docs while keeping the visual 「 」 bracket aesthetic.
+# Was Japanese decorative text in PR-15/16. PR-18.2 swapped the body to
+# Vietnamese but kept the visual ``「 」`` corner-bracket aesthetic.
+# PR-18.3 then dropped those CJK brackets entirely because Chrome
+# headless (used for PDF export) has no font with corner-bracket glyphs,
+# so they rendered as tofu □ squares in the PDF output.
 _TITLE_SUBTITLE = {
     "vi": {
         "portfolio": "Danh mục",
@@ -269,7 +272,10 @@ def render_markdown(content: DocContent) -> str:
     lines.append("")
     lines.append(f"# {content.title_main}")
     if content.title_jp:
-        lines.append(f"_「{content.title_jp}」_")
+        # PR-18.3: render the subtitle as plain italics. The legacy
+        # `「 」` brackets were dropped because Chrome headless
+        # rendered them as tofu squares in the PDF export.
+        lines.append(f"_{content.title_jp}_")
     if content.title_en:
         lines.append(f"_{content.title_en}_")
     lines.append("")
@@ -311,11 +317,17 @@ def render_markdown(content: DocContent) -> str:
     if content.notes:
         lines.append(f"## {labels['notes']}")
         lines.append("")
+        # PR-18.3: severity prefixes use plain Vietnamese tag labels
+        # instead of emoji. The previous ``ℹ️ / ⚠️ / 🔥`` emoji rendered
+        # as tofu squares in headless-Chrome PDF export (no emoji font
+        # installed). Text labels render correctly in any font.
         sev_prefix = {
-            "info": "ℹ️", "warn": "⚠️", "danger": "🔥",
+            "info": "[Lưu ý]",
+            "warn": "[Cảnh báo]",
+            "danger": "[Nguy hiểm]",
         }
         for n in content.notes:
-            prefix = sev_prefix.get(n.severity, "•")
+            prefix = sev_prefix.get(n.severity, "[Lưu ý]")  # default uses VN label for parity with the three known severities
             lines.append(f"> {prefix} **{n.title}**")
             lines.append(f"> {n.body}")
             lines.append("")
