@@ -209,6 +209,18 @@ python -m vibecodekit_mql5.tester_run MyEA.ex5 \
     --symbol EURUSD --period H1 --from 2024-01-01 --to 2024-06-01 \
     --out tester.xml > metrics.json
 
+# End-to-end Strategy Tester optimization (drives terminal64.exe + parses opt
+# XML into top-N parameter sets). The .set file must carry optimize=true flags
+# with start/step/stop ranges; mql5-optimize-run does not synthesize ranges.
+python -m vibecodekit_mql5.optimize_run MyEA.ex5 default.set \
+    --symbol EURUSD --period 2024.01.01-2024.12.31 --tf H1 \
+    --mode genetic --criterion sharpe-max --top 10 > top-sets.json
+
+# Hermetic / CI: parse an existing opt XML without launching MT5
+python -m vibecodekit_mql5.optimize_run MyEA.ex5 default.set \
+    --period 2024.01.01-2024.12.31 \
+    --from-xml /path/to/opt-results.xml --criterion sharpe-max
+
 # Walk-forward / overfit / monte-carlo take POSITIONAL XML/CSV inputs
 python -m vibecodekit_mql5.walkforward   is.xml oos.xml      > walkforward.json
 python -m vibecodekit_mql5.overfit_check is.xml oos.xml      > overfit.json
@@ -231,7 +243,8 @@ python -m vibecodekit_mql5.mfe_mae mfe.csv
 > backtest yourself via MetaTrader 5 (or automate it with
 > `terminal64.exe /config:tester.ini`), capture the XML, then feed it in.
 > `cloud_optimize` only emits the `tester.ini` you upload to MetaQuotes
-> Cloud Network.
+> Cloud Network. `tester_run` and `optimize_run` *do* drive
+> `terminal64.exe` and parse the result; use them for local sweeps.
 
 ### 3.5. RRI methodology (3)
 
