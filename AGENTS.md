@@ -8,19 +8,19 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.0.1`. ~50 CLI commands, 4 MCP servers,
-  23 scaffold archetypes, 23 anti-pattern detectors, 7-layer permission
-  gate, 873 tests across Phase 0 / A / B / C / D / E.
+- **Status:** shipped product, `v1.0.1`. 53 CLI commands, 4 MCP servers,
+  23 scaffold archetypes, 25 anti-pattern detectors, 7-layer permission
+  gate, 915 tests across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (~50) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (53) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
-6. `docs/anti-patterns-AVOID.md` — what NOT to ship; lists the 23 detectors.
+6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 AP-N) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py`.
 7. `docs/PLAN-v5.md` — historical plan + design principles (v5 ADD/DROP list).
 8. `docs/phase-{0,A,B,C,D,E}-spec.md` — phase-by-phase delivery contract.
 9. `docs/references/50-survey.md … 80-input-syntax.md` — 29 cheatsheets.
@@ -90,7 +90,7 @@ mql5-auto-build --spec ea-spec.yaml --out-dir build/FirstEA --no-compile --no-ga
 # Lint + Trader-17 + 7-layer permission gate:
 mql5-lint FirstEA.mq5
 mql5-trader-check FirstEA.mq5
-mql5-permission --mode personal --source FirstEA.mq5
+mql5-permission --mode personal FirstEA.mq5
 ```
 
 ## Environment
@@ -107,7 +107,7 @@ mql5-permission --mode personal --source FirstEA.mq5
 ## Tiếng Việt — tóm tắt cho agent
 
 - `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.0.1`,
-  ~50 lệnh CLI, 4 MCP server, 23 scaffold, 873 test gate.
+  53 lệnh CLI, 4 MCP server, 23 scaffold, 25 AP detector, 915 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**
