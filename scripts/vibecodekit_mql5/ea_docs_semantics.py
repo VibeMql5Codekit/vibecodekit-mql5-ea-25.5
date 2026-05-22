@@ -207,8 +207,13 @@ def _format_value(value, hint: str | None) -> str:
 
     ``hint`` is the optional ``:fmt`` suffix on the placeholder. Supported:
 
-    * ``pct``     — multiplies fractions (< 1) by 100 and appends ``%``;
-                    values ≥ 1 are assumed to be percent already.
+    * ``pct``     — value is already a percentage (per ``EaSpec`` schema:
+                    ``risk.daily_loss_pct = 5.0`` means 5 %, ``0.5`` means
+                    0.5 %). The formatter just trims trailing zeros and
+                    appends ``%``. Do NOT use this hint on fractions — wrap
+                    them with ``frac_to_pct`` instead.
+    * ``frac_to_pct`` — value is a fraction in [0, 1]; multiply by 100 and
+                    append ``%``. Use for legacy raw fractions only.
     * ``int``     — round to nearest integer.
     * (no hint)   — ``str(value)``.
     """
@@ -219,9 +224,14 @@ def _format_value(value, hint: str | None) -> str:
             num = float(value)
         except (TypeError, ValueError):
             return str(value)
-        if num < 1.0:
-            num *= 100.0
         # Drop trailing zeros: 5.0 → "5", 4.5 → "4.5"
+        text = f"{num:g}"
+        return f"{text}%"
+    if hint == "frac_to_pct":
+        try:
+            num = float(value) * 100.0
+        except (TypeError, ValueError):
+            return str(value)
         text = f"{num:g}"
         return f"{text}%"
     if hint == "int":

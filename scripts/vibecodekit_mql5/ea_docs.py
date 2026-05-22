@@ -368,10 +368,14 @@ def render_markdown(content: DocContent) -> str:
             else ("Meaning", "Unit", "Formula", "Depends on",
                   "Used by", "Sensible range", "Gotchas")
         )
+        dd_default_label = "mặc định" if content.lang == "vi" else "default"
+        dd_group_label = "nhóm" if content.lang == "vi" else "group"
         for row in content.enriched_params:
-            header_bits = [f"`{row.name}` (`{row.type}`, mặc định `{row.default}`)"]
+            header_bits = [
+                f"`{row.name}` (`{row.type}`, {dd_default_label} `{row.default}`)"
+            ]
             if getattr(row, "group", ""):
-                header_bits.append(f"_nhóm: {row.group}_")
+                header_bits.append(f"_{dd_group_label}: {row.group}_")
             lines.append(f"### {' — '.join(header_bits)}")
             lines.append("")
             sem = getattr(row, "semantic", None)

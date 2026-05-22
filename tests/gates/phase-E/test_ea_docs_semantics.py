@@ -154,22 +154,42 @@ def test_substitute_placeholders_replaces_spec_paths_and_percent_format() -> Non
     )
     out = substitute_placeholders(text, spec)
     assert "EA SemanticsTestEA runs on EURUSD H1" in out
-    assert "DD cap = 5%" in out  # 5.0 already-percent stays as 5%
+    # EaSpec.risk.daily_loss_pct stores values as direct percentages
+    # (schema: 0 < x ≤ 20), so :pct just appends '%' — no heuristic
+    # multiply-by-100. This is the bug-fix path for sub-1% values like
+    # 0.5 (was incorrectly rendered as 50%).
+    assert "DD cap = 5%" in out
     assert "SL = 30 pips" in out
 
 
-def test_substitute_placeholders_handles_fraction_pct_under_one() -> None:
-    """A fraction like 0.05 must render as ``5%`` (multiplied by 100)."""
+def test_substitute_placeholders_pct_preserves_sub_one_values() -> None:
+    """A valid sub-1% percentage like 0.5 must render as ``0.5%`` — NOT 50%.
+
+    Regression test for the heuristic-misinterpretation bug surfaced by
+    Devin Review on PR #21. ``EaSpec.risk.daily_loss_pct`` is bounded
+    ``(0, 20]`` and stores percentages directly, so a value below 1 is a
+    legitimate sub-percent setting (common for tight prop-firm rules),
+    not a fraction to be multiplied by 100.
+    """
+    spec = _spec(risk={"daily_loss_pct": 0.5, "sl_pips": 30, "tp_pips": 60})
+    out = substitute_placeholders(
+        "DD = {spec.risk.daily_loss_pct:pct}", spec
+    )
+    assert out == "DD = 0.5%"
+
+
+def test_substitute_placeholders_frac_to_pct_multiplies_by_100() -> None:
+    """``:frac_to_pct`` hint converts a fraction in [0, 1] to a percentage."""
 
     class _Stub:
         class _R:
-            daily_loss_pct = 0.05
+            some_fraction = 0.05
         risk = _R()
 
     out = substitute_placeholders(
-        "DD = {spec.risk.daily_loss_pct:pct}", _Stub()
+        "ratio = {spec.risk.some_fraction:frac_to_pct}", _Stub()
     )
-    assert out == "DD = 5%"
+    assert out == "ratio = 5%"
 
 
 def test_substitute_placeholders_rewrites_input_brace_to_backticks() -> None:
