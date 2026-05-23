@@ -16,6 +16,49 @@ def test_doctor_returns_report_with_checks() -> None:
     assert len(rep.checks) >= 10
 
 
+def test_doctor_scaffold_coverage_is_auto_derived() -> None:
+    """Doctor must validate every scaffold archetype on disk.
+
+    Regression for the silent-drift bug where ``REQUIRED_SCAFFOLDS`` was
+    a hard-coded list of 11 archetypes while ``scaffolds/`` shipped 23.
+    ``discover_scaffolds`` now reads the directory at run time so any
+    new ``<preset>/<stack>/EAName.mq5`` archetype is automatically
+    picked up by ``mql5-doctor`` without code edits.
+    """
+    discovered = doctor.discover_scaffolds(REPO_ROOT)
+    on_disk: set[str] = set()
+    for preset_dir in (REPO_ROOT / "scaffolds").iterdir():
+        if not preset_dir.is_dir():
+            continue
+        for stack_dir in preset_dir.iterdir():
+            if stack_dir.is_dir():
+                on_disk.add(f"{preset_dir.name}/{stack_dir.name}")
+    assert set(discovered) == on_disk, (
+        "doctor.discover_scaffolds must cover every <preset>/<stack> on disk"
+    )
+
+    rep = doctor.run_doctor(REPO_ROOT)
+    scaffold_checks = {
+        c["name"].removeprefix("scaffold:")
+        for c in rep.checks
+        if c["name"].startswith("scaffold:")
+    }
+    assert scaffold_checks == set(discovered), (
+        "run_doctor must add one check per discovered scaffold"
+    )
+    # Spot-check Phase 2A additions that the previous hard-coded list missed.
+    for new_arch in (
+        "trend/netting",
+        "scalping/hedging",
+        "service/standalone",
+        "news-trading/netting",
+        "arbitrage-stat/python-bridge",
+    ):
+        assert new_arch in scaffold_checks, (
+            f"Phase 2A archetype {new_arch} must be validated by doctor"
+        )
+
+
 def test_doctor_reports_metaeditor_and_terminal_via_env(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -77,6 +120,56 @@ def test_doctor_linux_still_requires_wine(
 
     assert by_name["wine"]["ok"] is False
     assert by_name["wine"]["detail"] == "PATH"
+
+
+def test_doctor_soft_mode_ignores_wine_failures(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """``--soft`` keeps wine/MetaEditor/terminal failures as report rows but
+    treats them as warnings: exit 0, top-level ``ok`` is True, ``strict_ok``
+    surfaces the unfiltered result for callers who still want it.
+    """
+    monkeypatch.delenv("METAEDITOR_PATH", raising=False)
+    monkeypatch.delenv("MQL5_TERMINAL_PATH", raising=False)
+    monkeypatch.setenv("WINEPREFIX", str(tmp_path / "empty"))
+    monkeypatch.setenv("HOME", str(tmp_path / "empty-home"))
+    monkeypatch.setattr(doctor.sys, "platform", "linux")
+    monkeypatch.setattr(doctor.shutil, "which", lambda name: None)
+
+    rc = doctor.main(["--repo-root", str(REPO_ROOT), "--soft"])
+    out = capsys.readouterr().out
+
+    import json as _json
+    payload = _json.loads(out)
+    assert rc == 0
+    assert payload["ok"] is True
+    assert payload["soft"] is True
+    assert payload["strict_ok"] is False
+    by_name = {c["name"]: c for c in payload["checks"]}
+    for opt in ("wine", "metaeditor-bin", "terminal-bin"):
+        assert by_name[opt]["ok"] is False, f"{opt} should still report failure"
+
+
+def test_doctor_soft_mode_still_fails_on_essential_check(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """Soft mode forgives optional wine/MT5 checks but not core ones.
+    A missing references directory must still flip ok=False and exit 1
+    even with --soft, otherwise the gate is meaningless.
+    """
+    fake_root = tmp_path / "fake-kit"
+    fake_root.mkdir()
+    (fake_root / "scaffolds").mkdir()
+
+    rc = doctor.main(["--repo-root", str(fake_root), "--soft"])
+    out = capsys.readouterr().out
+
+    import json as _json
+    payload = _json.loads(out)
+    assert rc == 1
+    assert payload["ok"] is False
+    by_name = {c["name"]: c for c in payload["checks"]}
+    assert by_name["references-dir"]["ok"] is False
 
 
 def test_doctor_metaeditor_and_terminal_fail_with_useful_detail(

@@ -3,8 +3,10 @@
 Phase E command.  Validates that everything the kit needs is reachable
 on the current machine: Python toolchain, Wine when running MetaEditor
 through Wine, ``MetaEditor.exe`` itself, the kit's package
-importability, and the presence of the 28 reference docs + 11 scaffold
-archetypes.
+importability, the presence of the 28+ reference docs, and that **every
+scaffold archetype** under ``scaffolds/<preset>/<stack>/`` ships its
+``EAName.mq5`` (auto-derived at run time so new archetypes are picked
+up without code edits).
 
 Exit code 0 = healthy.  Non-zero = at least one check failed.  The
 JSON output enumerates every check so a CI workflow can decide which
@@ -30,6 +32,15 @@ REQUIRED_MODULES = [
     "vibecodekit_mql5.build",
     "vibecodekit_mql5.pip_normalize",
 ]
+
+# Checks that depend on a working Wine + MetaEditor + terminal stack.
+# In soft mode (``--soft``) these are surfaced as warnings instead of
+# failures so docs-only / lint-only CI environments without Wine can still
+# exit 0. Python toolchain, kit-package imports, references, and scaffolds
+# remain hard checks under both modes.
+_OPTIONAL_CHECKS: frozenset[str] = frozenset({
+    "wine", "metaeditor-bin", "terminal-bin",
+})
 
 # Standard MetaTrader 5 binary locations Devin's setup-wine-metaeditor.sh leaves
 # behind. Doctor uses these as a fallback when the corresponding env var is not
@@ -63,7 +74,11 @@ def _probe(paths: tuple[str, ...]) -> Path | None:
             return p
     return None
 
-REQUIRED_SCAFFOLDS = [
+# Baseline list of scaffolds that MUST exist for the kit to be coherent.
+# These are the original 11 archetypes shipped before Phase 2A. They stay
+# explicit here so removals of any of them is caught even if the
+# ``scaffolds/`` directory listing accidentally regresses.
+_BASELINE_SCAFFOLDS: tuple[str, ...] = (
     "stdlib/netting", "stdlib/hedging", "stdlib/python-bridge",
     "wizard-composable/netting", "portfolio-basket/netting",
     "portfolio-basket/hedging", "ml-onnx/python-bridge",
@@ -71,7 +86,35 @@ REQUIRED_SCAFFOLDS = [
     "service-llm-bridge/cloud-api",
     "service-llm-bridge/self-hosted-ollama",
     "service-llm-bridge/embedded-onnx-llm",
-]
+)
+
+
+def discover_scaffolds(repo_root: Path = REPO_ROOT) -> list[str]:
+    """Return every ``<preset>/<stack>`` pair under ``scaffolds/``.
+
+    Auto-derived from the filesystem so new archetypes are validated by
+    doctor without requiring a code edit here. The baseline 11 from
+    ``_BASELINE_SCAFFOLDS`` are union-merged in case the directory walk
+    misses something (e.g. broken symlinks). The result is sorted for
+    deterministic output.
+    """
+    found: set[str] = set(_BASELINE_SCAFFOLDS)
+    scaffolds_root = repo_root / "scaffolds"
+    if scaffolds_root.is_dir():
+        for preset_dir in scaffolds_root.iterdir():
+            if not preset_dir.is_dir():
+                continue
+            for stack_dir in preset_dir.iterdir():
+                if not stack_dir.is_dir():
+                    continue
+                found.add(f"{preset_dir.name}/{stack_dir.name}")
+    return sorted(found)
+
+
+# Backwards-compat module-level constant. Older callers (tests, MCP) may
+# still ``import REQUIRED_SCAFFOLDS``; keep it pointing at the discovered
+# list so they automatically pick up newly added archetypes too.
+REQUIRED_SCAFFOLDS: list[str] = discover_scaffolds()
 
 
 @dataclass
@@ -83,6 +126,23 @@ class DoctorReport:
         self.checks.append({"name": name, "ok": ok, "detail": detail})
         if not ok:
             self.ok = False
+
+    def is_ok(self, *, soft: bool = False) -> bool:
+        """Aggregate health across checks.
+
+        In soft mode the Wine / MetaEditor / terminal checks no longer
+        flip the report. Every other check still does. This lets
+        docs-only or lint-only CI jobs that don't ship Wine pass the
+        doctor gate without ignoring failures elsewhere.
+        """
+        if not soft:
+            return self.ok
+        for c in self.checks:
+            if c["ok"]:
+                continue
+            if c["name"] not in _OPTIONAL_CHECKS:
+                return False
+        return True
 
 
 def run_doctor(repo_root: Path = REPO_ROOT) -> DoctorReport:
@@ -125,7 +185,7 @@ def run_doctor(repo_root: Path = REPO_ROOT) -> DoctorReport:
     if refs_dir.exists():
         n = len(list(refs_dir.glob("*.md")))
         rep.add("references-count", n >= 28, f"{n} refs")
-    for scaffold in REQUIRED_SCAFFOLDS:
+    for scaffold in discover_scaffolds(repo_root):
         p = repo_root / "scaffolds" / scaffold / "EAName.mq5"
         rep.add(f"scaffold:{scaffold}", p.exists(), str(p))
     return rep
@@ -134,10 +194,24 @@ def run_doctor(repo_root: Path = REPO_ROOT) -> DoctorReport:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mql5-doctor")
     parser.add_argument("--repo-root", default=str(REPO_ROOT))
+    parser.add_argument(
+        "--soft",
+        action="store_true",
+        help=(
+            "Treat Wine / MetaEditor / terminal probes as warnings instead "
+            "of failures. Exit 0 when only those optional checks fail. "
+            "Useful for docs-only or lint-only CI environments."
+        ),
+    )
     args = parser.parse_args(argv)
     rep = run_doctor(Path(args.repo_root))
-    print(json.dumps({"ok": rep.ok, "checks": rep.checks}, indent=2))
-    return 0 if rep.ok else 1
+    ok = rep.is_ok(soft=args.soft)
+    payload: dict[str, object] = {"ok": ok, "checks": rep.checks}
+    if args.soft:
+        payload["soft"] = True
+        payload["strict_ok"] = rep.ok
+    print(json.dumps(payload, indent=2))
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

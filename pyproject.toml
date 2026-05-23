@@ -12,14 +12,18 @@ requires-python = ">=3.10"
 authors = [{name = "vibecodekit-mql5-ea contributors"}]
 
 dependencies = [
-    # Phase 0: keep minimal; phases A-E add as needed
+    # Phase 0: keep minimal; phases A-E add as needed.
+    # PyYAML lives in core because `mql5-auto-build` accepts a YAML spec by
+    # default and the documented quickstart pipes `mql5-spec-from-prompt`
+    # YAML output straight into it; without PyYAML the first chat-driven
+    # build after a fresh `pip install -e .` fails on `load_spec`.
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
-    "pyyaml>=6.0",
     "ruff>=0.1",
 ]
 phase-d = [
@@ -54,12 +58,13 @@ mql5-onnx-export = "vibecodekit_mql5.onnx_export:main"
 mql5-onnx-embed = "vibecodekit_mql5.onnx_embed:main"
 mql5-llm-context = "vibecodekit_mql5.llm_context:main"
 mql5-forge-init = "vibecodekit_mql5.forge_init:main"
-# Verify (11)
+# Verify (12)
 mql5-compile = "vibecodekit_mql5.compile:main"
 mql5-lint = "vibecodekit_mql5.lint:main"
 mql5-method-hiding-check = "vibecodekit_mql5.method_hiding_check:main"
 mql5-backtest = "vibecodekit_mql5.backtest:main"
 mql5-tester-run = "vibecodekit_mql5.tester_run:main"
+mql5-optimize-run = "vibecodekit_mql5.optimize_run:main"
 mql5-walkforward = "vibecodekit_mql5.walkforward:main"
 mql5-monte-carlo = "vibecodekit_mql5.monte_carlo:main"
 mql5-overfit-check = "vibecodekit_mql5.overfit_check:main"

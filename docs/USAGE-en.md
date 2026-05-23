@@ -126,7 +126,7 @@ python -m vibecodekit_mql5.blueprint
 python -m vibecodekit_mql5.tip
 ```
 
-### 3.3. Build (12)
+### 3.3. Build (13)
 
 ```bash
 # Scaffolds + patchers
@@ -138,7 +138,32 @@ python -m vibecodekit_mql5.onnx_export model.pt --output model.onnx --opset 14
 python -m vibecodekit_mql5.onnx_embed MyEA.mq5 --model model.onnx
 python -m vibecodekit_mql5.llm_context MyEA.mq5 --pattern cloud-api
 python -m vibecodekit_mql5.forge_init MyEA
+
+# End-user EA documentation renderer (called automatically by mql5-auto-build;
+# also runnable standalone)
+mql5-ea-docs ea-spec.yaml MyEA.mq5 --out build/MyEA --lang vi --formats html,md
 ```
+
+`mql5-ea-docs` produces `MyEA.docs.html` and `MyEA.docs.md` (and
+`.docs.pdf` when headless Chrome is available). The output covers:
+
+* **Kiến trúc hệ thống** — 3-layer block diagram (Signal / Risk / Execute).
+* **Chu trình chiến lược** — 4-step timeline.
+* **Tham số EA** — auto-parsed table from `input` declarations.
+* **Chi tiết từng tham số** — per-input deep-dive cards (meaning,
+  formula, sensible range, dependencies, gotchas) backed by
+  `docs/input-semantics.yaml`.
+* **Cách EA chạy** — archetype-specific OnInit / OnTick (or OnTimer /
+  OnStart) / OnDeinit narrative, sourced from
+  `scaffolds/<preset>/<stack>/FLOW-vi.md`. Currently Vietnamese-only;
+  English `FLOW-en.md` is on the roadmap.
+* **Setup khuyến nghị** — tuning table per account size / broker /
+  prop-firm context.
+* **Ghi chú quan trọng** — rule-driven warnings (PipNormalizer,
+  permission gate, AP-17 / AP-18 reminders).
+
+Flags: `--lang {vi,en}` (default `vi`), `--formats html,md[,pdf]`,
+`--ea-version`, `--compile-status PASS|FAIL`, `--gate-status PASS|FAIL`.
 
 Available archetypes for `build`: `stdlib`, `trend`, `mean-reversion`,
 `breakout`, `scalping`, `hedging-multi`, `news-trading`,
@@ -191,7 +216,7 @@ stack overrides) lives at `scripts/vibecodekit_mql5/spec_schema.py`;
 recognisers for `mql5-spec-from-prompt` are tabulated in
 [`devin-chat-driven-build.md`](devin-chat-driven-build.md#what-the-parser-understands).
 
-### 3.4. Verify (11)
+### 3.4. Verify (12)
 
 ```bash
 # Code-quality (run anytime; no XML needed)
@@ -208,6 +233,18 @@ python -m vibecodekit_mql5.backtest MyEA.ex5 inputs.set \
 python -m vibecodekit_mql5.tester_run MyEA.ex5 \
     --symbol EURUSD --period H1 --from 2024-01-01 --to 2024-06-01 \
     --out tester.xml > metrics.json
+
+# End-to-end Strategy Tester optimization (drives terminal64.exe + parses opt
+# XML into top-N parameter sets). The .set file must carry optimize=true flags
+# with start/step/stop ranges; mql5-optimize-run does not synthesize ranges.
+python -m vibecodekit_mql5.optimize_run MyEA.ex5 default.set \
+    --symbol EURUSD --period 2024.01.01-2024.12.31 --tf H1 \
+    --mode genetic --criterion sharpe-max --top 10 > top-sets.json
+
+# Hermetic / CI: parse an existing opt XML without launching MT5
+python -m vibecodekit_mql5.optimize_run MyEA.ex5 default.set \
+    --period 2024.01.01-2024.12.31 \
+    --from-xml /path/to/opt-results.xml --criterion sharpe-max
 
 # Walk-forward / overfit / monte-carlo take POSITIONAL XML/CSV inputs
 python -m vibecodekit_mql5.walkforward   is.xml oos.xml      > walkforward.json
@@ -231,7 +268,8 @@ python -m vibecodekit_mql5.mfe_mae mfe.csv
 > backtest yourself via MetaTrader 5 (or automate it with
 > `terminal64.exe /config:tester.ini`), capture the XML, then feed it in.
 > `cloud_optimize` only emits the `tester.ini` you upload to MetaQuotes
-> Cloud Network.
+> Cloud Network. `tester_run` and `optimize_run` *do* drive
+> `terminal64.exe` and parse the result; use them for local sweeps.
 
 ### 3.5. RRI methodology (3)
 
@@ -270,23 +308,67 @@ python -m vibecodekit_mql5.cloud_optimize  MyEA --symbol EURUSD --period H1 \
 python -m vibecodekit_mql5.canary          MyEA.ex5 --duration 30m  # or --journal mt5.log
 ```
 
-### 3.8. Ship (3)
+### 3.8. Ship (4)
 
 ```bash
 python -m vibecodekit_mql5.forge_pr feature-branch --target main
+
+# Package an mql5-auto-build output as a manifest + ship-zip
+python -m vibecodekit_mql5.package --out-dir ./dist --spec ea-spec.yaml
+# Or fold the packager into the build pipeline (only runs on a green build):
+python -m vibecodekit_mql5.auto_build --spec ea-spec.yaml --out-dir ./dist --package
+
 python -m vibecodekit_mql5.ship --tag v1.0.1 --dry-run
 python -m vibecodekit_mql5.ship --tag v1.0.1
 python -m vibecodekit_mql5.refine --diff change.patch
 ```
 
-### 3.9. Other (4)
+**Ship .zip contents.** `mql5-package` (and `mql5-auto-build --package`)
+walks the `--out-dir`, classifies each file via
+`scripts/vibecodekit_mql5/package.py::classify_artifact`, writes a
+`manifest.json` with SHA-256 + group index, and bundles everything into
+`<out-dir>/<name>-ship.zip`. The bundle's groups:
+
+| Group     | Files                                                            | Why it ships                                                   |
+|-----------|------------------------------------------------------------------|----------------------------------------------------------------|
+| `runtime` | `*.ex5`, `Sets/*.set`                                            | Drop into MT5 to run the EA / Strategy Tester preset           |
+| `source`  | `*.mq5`, `*.mqh`, scaffold `README.md`                           | Recompile, audit source, review the scaffold                   |
+| `review`  | `auto-build-report.json`, `quality-matrix.html`, `*.docs.*`, `*.log` | Build / lint / compile / gate verdict + EA documentation     |
+| `repro`   | `*spec*.yaml/yml/json`, `*.onnx`, `*.csv`                        | Re-derive the build from the spec + ML / dataset side-inputs   |
+| _(root)_  | `manifest.json`                                                  | SHA-256 inventory + group index for the rest of the zip        |
+
+Files outside the classifier (random `.txt`, IDE droppings, the zip
+itself, an older `manifest.json`) are skipped. The `auto-build-report.json`
+copy inside the zip is the build-side snapshot (build / lint / compile /
+gate / docs / dashboard); the on-disk copy is rewritten after packaging
+so `report.package.ok` and `report.package.groups` are also queryable
+post-run.
+
+### 3.9. Other (5)
 
 ```bash
 python -m vibecodekit_mql5.broker_safety MyEA.mq5
 python -m vibecodekit_mql5.trader_check  MyEA.mq5
 python -m vibecodekit_mql5.install       ~/existing-mt5-project
 python -m vibecodekit_mql5.second_opinion MyEA.mq5
+
+# 7-layer permission gate orchestrator (positional source, NOT --source).
+# Modes: personal (layers 1,2,3,4,7) | team (1-5,7) | enterprise (1-7).
+mql5-permission --mode personal MyEA.mq5
+mql5-permission --mode team     MyEA.mq5 --multibroker reports/
+mql5-permission --mode enterprise MyEA.mq5 \
+    --compile-log build.log --trader-check-report trader.json \
+    --matrix quality-matrix.html --journal rri-bt.json
 ```
+
+`mql5-permission` exits 1 if any layer fails. Layer 2 (compile)
+requires Wine + MetaEditor on Linux — use `mql5-doctor --soft` to
+verify; on a docs-only CI runner that lacks Wine, omit `--mode
+enterprise` so layer 2 doesn't block.
+
+The state dir (`--state-dir`, default `.rri-state`) caches per-layer
+payloads so subsequent CLI runs can re-use them without re-executing
+each tool.
 
 ---
 
@@ -429,7 +511,7 @@ clients.
 `spec.from_prompt`, `spec.validate`, `build.auto`, `verify.permission`.
 
 **PR-2 (static-analysis verify suite):** `verify.lint` (8 critical AP),
-`verify.lint_best_practice` (16 WARN AP), `verify.method_hiding`,
+`verify.lint_best_practice` (17 WARN AP), `verify.method_hiding`,
 `verify.trader17`, `verify.compile`, `verify.broker_safety`,
 `verify.audit`.
 
@@ -491,7 +573,7 @@ for Claude Desktop, Cursor, Codex, and Devin.
 
 ---
 
-## 6. 23 anti-pattern detectors
+## 6. 26 anti-pattern detectors
 
 Lint is split across two tiers:
 
@@ -508,7 +590,7 @@ Lint is split across two tiers:
 | AP-20 | Hard-coded pip (`* 0.0001`, `* _Point`) | `lint.py` |
 | AP-21 | JPY/XAU digits broken | `lint.py` |
 
-### 6.2. Best-practice APs — WARN (14)
+### 6.2. Best-practice APs — WARN (17)
 
 | ID | Description | Detector |
 |----|-------------|----------|
@@ -528,6 +610,7 @@ Lint is split across two tiers:
 | AP-22 | `OnTick` reaches no order-placing call (placeholder signal) | `lint_best_practice.py` |
 | AP-23 | `CTrade.Buy/Sell` return/retcode not checked | `lint_best_practice.py` |
 | AP-24 | History/indicator access without sync guard | `lint_best_practice.py` |
+| AP-25 | Raw `delete` without pointer guard | `lint_best_practice.py` |
 
 ### 6.3. Method-hiding (1, build-aware)
 
@@ -551,6 +634,17 @@ python -m vibecodekit_mql5.method_hiding_check MyEA.mq5 --build 5260
 ### `doctor` reports "metaeditor-bin: not found"
 ```bash
 export METAEDITOR_BIN=~/.wine/drive_c/Program\ Files/MetaTrader\ 5/metaeditor64.exe
+```
+
+### `doctor --soft` for docs-only / lint-only CI
+Wine / MetaEditor / terminal probes degrade to warnings instead of failures, so
+CI jobs that don't ship Wine still exit 0. Hard checks (Python ≥ 3.10, kit
+package imports, `docs/references/`, scaffold archetypes) still flip the gate.
+```bash
+python -m vibecodekit_mql5.doctor --soft
+# JSON output adds "soft": true and "strict_ok": <unfiltered ok>
+# rc == 0 when only optional wine/MT5 probes fail; rc == 1 if any hard
+# check fails.
 ```
 
 ### ONNX e2e test fails — torch not installed
