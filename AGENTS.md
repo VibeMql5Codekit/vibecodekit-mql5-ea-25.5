@@ -34,8 +34,12 @@ to read first, what to use, and what NOT to introduce.
   `tests/gates/phase-{0,A,B,C,D,E}/`.
 - New Include headers in `Include/*.mqh` (must compile under MetaEditor
   build ≥ 5260 — see `mql5-method-hiding-check`).
-- New scaffold archetypes under `scaffolds/<preset>/<stack>/` with a
-  `doctor.REQUIRED_SCAFFOLDS` entry.
+- New scaffold archetypes under `scaffolds/<preset>/<stack>/` with an
+  `EAName.mq5` template. `mql5-doctor` auto-discovers every
+  `<preset>/<stack>` pair on disk via `discover_scaffolds()` — no
+  code edit to `REQUIRED_SCAFFOLDS` is needed. Add a matching scaffold
+  test under `tests/gates/phase-D/test_scaffold_*` and a
+  `FLOW-vi.md` narrative for `mql5-ea-docs`.
 - New anti-pattern detectors in `scripts/vibecodekit_mql5/lint.py` or
   `scripts/vibecodekit_mql5/lint_best_practice.py` with regression tests.
 - Documentation under `docs/`.
