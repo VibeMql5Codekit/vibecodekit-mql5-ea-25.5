@@ -262,7 +262,9 @@ def build_context(
             f"spec must be a mapping, got {type(spec_raw).__name__}"
         )
 
-    mq5_text = mq5_path.read_text(encoding="utf-8", errors="replace") if mq5_path.is_file() else ""
+    from .mq5_io import read_mq5_text
+
+    mq5_text = read_mq5_text(mq5_path, errors="replace") if mq5_path.is_file() else ""
     decls = parse_inputs(mq5_text)
     semantics = load_input_semantics(semantics_path) if semantics_path else load_input_semantics()
 

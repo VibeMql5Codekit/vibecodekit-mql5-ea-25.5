@@ -18,8 +18,10 @@ from vibecodekit_mql5 import trader_check as vck_trader
 
 
 def review_ea(mq5_path: Path, mode: str = "personal") -> dict:
+    from .mq5_io import read_mq5_text
+
     findings = vck_lint.lint_file(mq5_path)
-    text = mq5_path.read_text(encoding="utf-8", errors="replace")
+    text = read_mq5_text(mq5_path, errors="replace")
     result = vck_trader.evaluate(text)
     passed = vck_trader.verdict(result, mode=mode)
     return {

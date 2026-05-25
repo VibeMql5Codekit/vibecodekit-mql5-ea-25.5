@@ -16,7 +16,6 @@ import argparse
 import json
 import re
 import sys
-from pathlib import Path
 
 # Phase A linter checks share fixture-level semantics; re-use its detectors.
 from vibecodekit_mql5 import lint as ap_lint
@@ -163,7 +162,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--mode", choices=["personal", "enterprise"], default="personal")
     args = p.parse_args(argv)
 
-    text = Path(args.ea).read_text(encoding="utf-8", errors="replace")
+    from .mq5_io import read_mq5_text
+
+    text = read_mq5_text(args.ea, errors="replace")
     result = evaluate(text)
     ok = verdict(result, mode=args.mode)
     print(json.dumps(result, indent=2))

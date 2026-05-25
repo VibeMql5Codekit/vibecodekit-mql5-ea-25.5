@@ -362,7 +362,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         spec_dict = _load_spec_dict(args.spec)
         spec = validate(spec_dict)
-        mq5_text = args.mq5.read_text(encoding="utf-8", errors="replace")
+        from .mq5_io import read_mq5_text
+        mq5_text = read_mq5_text(args.mq5, errors="replace")
     except FileNotFoundError as exc:
         print(f"error: file not found: {exc}", file=sys.stderr)
         return 2

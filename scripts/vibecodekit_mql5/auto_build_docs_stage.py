@@ -155,7 +155,9 @@ def attach_docs(
             compile_status=compile_status,
             gate_status=gate_status,
         )
-        mq5_text = mq5_path.read_text(encoding="utf-8", errors="replace")
+        from .mq5_io import read_mq5_text
+
+        mq5_text = read_mq5_text(mq5_path, errors="replace")
     except OSError as exc:
         # Reading the .mq5 file is the only step before delegating to
         # ``write_docs_to_disk``; if we can't even read source, surface

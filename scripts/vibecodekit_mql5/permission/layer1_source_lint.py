@@ -26,13 +26,15 @@ _COMMENT_BLOCK = re.compile(r"/\*.*?\*/", flags=re.DOTALL)
 
 
 def _decode(path: Path) -> str:
-    raw = path.read_bytes()
-    for enc in ("utf-8", "utf-16-le", "utf-16", "latin-1"):
-        try:
-            return raw.decode(enc)
-        except UnicodeDecodeError:
-            continue
-    raise UnicodeDecodeError("layer1", raw, 0, 1, "could not decode file")
+    """Decode a .mq5/.mqh source file. Delegates to :mod:`mq5_io`.
+
+    Kept as a thin wrapper so existing callers that imported this name
+    directly still work — the kit's canonical helper is now
+    :func:`vibecodekit_mql5.mq5_io.read_mq5_text`.
+    """
+    from ..mq5_io import read_mq5_text
+
+    return read_mq5_text(path)
 
 
 def _strip_comments(src: str) -> str:

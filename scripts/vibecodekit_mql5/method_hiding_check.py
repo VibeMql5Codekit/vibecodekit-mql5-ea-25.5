@@ -92,7 +92,9 @@ def _collect_class_bodies(src: str) -> list[tuple[str, str | None, int, str]]:
 def check_method_hiding(mq5_path: Path, target_build: int = 5260) -> CheckReport:
     if not mq5_path.exists():
         return CheckReport(False, str(mq5_path), target_build, [])
-    src = mq5_path.read_text(encoding="utf-8", errors="replace")
+    from .mq5_io import read_mq5_text
+
+    src = read_mq5_text(mq5_path, errors="replace")
     classes = _collect_class_bodies(src)
     by_name = {name: body for name, _, _, body in classes}
 

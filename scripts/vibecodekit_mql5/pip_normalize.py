@@ -153,7 +153,12 @@ def main(argv: list[str] | None = None) -> int:
         if not path.is_file():
             print(f"{f}: not a file", file=sys.stderr)
             return 2
-        src = path.read_text(encoding="utf-8", errors="replace")
+        from .mq5_io import read_mq5_text_with_encoding
+
+        try:
+            src, enc = read_mq5_text_with_encoding(path)
+        except UnicodeDecodeError:
+            src, enc = path.read_text(encoding="latin-1", errors="replace"), "latin-1"
         res = normalize_source(str(path), src)
         if res.substitutions:
             any_subs = True
@@ -165,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.stdout:
                     sys.stdout.write(res.new_text)
                 else:
-                    path.write_text(res.new_text, encoding="utf-8")
+                    path.write_text(res.new_text, encoding=enc)
         else:
             print(f"{f}: already normalized")
     if args.check and any_subs:

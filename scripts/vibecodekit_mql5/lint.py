@@ -214,7 +214,9 @@ def lint_source(path: str, raw: str) -> list[Finding]:
 
 
 def lint_file(path: Path) -> list[Finding]:
-    return lint_source(str(path), path.read_text(encoding="utf-8", errors="replace"))
+    from .mq5_io import read_mq5_text
+
+    return lint_source(str(path), read_mq5_text(path, errors="replace"))
 
 
 def main(argv: list[str] | None = None) -> int:

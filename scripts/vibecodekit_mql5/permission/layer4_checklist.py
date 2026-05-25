@@ -57,7 +57,9 @@ def gate_from_ea(ea_path: Path, mode: str = "personal") -> dict:
     """Convenience: run trader_check in-process, then gate."""
     if mode not in MODE_THRESHOLDS:
         raise ValueError(f"unknown mode: {mode!r}")
-    text = Path(ea_path).read_text(encoding="utf-8", errors="replace")
+    from ..mq5_io import read_mq5_text
+
+    text = read_mq5_text(ea_path, errors="replace")
     report = tc_mod.evaluate(text)
     passes = _pass_count_from_report(report)
     threshold = MODE_THRESHOLDS[mode]

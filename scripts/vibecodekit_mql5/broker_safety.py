@@ -115,7 +115,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("symbol_json")
     args = p.parse_args(argv)
 
-    ea_text = Path(args.ea).read_text(encoding="utf-8", errors="replace")
+    from .mq5_io import read_mq5_text
+
+    ea_text = read_mq5_text(args.ea, errors="replace")
     sym = json.loads(Path(args.symbol_json).read_text(encoding="utf-8"))
     result = evaluate(ea_text, sym)
     print(json.dumps(result.to_dict(), indent=2))
