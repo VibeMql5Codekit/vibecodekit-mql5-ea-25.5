@@ -101,9 +101,15 @@ def embed_image(doc: Document, image_path: Path, result: "AssembleResult") -> No
 
 
 def add_inline_runs(paragraph: Any, children: list[Any]) -> None:
-    """Walk markdown-it inline tokens and emit Word runs with basic styling."""
+    """Walk markdown-it inline tokens and emit Word runs with basic styling.
+
+    Links keep their URL inline: ``[text](url)`` renders as ``text
+    (url)`` so a printed copy of the document remains useful when the
+    hyperlink can't be clicked.
+    """
     bold = False
     italic = False
+    pending_href = ""
     for child in children:
         ttype = child.type
         if ttype == "text":
@@ -127,10 +133,13 @@ def add_inline_runs(paragraph: Any, children: list[Any]) -> None:
         elif ttype == "hardbreak":
             paragraph.add_run().add_break()
         elif ttype == "link_open":
-            attrs = dict(child.attrs or {})
-            child._href = str(attrs.get("href", ""))  # type: ignore[attr-defined]
+            pending_href = str(dict(child.attrs or {}).get("href", ""))
         elif ttype == "link_close":
-            continue
+            if pending_href:
+                url_run = paragraph.add_run(f" ({pending_href})")
+                url_run.font.size = Pt(9)
+                url_run.italic = True
+            pending_href = ""
         elif ttype == "image":
             attrs = dict(child.attrs or {})
             paragraph.add_run(f"[image: {attrs.get('src', '')}]")
@@ -177,7 +186,7 @@ def add_callout(doc: Document, body_tokens: list[Any]) -> None:
             elif child.type == "softbreak":
                 text_runs.append(" ")
                 bold_segments.append(False)
-    for text, bold in zip(text_runs, bold_segments):
+    for text, bold in zip(text_runs, bold_segments, strict=False):
         run = paragraph.add_run(text)
         run.italic = True
         run.bold = bold or None

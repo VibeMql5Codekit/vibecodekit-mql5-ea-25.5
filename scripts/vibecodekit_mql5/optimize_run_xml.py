@@ -117,7 +117,7 @@ def parse_opt_xml(text: str) -> list[OptResult]:
         if not any(cells):
             # Trailing empty rows are common in Excel exports.
             continue
-        record = dict(zip(header, cells))
+        record = dict(zip(header, cells, strict=False))
         # MT5 optimization passes are 0-indexed, so we cannot use
         # ``_try_int(...) or idx`` here — that would silently renumber
         # the pass 0 row to ``idx == 1`` and collide with pass 1. Treat

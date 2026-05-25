@@ -75,6 +75,25 @@ class AssembleResult:
     warnings: list[str] = field(default_factory=list)
 
 
+def _iter_outside_code_fences(lines: list[str]) -> list[str]:
+    """Yield the subset of ``lines`` that sit outside ``\\`\\`\\```-fenced blocks.
+
+    Toggle on any line that opens or closes a code fence (``\\`\\`\\``` /
+    ``\\`\\`\\`bash``). Indented fences (``    \\`\\`\\```) are honoured too —
+    `lstrip` keeps the detection symmetric with markdown-it.
+    """
+    visible: list[str] = []
+    in_fence = False
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            visible.append(line)
+    return visible
+
+
 def validate_guide_md(md_text: str) -> list[str]:
     """Lightweight structural checks on the LLM-authored markdown.
 
@@ -82,14 +101,20 @@ def validate_guide_md(md_text: str) -> list[str]:
     means the markdown clears the structural bar set by ``docs-prompt.md``.
     Callers may treat any issue as a soft warning — :func:`assemble`
     still renders a docx so a reviewer can eyeball the result and fix.
+
+    H1 and ``[[TOC]]`` detection runs against the lines *outside* fenced
+    code blocks so a shell snippet like ``# rebuild`` inside ``\\`\\`\\``` is
+    not counted as a chapter heading.
     """
     issues: list[str] = []
     lines = md_text.strip().splitlines() if md_text else []
     if not lines or not lines[0].startswith("# "):
         issues.append("H1 phải là dòng đầu tiên của guide.md")
-    if _TOC_MARKER not in md_text:
+    visible_lines = _iter_outside_code_fences(lines)
+    visible_text = "\n".join(visible_lines)
+    if _TOC_MARKER not in visible_text:
         issues.append(f"Thiếu marker {_TOC_MARKER} (Word ToC field)")
-    h1_count = sum(1 for line in lines if line.startswith("# "))
+    h1_count = sum(1 for line in visible_lines if line.startswith("# "))
     chapter_count = max(h1_count - 1, 0)  # exclude the title H1
     if chapter_count < _MIN_CHAPTERS:
         issues.append(

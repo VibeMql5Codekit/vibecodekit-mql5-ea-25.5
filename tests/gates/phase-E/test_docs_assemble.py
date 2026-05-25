@@ -218,6 +218,62 @@ def test_main_cli_missing_guide(tmp_path: Path) -> None:
     assert rc == 2
 
 
+def test_assemble_renders_link_url_inline(tmp_path: Path) -> None:
+    """Links must keep their URL inline so a printed copy is useful.
+
+    Pre-fix the renderer captured the href onto the token but never
+    emitted any run for the URL, so ``[MT5 manual](https://...)``
+    collapsed to just ``MT5 manual`` in the docx.
+    """
+    md = (
+        "# Title\n\n"
+        "[[TOC]]\n\n"
+        "# Chương 1\n\nXem thêm [MT5 manual](https://www.metatrader5.com/help).\n\n"
+        "# Chương 2\n# Chương 3\n# Chương 4\n# Chương 5\n"
+    )
+    guide = _write_guide(tmp_path, body=md)
+    out_docx = tmp_path / "links.docx"
+    docs_assemble.assemble(guide, out_docx)
+
+    doc = Document(str(out_docx))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+    assert "MT5 manual" in full_text
+    assert "https://www.metatrader5.com/help" in full_text
+
+
+def test_validate_ignores_h1_inside_code_fence() -> None:
+    """``# foo`` inside a fenced code block must not count as a chapter.
+
+    Pre-fix ``validate_guide_md`` was line-based and naively matched
+    any leading ``# `` regardless of fence state, so shell snippets
+    like ``# rebuild`` inside ``\\`\\`\\`bash`` inflated the chapter count.
+    """
+    md = (
+        "# Title\n\n"
+        "[[TOC]]\n\n"
+        "# Chương 1\n"
+        "```bash\n"
+        "# fake chapter heading inside a fence\n"
+        "# another one\n"
+        "```\n"
+        "# Chương 2\n# Chương 3\n# Chương 4\n# Chương 5\n"
+    )
+    assert docs_assemble.validate_guide_md(md) == []
+
+
+def test_validate_ignores_toc_marker_inside_code_fence() -> None:
+    """``[[TOC]]`` only counts when it sits outside a fenced code block."""
+    md = (
+        "# Title\n\n"
+        "```text\n"
+        "[[TOC]]\n"
+        "```\n"
+        "# Chương 1\n# Chương 2\n# Chương 3\n# Chương 4\n# Chương 5\n"
+    )
+    issues = docs_assemble.validate_guide_md(md)
+    assert any("TOC" in i.upper() for i in issues)
+
+
 def test_result_is_json_serialisable(tmp_path: Path) -> None:
     guide = _write_guide(tmp_path)
     result = docs_assemble.assemble(guide, tmp_path / "MyEA.docs.docx")
