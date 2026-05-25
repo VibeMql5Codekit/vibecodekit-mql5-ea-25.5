@@ -80,6 +80,17 @@ def classify_artifact(path: Path, out_dir: Path) -> tuple[str, str] | None:
         return "review", f"ea-docs-{suffix.lstrip('.')}"
     if suffix == ".log":
         return "review", "compile-log"
+    # LLM-driven `.docx` ship pipeline (PR ship-docx): docs-context.json
+    # + docs-prompt.md are the regenerable inputs to the LLM step, and
+    # guide.md is the LLM's intermediate markdown. They live in the
+    # `repro` group so a reviewer can re-run the assembly later without
+    # cluttering the primary `review` deliverable (`.docs.docx`).
+    if name == "docs-context.json":
+        return "repro", "docs-context"
+    if name == "docs-prompt.md":
+        return "repro", "docs-prompt"
+    if name == "guide.md":
+        return "repro", "docs-guide-md"
     if (
         suffix in {".yaml", ".yml", ".json"}
         and "spec" in name

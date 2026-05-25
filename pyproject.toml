@@ -18,6 +18,13 @@ dependencies = [
     # YAML output straight into it; without PyYAML the first chat-driven
     # build after a fresh `pip install -e .` fails on `load_spec`.
     "pyyaml>=6.0",
+    # LLM-driven .docx ship pipeline (`mql5-docs-bundle` emits the LLM
+    # context + prompt; `mql5-docs-assemble` converts the LLM-authored
+    # `guide.md` to a Word document for the ship.zip). Both deps are
+    # pure-Python wheels so they install cleanly on Linux/Wine/Windows
+    # without extra system packages.
+    "python-docx>=1.1.0",
+    "markdown-it-py>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +58,8 @@ mql5-auto-fix = "vibecodekit_mql5.auto_fix:main"
 mql5-spec-from-prompt = "vibecodekit_mql5.spec_from_prompt:main"
 mql5-dashboard = "vibecodekit_mql5.dashboard:main"
 mql5-ea-docs = "vibecodekit_mql5.ea_docs:main"
+mql5-docs-bundle = "vibecodekit_mql5.docs_bundle:main"
+mql5-docs-assemble = "vibecodekit_mql5.docs_assemble:main"
 mql5-wizard = "vibecodekit_mql5.wizard:main"
 mql5-pip-normalize = "vibecodekit_mql5.pip_normalize:main"
 mql5-async-build = "vibecodekit_mql5.async_build:main"

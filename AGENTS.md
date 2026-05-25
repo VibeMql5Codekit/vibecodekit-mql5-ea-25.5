@@ -8,9 +8,9 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.0.1`. 53 CLI commands, 4 MCP servers,
+- **Status:** shipped product, `v1.0.1`. 55 CLI commands, 4 MCP servers,
   23 scaffold archetypes, 26 anti-pattern detectors (25 numbered AP-1…AP-25
-  + 1 build-aware method-hiding), 7-layer permission gate, 915 tests
+  + 1 build-aware method-hiding), 7-layer permission gate, 946 tests
   across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
@@ -18,7 +18,7 @@ to read first, what to use, and what NOT to introduce.
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (53) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (55) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -43,6 +43,11 @@ to read first, what to use, and what NOT to introduce.
 - New anti-pattern detectors in `scripts/vibecodekit_mql5/lint.py` or
   `scripts/vibecodekit_mql5/lint_best_practice.py` with regression tests.
 - Documentation under `docs/`.
+- Docs templates under `docs/templates/` for the LLM-driven `.docx`
+  ship pipeline (`mql5-docs-bundle` + `mql5-docs-assemble`) — these
+  must stay **kit-light**: do not hardcode per-archetype chapter
+  content. Variation is the LLM agent's job; the kit only emits the
+  deterministic context payload.
 
 ## What you must NOT introduce
 
@@ -61,6 +66,15 @@ failure modes the kit was forked from `vibecodekit-handwritten` to fix:
 - LLM hallucination of test results. Every "passes" claim must be
   traceable to a real Strategy Tester XML report.
 - Skipping the 7-layer permission gate in TEAM / ENTERPRISE mode.
+- Hardcoded per-EA chapter content inside `docs_bundle` /
+  `docs_assemble`. The LLM-driven `.docx` pipeline is intentionally
+  archetype-agnostic — chapter structure is decided adaptively by the
+  external LLM agent based on `docs-context.json`. Per-archetype
+  `STRATEGY.yaml` files, hardcoded 10-chapter templates, and embedded
+  matplotlib chart generators are **out of scope** for this kit.
+- An LLM API client inside the kit. `mql5-docs-bundle` emits a prompt
+  and the operator's external agent (Devin / Claude / Cursor) does the
+  authoring step. The kit never calls a model directly.
 
 ## Task Loop
 
@@ -112,8 +126,8 @@ mql5-permission --mode personal FirstEA.mq5
 ## Tiếng Việt — tóm tắt cho agent
 
 - `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.0.1`,
-  53 lệnh CLI, 4 MCP server, 23 scaffold, 26 AP detector (25 đánh số
-  AP-1…AP-25 + 1 method-hiding theo build), 915 test gate.
+  55 lệnh CLI, 4 MCP server, 23 scaffold, 26 AP detector (25 đánh số
+  AP-1…AP-25 + 1 method-hiding theo build), 946 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

@@ -400,6 +400,51 @@ là snapshot build-side (build / lint / compile / gate / docs /
 dashboard); bản trên disk được ghi lại sau bước package nên có thêm
 `report.package.ok` + `report.package.groups` để CI grep được.
 
+### 3.10. LLM-driven docs ship (`.docx` user-guide)
+
+Pattern A — kit-light. Kit emit context + prompt → LLM agent (Devin /
+Claude / Cursor) viết `guide.md` adaptive theo logic EA → kit convert
+sang `.docx` cho ship.zip. Bộ đôi `mql5-docs-bundle` +
+`mql5-docs-assemble` auto-run trong `mql5-auto-build`, hoặc gọi
+standalone:
+
+```bash
+# Bước 1 — kit emit context + prompt (deterministic)
+mql5-docs-bundle ea-spec.yaml MyEA/MyEA.mq5 --out MyEA/
+# → MyEA/docs-context.json  (spec, inputs có semantic enrich, FLOW, build metrics)
+# → MyEA/docs-prompt.md     (instructions Vietnamese cho LLM)
+
+# Bước 2 — LLM agent đọc 2 file trên + viết `MyEA/guide.md`
+# (bước này do agent thực hiện, kit không có LLM client)
+
+# Bước 3 — kit convert markdown → Word docx
+mql5-docs-assemble MyEA/guide.md --out MyEA/MyEA.docs.docx
+# → MyEA/MyEA.docs.docx (ToC field cập nhật bằng F9, fonts Vietnamese
+#   render đầy đủ; embed PNG charts từ MyEA/images/ nếu có)
+
+# Hoặc all-in-one qua auto-build (bước 1 + bước 3 auto, bước 2 LLM agent):
+mql5-auto-build ea-spec.yaml --out-dir MyEA/ --package
+# → MyEA/docs-context.json + docs-prompt.md emit ngay sau build
+# → Sau khi LLM agent ghi MyEA/guide.md → chạy mql5-docs-assemble
+#   standalone, hoặc mql5-auto-build lần 2 (force=False để không xoá
+#   guide.md).
+```
+
+`mql5-docs-bundle` không cần `auto-build-report.json` đã tồn tại;
+truyền `--build-report MyEA/auto-build-report.json` nếu muốn nhúng
+compile + lint metrics vào context (LLM dùng để viết chương "Risk
+warnings" sát hơn).
+
+`mql5-docs-assemble` validate `guide.md`: H1 đầu file là tên EA + version,
+có `[[TOC]]` ngay sau, tối thiểu 5 chương — tối đa 12 chương. Vi phạm
+sẽ surface vào `result.warnings` nhưng vẫn render docx để reviewer
+preview.
+
+Cả 2 lệnh **archetype-agnostic**: kit không hardcode cấu trúc chương cho
+trend / scalping / DCA / ... — LLM tự adapt theo context. Xem
+`scripts/vibecodekit_mql5/docs_bundle.py::REFERENCE_OUTLINE` để biết
+cấu trúc tham chiếu mặc định (10 chương).
+
 ### 3.9. Other (5 lệnh)
 
 ```bash
