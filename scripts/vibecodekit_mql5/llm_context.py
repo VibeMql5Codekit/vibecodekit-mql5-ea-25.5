@@ -75,7 +75,12 @@ def wire_llm(mq5_path: Path, pattern: str) -> ContextReport:
 
     cls = _pattern_class(pattern)
     header = f"{cls}.mqh"
-    src = mq5_path.read_text(encoding="utf-8")
+    from .mq5_io import read_mq5_text_with_encoding
+
+    try:
+        src, _enc = read_mq5_text_with_encoding(mq5_path)
+    except UnicodeDecodeError:
+        src, _enc = mq5_path.read_text(encoding="latin-1", errors="replace"), "latin-1"
 
     added_include = False
     added_global = False
@@ -106,7 +111,7 @@ def wire_llm(mq5_path: Path, pattern: str) -> ContextReport:
     backup = mq5_path.with_suffix(mq5_path.suffix + ".bak")
     if not backup.exists():
         shutil.copy(mq5_path, backup)
-    mq5_path.write_text(src, encoding="utf-8")
+    mq5_path.write_text(src, encoding=_enc)
     return ContextReport(
         ok=True, mq5_path=str(mq5_path), pattern=pattern,
         added_include=added_include, added_global=added_global,

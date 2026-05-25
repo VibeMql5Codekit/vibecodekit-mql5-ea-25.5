@@ -82,7 +82,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[deploy_vps] EA not found: {ea_path}", file=sys.stderr)
         return 2
 
-    text = ea_path.read_text(encoding="utf-8", errors="replace")
+    from .mq5_io import read_mq5_text
+
+    text = read_mq5_text(ea_path, errors="replace")
     result = trader_check.evaluate(text)
     ok = trader_check.verdict(result, mode=args.mode)
     Path(args.out).write_text(render_guide(ea_path, result), encoding="utf-8")

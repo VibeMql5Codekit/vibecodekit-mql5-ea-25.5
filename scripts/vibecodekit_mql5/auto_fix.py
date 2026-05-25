@@ -290,6 +290,10 @@ class FixReport:
     annotations: list[str] = field(default_factory=list)
     findings_before: list[lint_mod.Finding] = field(default_factory=list)
     findings_after: list[lint_mod.Finding] = field(default_factory=list)
+    #: Encoding of the source file on disk. Used by the CLI to write
+    #: the patched file back in the *same* encoding so a UTF-16-LE
+    #: MetaEditor file isn't silently transcoded to UTF-8.
+    encoding: str = "utf-8"
 
     @property
     def changed(self) -> bool:
@@ -332,8 +336,15 @@ def fix_source(path: str, src: str) -> FixReport:
 
 
 def fix_file(path: Path) -> FixReport:
-    src = path.read_text(encoding="utf-8", errors="replace")
-    return fix_source(str(path), src)
+    from .mq5_io import read_mq5_text_with_encoding
+
+    try:
+        src, enc = read_mq5_text_with_encoding(path)
+    except UnicodeDecodeError:
+        src, enc = path.read_text(encoding="latin-1", errors="replace"), "latin-1"
+    report = fix_source(str(path), src)
+    report.encoding = enc
+    return report
 
 
 def _unified_diff(report: FixReport) -> str:
@@ -384,9 +395,9 @@ def main(argv: list[str] | None = None) -> int:
     if report.changed:
         if not args.no_backup:
             args.file.with_suffix(args.file.suffix + ".bak").write_text(
-                report.original_text, encoding="utf-8"
+                report.original_text, encoding=report.encoding
             )
-        args.file.write_text(report.fixed_text, encoding="utf-8")
+        args.file.write_text(report.fixed_text, encoding=report.encoding)
     print(json.dumps(summary, indent=2))
     return 0
 

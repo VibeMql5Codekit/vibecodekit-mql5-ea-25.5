@@ -45,7 +45,12 @@ def embed_onnx(
             False, str(mq5_path), str(model_path), False, False, False,
             [f"missing .mq5: {mq5_path}"],
         )
-    src = mq5_path.read_text(encoding="utf-8")
+    from .mq5_io import read_mq5_text_with_encoding
+
+    try:
+        src, _enc = read_mq5_text_with_encoding(mq5_path)
+    except UnicodeDecodeError:
+        src, _enc = mq5_path.read_text(encoding="latin-1", errors="replace"), "latin-1"
     model_name = model_path.name
 
     added_resource = False
@@ -93,7 +98,7 @@ def embed_onnx(
         backup = mq5_path.with_suffix(mq5_path.suffix + ".bak")
         if not backup.exists():
             shutil.copy(mq5_path, backup)
-        mq5_path.write_text(src, encoding="utf-8")
+        mq5_path.write_text(src, encoding=_enc)
     else:
         sys.stdout.write(src)
 
