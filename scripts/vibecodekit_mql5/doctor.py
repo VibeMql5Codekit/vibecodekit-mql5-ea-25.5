@@ -192,6 +192,8 @@ def run_doctor(repo_root: Path = REPO_ROOT) -> DoctorReport:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     parser = argparse.ArgumentParser(prog="mql5-doctor")
     parser.add_argument("--repo-root", default=str(REPO_ROOT))
     parser.add_argument(
@@ -203,6 +205,8 @@ def main(argv: list[str] | None = None) -> int:
             "Useful for docs-only or lint-only CI environments."
         ),
     )
+    _agent_io.add_json_flag(parser)
+    _agent_io.add_gate_report_flag(parser)
     args = parser.parse_args(argv)
     rep = run_doctor(Path(args.repo_root))
     ok = rep.is_ok(soft=args.soft)
@@ -210,7 +214,26 @@ def main(argv: list[str] | None = None) -> int:
     if args.soft:
         payload["soft"] = True
         payload["strict_ok"] = rep.ok
-    print(json.dumps(payload, indent=2))
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-doctor",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=(f"doctor: {len(rep.checks)} checks, "
+                 f"{'PASS' if ok else 'FAIL'}"
+                 + (" (soft)" if args.soft else "")),
+        data=payload,
+        evidence=[str(args.repo_root)],
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(payload, indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
     return 0 if ok else 1
 
 

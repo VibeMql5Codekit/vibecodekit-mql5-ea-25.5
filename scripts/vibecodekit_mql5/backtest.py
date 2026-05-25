@@ -273,6 +273,8 @@ def apply_tester_log(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-backtest", description=__doc__.splitlines()[0])
     p.add_argument("ea")
     p.add_argument("set_file")
@@ -294,6 +296,8 @@ def main(argv: list[str] | None = None) -> int:
             "--tester-log to compute prestart_shift_days"
         ),
     )
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     if args.report:
@@ -303,7 +307,28 @@ def main(argv: list[str] | None = None) -> int:
                 encoding="utf-8", errors="replace"
             )
             apply_tester_log(result, log_text, args.requested_from or "")
-        print(json.dumps(result.to_dict(), indent=2))
+
+        envelope = _agent_io.Envelope(
+            tool="mql5-backtest",
+            ok=True,
+            exit_code=0,
+            summary=(f"parsed {args.report}: "
+                     f"trades={getattr(result, 'trades', 'n/a')} "
+                     f"pf={getattr(result, 'profit_factor', 'n/a')}"),
+            data=result.to_dict(),
+            evidence=[args.report],
+            matrix_dim="d_robustness",
+            matrix_axis="backtest",
+            matrix_status="PASS",
+        )
+
+        if args.emit_json:
+            _agent_io.emit(envelope)
+        else:
+            print(json.dumps(result.to_dict(), indent=2))
+
+        if args.gate_report is not None:
+            _agent_io.write_gate_report(envelope, args.gate_report)
         return 0
     print("[mql5-backtest] running terminal is not implemented in Phase B unit-mode; "
           "pass --report <xml> to parse an existing report.", file=sys.stderr)

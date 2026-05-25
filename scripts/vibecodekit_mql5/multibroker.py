@@ -117,9 +117,13 @@ def _split(s: str | None) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-multibroker", description=__doc__.splitlines()[0])
     p.add_argument("--reports", required=True, help="Comma-sep paths to per-broker XML reports")
     p.add_argument("--journals", default=None, help="Comma-sep paths to per-broker journal .log")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     rpaths = _split(args.reports)
@@ -136,8 +140,29 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     result = evaluate(reports, journals=_split(args.journals))
-    print(json.dumps(result.to_dict(), indent=2))
-    return 0 if result.verdict == "PASS" else 1
+    ok = result.verdict == "PASS"
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-multibroker",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=f"multibroker verdict: {result.verdict} ({len(reports)} broker(s))",
+        data=result.to_dict(),
+        evidence=list(rpaths) + _split(args.journals),
+        matrix_dim="d_broker_safety",
+        matrix_axis="multi_broker",
+        matrix_status=result.verdict if result.verdict in ("PASS", "WARN", "FAIL") else "N/A",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(result.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

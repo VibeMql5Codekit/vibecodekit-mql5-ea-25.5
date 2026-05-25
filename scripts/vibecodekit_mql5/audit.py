@@ -126,15 +126,38 @@ def run_audit() -> AuditReport:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     parser = argparse.ArgumentParser(prog="mql5-audit")
-    parser.parse_args(argv)
+    _agent_io.add_json_flag(parser)
+    _agent_io.add_gate_report_flag(parser)
+    args_ns = parser.parse_args(argv)
+
     rep = run_audit()
-    print(json.dumps({
+    payload = {
         "ok": rep.ok,
         "total": len(rep.probes),
         "passed": sum(1 for p in rep.probes if p.ok),
         "probes": [p.__dict__ for p in rep.probes],
-    }, indent=2))
+    }
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-audit",
+        ok=rep.ok,
+        exit_code=0 if rep.ok else 1,
+        summary=f"audit: {payload['passed']}/{payload['total']} probes",
+        data=payload,
+        evidence=[],
+    )
+
+    if args_ns.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(payload, indent=2))
+
+    if args_ns.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args_ns.gate_report)
+
     return 0 if rep.ok else 1
 
 

@@ -86,6 +86,8 @@ def run(args: argparse.Namespace) -> OrchestratorReport:
 
 
 def main() -> int:
+    from .. import _agent_io
+
     ap = argparse.ArgumentParser(prog="mql5-permission")
     ap.add_argument("source", type=Path, help="EA .mq5 file")
     ap.add_argument("--mode", choices=tuple(MODE_LAYERS), default="personal")
@@ -95,9 +97,33 @@ def main() -> int:
     ap.add_argument("--matrix", type=Path, default=None)
     ap.add_argument("--multibroker", type=Path, default=None)
     ap.add_argument("--journal", type=Path, default=None)
+    _agent_io.add_json_flag(ap)
+    _agent_io.add_gate_report_flag(ap)
     args = ap.parse_args()
     report = run(args)
-    print(json.dumps(report.to_dict(), indent=2))
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-permission",
+        ok=report.ok,
+        exit_code=0 if report.ok else 1,
+        summary=(f"permission [{args.mode}]: "
+                 f"{'PASS' if report.ok else 'FAIL'} "
+                 f"({len(report.layers)} layer(s))"),
+        data=report.to_dict(),
+        evidence=[str(args.source)],
+        matrix_dim="d_correctness",
+        matrix_axis="integration",
+        matrix_status="PASS" if report.ok else "FAIL",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(report.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
     return 0 if report.ok else 1
 
 

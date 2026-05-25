@@ -84,9 +84,13 @@ FORWARD_QUARTER = 3
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-walkforward", description=__doc__.splitlines()[0])
     p.add_argument("is_xml", help="In-sample tester report XML")
     p.add_argument("oos_xml", help="Out-of-sample tester report XML")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     try:
@@ -97,8 +101,29 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     result = evaluate(is_r, oos_r)
-    print(json.dumps(result.to_dict(), indent=2))
-    return 0 if result.verdict in ("PASS", "WARN") else 1
+    ok = result.verdict in ("PASS", "WARN")
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-walkforward",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=f"walkforward verdict: {result.verdict}",
+        data=result.to_dict(),
+        evidence=[args.is_xml, args.oos_xml],
+        matrix_dim="d_robustness",
+        matrix_axis="walk_forward",
+        matrix_status=result.verdict if result.verdict in ("PASS", "WARN", "FAIL") else "N/A",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(result.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

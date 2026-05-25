@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (55 commands)
+title: Command catalog (57 commands)
 applicable_phase: E
 ---
 
@@ -8,6 +8,31 @@ applicable_phase: E
 
 All commands callable directly via `python -m vibecodekit_mql5.<name>`.
 No master `/mql5` router — every command stands alone.
+
+## Agent contracts (Wave 1)
+
+Twelve gates accept a standardised `--json` flag that emits a stable
+envelope (`schema_version=1`) on stdout instead of pretty text — see
+`scripts/vibecodekit_mql5/_agent_io.py`. The same gates also accept
+`--gate-report <path>` to additionally write the envelope to disk; the
+matrix collector picks them up:
+
+```bash
+mql5-lint EA.mq5 --json
+mql5-lint EA.mq5 --format sarif                # SARIF 2.1.0
+mql5-walkforward is.xml oos.xml --gate-report gate-report-wf.json
+mql5-rri-matrix --collect ./reports/ --output matrix.html
+```
+
+Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
+`mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
+`mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
+`mql5-audit`, plus the two new commands below.
+
+Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
+
+Run `mql5-manifest --emit > manifest.json` for a machine-readable
+catalogue of every command (capability flags + module path).
 
 ## Discovery (4)
 - `/mql5-scan`     — survey project tree, classify artefacts
@@ -81,3 +106,7 @@ No master `/mql5` router — every command stands alone.
 - `/mql5-permission`      — 7-layer permission gate orchestrator (positional `.mq5` source; `--mode {personal,team,enterprise}` selects gate set: PERSONAL=1/2/3/4/7, TEAM=1-5/7, ENTERPRISE=1-7)
 - `/mql5-install`         — reconcile-install kit overlay
 - `/mql5-second-opinion`  — one-shot lint + Trader-17 (optional)
+
+## Agent contracts (2)
+- `/mql5-manifest`  — emit (or validate) a machine-readable catalogue of every CLI: `--emit [--output manifest.json]`, `--validate manifest.json`
+- `/mql5-fixture`   — generate hermetic MT5 Strategy Tester fixtures so the BT/WF/MC/MB pipeline runs on Linux without Wine: `--type {backtest,walkforward,monte-carlo,multibroker} --strategy {random,trend,mean-rev} --seed N --out <dir>`
