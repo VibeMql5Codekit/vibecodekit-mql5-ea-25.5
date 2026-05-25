@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from vibecodekit_mql5 import auto_build
+from vibecodekit_mql5 import auto_build, auto_build_docs_ship_stage
 from vibecodekit_mql5 import compile as compile_mod
 
 
@@ -112,7 +112,7 @@ def test_assemble_helper_renders_existing_guide(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     report = auto_build.PipelineReport(spec=dict(MINIMAL_SPEC), out_dir=str(out_dir))
-    auto_build._maybe_assemble_docs(
+    auto_build_docs_ship_stage.attach_docs_assemble(
         report, out_dir, ea_name="DocsBundleEA", skip=False
     )
 

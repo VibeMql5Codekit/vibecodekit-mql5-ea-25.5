@@ -41,12 +41,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from . import auto_build_docs_ship_stage as docs_ship_stage_mod
 from . import auto_build_docs_stage as docs_stage_mod
 from . import build as build_mod
 from . import compile as compile_mod
 from . import dashboard as dashboard_mod
-from . import docs_assemble as docs_assemble_mod
-from . import docs_bundle as docs_bundle_mod
 from . import lint as lint_mod
 from . import package as package_mod
 from . import spec_schema
@@ -247,10 +246,10 @@ def run_pipeline(
             report, out_dir, skip=skip_docs, ea_spec=ea_spec,
             lang=docs_lang, formats=docs_formats, spec=spec, mq5_path=mq5,
         )
-        _maybe_emit_docs_bundle(
+        docs_ship_stage_mod.attach_docs_bundle(
             report, out_dir, spec=spec, mq5_path=mq5, skip=skip_docs,
         )
-        _maybe_assemble_docs(
+        docs_ship_stage_mod.attach_docs_assemble(
             report, out_dir, ea_name=str(spec.get("name", "")), skip=skip_docs,
         )
         _maybe_attach_dashboard(
@@ -323,120 +322,6 @@ def run_pipeline(
             report.ok = False
 
     return _finalize(mq5_path)
-
-
-def _maybe_emit_docs_bundle(
-    report: PipelineReport,
-    out_dir: Path,
-    *,
-    spec: dict[str, Any],
-    mq5_path: Path | None,
-    skip: bool,
-) -> None:
-    """Write ``docs-context.json`` + ``docs-prompt.md`` next to the build.
-
-    Informational stage — wraps :func:`docs_bundle.write_bundle` so any
-    failure is recorded on ``report.docs_bundle`` without flipping the
-    pipeline verdict. The bundle is intentionally tied to the
-    docs-stage skip flag: when the caller passes ``--no-docs`` the
-    bundle step skips too, matching the existing docs / dashboard
-    convention.
-    """
-    if skip:
-        report.docs_bundle = {"skipped": True}
-        return
-    if mq5_path is None or not mq5_path.is_file():
-        report.docs_bundle = {
-            "skipped": True,
-            "reason": "docs-bundle skipped: .mq5 not available",
-        }
-        return
-    # The spec passed in is the raw dict the user fed to mql5-auto-build.
-    # We need a real path for docs_bundle.write_bundle; load_spec keeps a
-    # reference on the report indirectly via the report.spec dict, but
-    # the path lives only on the args. Resolve via out_dir/ea-spec hint
-    # when present, otherwise serialise the dict to a tempfile-style
-    # location under out_dir.
-    spec_path = _materialise_spec_for_bundle(out_dir, spec)
-    try:
-        result = docs_bundle_mod.write_bundle(
-            spec_path,
-            mq5_path,
-            out_dir,
-            build_report_path=out_dir / "auto-build-report.json",
-        )
-        report.docs_bundle = {
-            "ok": result.ok,
-            "context_path": result.context_path,
-            "prompt_path": result.prompt_path,
-            "inputs_total": result.inputs_total,
-            "inputs_enriched": result.inputs_enriched,
-            "has_flow_narrative": result.has_flow_narrative,
-            "notes": list(result.notes),
-        }
-    except (OSError, ValueError, RuntimeError) as exc:
-        report.docs_bundle = {"ok": False, "error": f"docs-bundle failed: {exc}"}
-
-
-def _materialise_spec_for_bundle(out_dir: Path, spec: dict[str, Any]) -> Path:
-    """Return a filesystem path to the spec for ``docs_bundle.write_bundle``.
-
-    The pipeline currently passes the spec around as a raw dict (the
-    YAML file is loaded once and discarded), so the bundle helper has
-    no original path to read from. We persist a regenerable copy at
-    ``<out_dir>/ea-spec.bundle.yaml`` — this file is harmless for the
-    packager (`classify_artifact` already routes spec-shaped YAML into
-    the `repro` group) and lets the bundle stay a pure function over a
-    file path.
-    """
-    import yaml  # local import — pyyaml is already a hard dep
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    spec_path = out_dir / "ea-spec.bundle.yaml"
-    spec_path.write_text(yaml.safe_dump(spec, allow_unicode=True), encoding="utf-8")
-    return spec_path
-
-
-def _maybe_assemble_docs(
-    report: PipelineReport,
-    out_dir: Path,
-    *,
-    ea_name: str,
-    skip: bool,
-) -> None:
-    """Render ``guide.md`` to ``<ea>.docs.docx`` when the LLM has written it.
-
-    Informational stage. When the LLM step hasn't run yet (no
-    ``guide.md`` on disk), we record a structured skip with the hint to
-    run ``mql5-docs-assemble`` later — that matches the kit-light
-    pattern where the LLM step lives outside the build.
-    """
-    if skip:
-        report.docs_assemble = {"skipped": True}
-        return
-    guide_path = out_dir / "guide.md"
-    if not guide_path.is_file():
-        report.docs_assemble = {
-            "skipped": True,
-            "reason": (
-                "guide.md not found — author it from docs-context.json / "
-                "docs-prompt.md then run `mql5-docs-assemble`."
-            ),
-        }
-        return
-    docx_path = out_dir / f"{ea_name or 'EA'}.docs.docx"
-    try:
-        result = docs_assemble_mod.assemble(guide_path, docx_path)
-        report.docs_assemble = {
-            "ok": result.ok,
-            "docx_path": result.docx_path,
-            "chapters": result.chapters,
-            "tables": result.tables,
-            "images_embedded": result.images_embedded,
-            "warnings": list(result.warnings),
-        }
-    except (OSError, ValueError) as exc:
-        report.docs_assemble = {"ok": False, "error": f"docs-assemble failed: {exc}"}
 
 
 def _maybe_attach_package(
