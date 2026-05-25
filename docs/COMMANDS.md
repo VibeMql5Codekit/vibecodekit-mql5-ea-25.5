@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (53 commands)
+title: Command catalog (55 commands)
 applicable_phase: E
 ---
 
@@ -21,13 +21,15 @@ No master `/mql5` router — every command stands alone.
 - `/mql5-blueprint` — open Step 4 BLUEPRINT template
 - `/mql5-tip`       — open Step 5 TIP template
 
-## Build (13)
+## Build (15)
 - `/mql5-build`             — render a scaffold
 - `/mql5-auto-build`        — single-shot spec → scan → build → lint → compile → gate → dashboard → docs
 - `/mql5-auto-fix`          — close 8 critical anti-patterns automatically
 - `/mql5-spec-from-prompt`  — free-text description → `ea-spec.yaml` (chat-driven build)
 - `/mql5-dashboard`         — render + publish the quality-matrix HTML
 - `/mql5-ea-docs`           — render end-user EA documentation (`.docs.html` + `.docs.md` + optional `.docs.pdf`) with per-input semantic deep-dive cards + per-archetype FLOW narrative (OnInit / OnTick / OnDeinit). Vietnamese by default; `--lang en` for English.
+- `/mql5-docs-bundle`       — emit `docs-context.json` + `docs-prompt.md` so an external LLM agent can author the EA user-guide markdown (Pattern A — kit-light `.docx` ship). Bundles spec + parsed inputs (semantic-library enriched) + scaffold FLOW + build/lint metrics. Auto-runs inside `mql5-auto-build`.
+- `/mql5-docs-assemble`     — convert the LLM-authored `guide.md` → Word `<EA>.docs.docx` (embedded images from `images/`, F9-refreshable ToC, Vietnamese diacritics). Auto-runs inside `mql5-auto-build` when `guide.md` is present in the build dir.
 - `/mql5-wizard`            — render the wizard-composable scaffold
 - `/mql5-pip-normalize`     — patch a .mq5 to use `CPipNormalizer`
 - `/mql5-async-build`       — render the hft-async scaffold

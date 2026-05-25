@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from . import auto_build_docs_ship_stage as docs_ship_stage_mod
 from . import auto_build_docs_stage as docs_stage_mod
 from . import build as build_mod
 from . import compile as compile_mod
@@ -75,6 +76,13 @@ class PipelineReport:
     dashboard: dict[str, Any] | None = None
     docs: dict[str, Any] | None = None
     package: dict[str, Any] | None = None
+    # LLM-driven `.docx` ship pipeline (Pattern A): `docs_bundle` is the
+    # deterministic context+prompt the kit emits for an external agent;
+    # `docs_assemble` is the conversion of the agent's `guide.md` to a
+    # Word `.docx`. Both are informational stages and never flip
+    # ``report.ok``.
+    docs_bundle: dict[str, Any] | None = None
+    docs_assemble: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -84,6 +92,8 @@ class PipelineReport:
             "stages": [s.to_dict() for s in self.stages],
             "dashboard": self.dashboard,
             "docs": self.docs,
+            "docs_bundle": self.docs_bundle,
+            "docs_assemble": self.docs_assemble,
             "package": self.package,
         }
 
@@ -235,6 +245,12 @@ def run_pipeline(
         docs_stage_mod.attach_docs(
             report, out_dir, skip=skip_docs, ea_spec=ea_spec,
             lang=docs_lang, formats=docs_formats, spec=spec, mq5_path=mq5,
+        )
+        docs_ship_stage_mod.attach_docs_bundle(
+            report, out_dir, spec=spec, mq5_path=mq5, skip=skip_docs,
+        )
+        docs_ship_stage_mod.attach_docs_assemble(
+            report, out_dir, ea_name=str(spec.get("name", "")), skip=skip_docs,
         )
         _maybe_attach_dashboard(
             report, out_dir, skip=skip_dashboard,
