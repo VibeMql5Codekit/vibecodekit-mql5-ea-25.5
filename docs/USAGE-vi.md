@@ -307,38 +307,75 @@ python -m vibecodekit_mql5.mfe_mae mfe.csv
 > `deal_id,open_time,close_time,magic,type,profit,mfe,mae` (xuất từ
 > `CMfeMaeLogger.SaveToCsv()`; xem `Include/CMfeMaeLogger.mqh`).
 
-### 3.5. RRI methodology (3 lệnh review chuyên dụng)
+### 3.5. RRI methodology (4 — 1 umbrella + 3 alias Wave-3)
+
+Wave 3 gộp 3 CLI RRI (`mql5-rri-bt`, `mql5-rri-rr`, `mql5-rri-chart`)
+vào 1 umbrella `mql5-rri` với subcommand. 3 console script cũ giữ
+nguyên dưới dạng **alias Wave-3** (forward 1-line sang umbrella) —
+JSON output byte-identical, có thêm field `data.kind`. **Code mới
+dùng umbrella.**
 
 ```bash
-# Backtest review — 5 persona × 7 dim × 8 axis (yêu cầu JSON metrics
-# từ `mql5-backtest`)
-python -m vibecodekit_mql5.rri.rri_bt \
-    --metrics metrics.json --mode enterprise --output rri-bt.html
+# Umbrella (nên dùng):
+mql5-rri                                            # legacy: in template RRI Bước 2
+mql5-rri template                                   # subcommand template tường minh
+mql5-rri bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+mql5-rri rr    --trader-check tc.json --walkforward wf.json \
+               --monte-carlo  mc.json --overfit     of.json \
+               --mode enterprise --output rri-rr.html
+mql5-rri chart --metrics chart.json --mode personal --output rri-chart.html
 
-# Risk & Robustness review (cần 4 JSON: trader-check, walkforward,
-# monte-carlo, overfit)
-python -m vibecodekit_mql5.rri.rri_rr \
-    --trader-check trader-check.json \
-    --walkforward  walkforward.json \
-    --monte-carlo  montecarlo.json \
-    --overfit      overfit.json \
-    --mode personal --output rri-rr.html
+# Alias cũ (giữ để back-compat, tương đương subcommand umbrella ở trên):
+mql5-rri-bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+mql5-rri-rr    --trader-check tc.json --walkforward wf.json \
+               --monte-carlo  mc.json --overfit     of.json \
+               --mode enterprise --output rri-rr.html
+mql5-rri-chart --metrics chart.json --mode personal --output rri-chart.html
 
-# Indicator-dev RRI (chỉ áp dụng cho strategy indicator-only)
-python -m vibecodekit_mql5.rri.rri_chart \
-    --metrics metrics.json --mode personal --output rri-chart.html
+# Module-level (chạy cả qua umbrella lẫn alias đều OK):
+python -m vibecodekit_mql5.rri bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+python -m vibecodekit_mql5.rri.rri_bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+python -m vibecodekit_mql5.rri.rri_rr    --trader-check tc.json --walkforward wf.json \
+                                         --monte-carlo  mc.json --overfit     of.json \
+                                         --mode personal --output rri-rr.html
+python -m vibecodekit_mql5.rri.rri_chart --metrics chart.json --mode personal --output rri-chart.html
 ```
 
-### 3.6. Review opener (5 lệnh)
+### 3.6. Review opener (6 — 1 umbrella + 4 alias Wave-3 + 1 standalone)
 
-5 lệnh này mở template markdown để bạn (hoặc reviewer) điền:
+Wave 3 gộp 4 CLI review-persona (`mql5-eng-review`, `mql5-ceo-review`,
+`mql5-cso`, `mql5-investigate`) vào umbrella `mql5-review` qua cờ mới
+`--lens <eng|ceo|cso|investigate>`. 4 console script cũ giữ nguyên
+dưới dạng **alias Wave-3** (forward 1-line sang `mql5-review --lens
+<tên>`); JSON output byte-identical, có thêm `data.lens` + `data.steps`.
+**Code mới dùng umbrella.** `mql5-second-opinion` là standalone
+fast-pass (lint + Trader-17 trên `.mq5`) — **không** phải lens, không
+gộp.
 
 ```bash
-python -m vibecodekit_mql5.review.review       # review tổng quát
-python -m vibecodekit_mql5.review.eng_review   # engineering review
-python -m vibecodekit_mql5.review.ceo_review   # leadership / CEO review
-python -m vibecodekit_mql5.review.cso          # strategy review
-python -m vibecodekit_mql5.review.investigate  # incident investigation
+# Umbrella (nên dùng):
+mql5-review                                              # legacy: mở template review base
+mql5-review --lens eng         --mode personal --output eng-review.md
+mql5-review --lens ceo         --mode personal --output ceo-review.md
+mql5-review --lens cso         --mode personal --output cso-review.md
+mql5-review --lens investigate --mode personal --output investigate.md
+mql5-review --persona trader --step verify --mode personal --output review.md   # single-persona path cũ (giữ nguyên)
+
+# Alias cũ (giữ để back-compat):
+mql5-eng-review   --mode personal --output eng-review.md
+mql5-ceo-review   --mode personal --output ceo-review.md
+mql5-cso          --mode personal --output cso-review.md
+mql5-investigate  --mode personal --output investigate.md
+
+# Standalone (KHÔNG phải lens — lint + Trader-17 fast pass trên .mq5):
+mql5-second-opinion EA.mq5
+
+# Module-level:
+python -m vibecodekit_mql5.review --lens eng --mode personal --output eng-review.md
+python -m vibecodekit_mql5.review.eng_review
+python -m vibecodekit_mql5.review.ceo_review
+python -m vibecodekit_mql5.review.cso
+python -m vibecodekit_mql5.review.investigate
 ```
 
 ### 3.7. Deploy (3 lệnh)
@@ -476,6 +513,35 @@ CI chỉ chạy docs / lint thì bỏ `--mode enterprise` để không bị chen
 
 State dir (`--state-dir`, default `.rri-state`) cache payload từng
 layer để lần chạy sau tái sử dụng.
+
+### 3.11. Forge closed loop (1 lệnh, Wave 3)
+
+`mql5-forge-loop` chạy vòng lặp backtest hermetic trên Linux không cần
+Wine. Mỗi iteration chain `mql5-fixture --type backtest` (deterministic
+theo `--base-seed + i`) vào parser `mql5-backtest` và tổng hợp metric
+từng iter vào 1 report duy nhất. Dùng để pin lint / parser contract
+regression và chạy forge-style robustness sweep trong CI.
+
+```bash
+# Tối giản — 3 iteration strategy trend, deterministic seed 100:
+mql5-forge-loop --iterations 3 --strategy trend --base-seed 100 \
+                --out ./forge-loop/
+
+# Có gate floor cứng — fail iter nào vượt ngưỡng:
+mql5-forge-loop --iterations 5 --strategy mean-rev --base-seed 200 \
+                --pf-floor 1.10 --sharpe-floor 0.80 --max-dd-ceiling 35.0 \
+                --out ./forge-loop/ \
+                --gate-report forge-loop-report.json --json
+
+# Module-level:
+python -m vibecodekit_mql5.forge_loop \
+    --iterations 3 --strategy random --base-seed 42 --out ./forge-loop/
+```
+
+`mql5-forge-loop` ship Wave-1 `--json` envelope (`schema_version=1`)
++ `--gate-report`, nên matrix collector (`mql5-rri-matrix --collect`)
+ăn unchanged. Không Wine, không MetaTester — fixture generator emit
+XML/CSV/journal đúng schema mà backtest parser nhận.
 
 ---
 

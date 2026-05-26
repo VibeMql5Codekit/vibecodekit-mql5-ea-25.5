@@ -43,7 +43,7 @@ mql5-rri-matrix --collect ./reports/ --output matrix.html
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, `mql5-fixture`, `mql5-init`.
+`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`.
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -126,7 +126,7 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
   - `/mql5-rri chart --metrics chart.json [--output rri-chart.html]` — Optional indicator-dev RRI.
 - `/mql5-rri-bt`, `/mql5-rri-rr`, `/mql5-rri-chart` — kept as **Wave-3 aliases** for back-compat; each is a 1-line forward to the umbrella subcommand above. Use the umbrella for new code.
 
-## Review (5 — 1 umbrella + 4 Wave-3 aliases)
+## Review (6 — 1 umbrella + 4 Wave-3 aliases + 1 standalone)
 - `/mql5-review` — umbrella CLI. Either `--lens <eng|ceo|cso|investigate>` (multi-persona preset) **or** the legacy `--persona <id> --step <id>` single-persona path:
   - `mql5-review --lens eng    [--mode personal] [--output eng-review.md]` → broker-engineer + devops, steps BUILD + VERIFY.
   - `mql5-review --lens ceo    [--mode personal] [--output ceo-review.md]` → trader + strategy-architect, steps VISION + REFINE.
