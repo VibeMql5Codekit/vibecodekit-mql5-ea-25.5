@@ -991,6 +991,107 @@ CHỦ-THẦU chạy mql5-verify-report      → verify-report.md
 CHỦ-NHÀ chọn REFINE option (Ship / Tighten / Add tests / Reopen VISION)
 ```
 
+### 3.16. Log escalation actor-to-actor (Wave 6.2b)
+
+Khi một vai trong Tam giác quyền lực không thể tiếp tục mà không có input
+từ vai khác, họ **escalate** thay vì đoán mò. Kit lưu log JSONL append-only
+ở `.mql5-audit/escalations.jsonl` để audit trail compose tự nhiên với git.
+
+Ba mức được công nhận:
+
+| Mức | Ý nghĩa | Chặn `mql5-permission-layer5` (với `--enforce-no-open-escalation`)? |
+|----:|---------|---------------------------------------------------------------------|
+| 1 | Note / quan sát | Không |
+| 2 | Cảnh báo / hỏi | Không (thông tin; xuất hiện trong Verify Report) |
+| 3 | Chặn cứng       | **Có** — gate TEAM / ENTERPRISE fail khi còn L3 OPEN |
+
+#### 3.16.1. `mql5-escalation` — raise / list / resolve
+
+```bash
+# Raise (Thợ thi công hỏi Chủ thầu vì thiếu CPipNormalizer):
+mql5-escalation \
+    --from tho-thi-cong \
+    --to   chu-thau \
+    --level 3 \
+    --reason "thiếu CPipNormalizer cho XAUUSD; pip math sai" \
+    --artefact tasks/TIP-002.md
+
+# List (mặc định lọc OPEN; --status RESOLVED|ALL cũng hợp lệ):
+mql5-escalation --list
+mql5-escalation --list --status ALL --level 3
+
+# Resolve (Chủ thầu xác nhận + ghi giải pháp):
+mql5-escalation \
+    --resolve ESC-20260525-001 \
+    --resolved-by chu-thau \
+    --note "đã patch include/CPipNormalizer.mqh"
+```
+
+Hành vi:
+
+- Mỗi record có id deterministic `ESC-YYYYMMDD-NNN` được cấp phát bằng
+  một lần scan log hiện có nên hai lần gọi cùng ngày không bao giờ trùng.
+- `--from` và `--to` phải khác nhau và phải thuộc
+  `chu-nha` / `chu-thau` / `tho-thi-cong`.
+- `--reason` bắt buộc và phải khác rỗng sau khi strip.
+- Override log path: `--audit-log <path>` (mặc định
+  `.mql5-audit/escalations.jsonl`).
+- Cờ envelope Wave-1 chuẩn: `--json` cho stdout, `--gate-report <path>`
+  để persist.
+- Idempotency: resolve lại record `RESOLVED` raise error thay vì
+  ghi đè im lặng note cũ.
+
+#### 3.16.2. Hook layer-5 — `--enforce-no-open-escalation`
+
+```bash
+# Gate TEAM fail khi còn L3 escalation OPEN:
+mql5-permission-layer5 \
+    --mode team \
+    --enforce-no-open-escalation
+
+# Personal mode: chỉ báo cáo số lượng, không fail (giữ backward compat):
+mql5-permission-layer5 \
+    --mode personal \
+    --enforce-no-open-escalation
+
+# Override log path (compose với --enforce-activities + --enforce-sign-off):
+mql5-permission-layer5 \
+    --mode enterprise \
+    --enforce-no-open-escalation \
+    --escalation-log .mql5-audit/escalations.jsonl \
+    --enforce-sign-off \
+    --enforce-activities
+```
+
+Envelope thêm ba field mới dưới `data`:
+
+```json
+{
+  "escalation_log": ".mql5-audit/escalations.jsonl",
+  "escalation_open_level3_count": 1,
+  "escalation_open_level3": [
+    {"id": "ESC-20260525-001", "from": "tho-thi-cong",
+     "to": "chu-thau", "level": 3, ...}
+  ],
+  "escalation_enforced": true
+}
+```
+
+`escalation_enforced` chỉ `true` khi `mode != "personal"` để operator xem
+report personal mode lập tức thấy số lượng là thông tin, không phải verdict.
+
+#### 3.16.3. Khi nào dùng mức nào
+
+- **Level 1 (note):** Thợ thi công phát hiện magic number collision có sẵn
+  khi implement một TIP. Không chặn TIP này, nhưng Chủ thầu cần biết.
+- **Level 2 (cảnh báo):** Thợ phát hiện acceptance criteria của TIP mâu
+  thuẫn với một invariant. Cần Chủ thầu quyết trước TIP kế, nhưng TIP
+  hiện tại vẫn ship được.
+- **Level 3 (chặn cứng):** Thợ không thể hoàn thành TIP-002 vì contract
+  giả định có `CPipNormalizer` nhưng không có. Gate TEAM / ENTERPRISE
+  từ chối ship đến khi Chủ thầu sửa contract hoặc cung cấp include
+  thiếu.
+
 ---
 
 ## 4. Ví dụ hoàn chỉnh: MACD+SAR EURUSD H1

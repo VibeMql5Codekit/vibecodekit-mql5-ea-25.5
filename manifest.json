@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "kit": "vibecodekit-mql5-ea",
-  "kit_version": "1.6.0",
+  "kit_version": "1.6.1",
   "generated_by": "mql5-manifest",
   "tools": [
     {
@@ -219,6 +219,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-escalation",
+      "module": "vibecodekit_mql5.rri.escalation",
+      "entry_point": "vibecodekit_mql5.rri.escalation:main",
+      "description": "Wave 6.2b \u2014 actor-to-actor escalation audit log.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-fitness",
