@@ -89,7 +89,7 @@
       "name": "mql5-ceo-review",
       "module": "vibecodekit_mql5.review.ceo_review",
       "entry_point": "vibecodekit_mql5.review.ceo_review:main",
-      "description": "mql5-ceo-review \u2014 executive review (trader + strategy-architect).",
+      "description": "mql5-ceo-review \u2014 Wave-3 alias for ``mql5-review --lens ceo``.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
@@ -116,7 +116,7 @@
       "name": "mql5-cso",
       "module": "vibecodekit_mql5.review.cso",
       "entry_point": "vibecodekit_mql5.review.cso:main",
-      "description": "mql5-cso \u2014 Chief Safety Officer review (risk-auditor lens).",
+      "description": "mql5-cso \u2014 Wave-3 alias for ``mql5-review --lens cso``.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
@@ -179,7 +179,7 @@
       "name": "mql5-eng-review",
       "module": "vibecodekit_mql5.review.eng_review",
       "entry_point": "vibecodekit_mql5.review.eng_review:main",
-      "description": "mql5-eng-review \u2014 engineering review (broker-engineer + devops personas).",
+      "description": "mql5-eng-review \u2014 Wave-3 alias for ``mql5-review --lens eng``.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
@@ -212,6 +212,15 @@
       "supports_gate_report": false
     },
     {
+      "name": "mql5-forge-loop",
+      "module": "vibecodekit_mql5.forge_loop",
+      "entry_point": "vibecodekit_mql5.forge_loop:main",
+      "description": "mql5-forge-loop \u2014 hermetic forge iteration loop (Wave 3 W3.C).",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
+    },
+    {
       "name": "mql5-forge-pr",
       "module": "vibecodekit_mql5.forge_pr",
       "entry_point": "vibecodekit_mql5.forge_pr:main",
@@ -242,7 +251,7 @@
       "name": "mql5-investigate",
       "module": "vibecodekit_mql5.review.investigate",
       "entry_point": "vibecodekit_mql5.review.investigate:main",
-      "description": "mql5-investigate \u2014 open-ended investigation review.",
+      "description": "mql5-investigate \u2014 Wave-3 alias for ``mql5-review --lens investigate``.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
@@ -386,7 +395,7 @@
       "name": "mql5-review",
       "module": "vibecodekit_mql5.review.review",
       "entry_point": "vibecodekit_mql5.review.review:main",
-      "description": "mql5-review \u2014 generic review wrapper that opens the appropriate template",
+      "description": "mql5-review \u2014 unified review wrapper.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
@@ -395,7 +404,7 @@
       "name": "mql5-rri",
       "module": "vibecodekit_mql5.rri",
       "entry_point": "vibecodekit_mql5.rri:main",
-      "description": "Vibecodekit RRI methodology package.",
+      "description": "Vibecodekit RRI methodology package + Wave-3 umbrella ``mql5-rri``.",
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false

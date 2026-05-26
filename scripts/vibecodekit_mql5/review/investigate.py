@@ -1,57 +1,41 @@
-"""mql5-investigate — open-ended investigation review.
+"""mql5-investigate — Wave-3 alias for ``mql5-review --lens investigate``.
 
-When a backtest, walkforward, or live deployment misbehaves, the
-"investigate" review aims to capture *what we don't yet understand*.
-It bundles perf-analyst + strategy-architect + the SCAN step template
-into a single document so the reviewer can record hypotheses and the
-data each one needs.
+Open-ended investigation review: when a backtest, walkforward, or live
+deployment misbehaves, this lens combines ``perf-analyst`` +
+``strategy-architect`` with the ``scan`` + ``rri`` step templates and
+appends a Hypotheses worksheet so the reviewer can record hypotheses
+and the data each one needs. Body lives in
+:mod:`vibecodekit_mql5.review.review`.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-from ..rri.personas import filter_for_mode, load_persona
-from ..rri.step_workflow import render_template
+from .review import LENSES, run_lens
 
-PERSONAS: tuple[str, ...] = ("perf-analyst", "strategy-architect")
-DEFAULT_STEPS: tuple[str, ...] = ("scan", "rri")
+
+PERSONAS: tuple[str, ...] = LENSES["investigate"].personas
+DEFAULT_STEPS: tuple[str, ...] = LENSES["investigate"].steps
 
 
 def render(mode: str, steps: tuple[str, ...] = DEFAULT_STEPS) -> str:
-    out: list[str] = ["# Investigation review", "",
-                      "_Goal: capture hypotheses + the evidence each needs._", ""]
-    for pid in PERSONAS:
-        persona = load_persona(pid)
-        out.append(f"## Persona: {persona.persona}")
-        out.append(f"_{persona.description}_\n")
-        for q in filter_for_mode(persona, mode):
-            out.append(f"- [ ] **{q.id}** ({q.priority}) — {q.text}")
-        out.append("")
-    out.append("## Step templates\n")
-    for step in steps:
-        out.append(f"### {step}\n")
-        out.append(render_template(step))
-        out.append("")
-    out.append("## Hypotheses\n\n- [ ] Hypothesis 1: ...\n- [ ] Hypothesis 2: ...\n")
-    return "\n".join(out)
+    from .review import render_lens
+    return render_lens(LENSES["investigate"], mode, steps)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mql5-investigate")
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("investigate.md"))
-    args = ap.parse_args()
-    args.output.write_text(render(args.mode), encoding="utf-8")
-    print(json.dumps({
-        "personas": list(PERSONAS),
-        "mode": args.mode,
-        "output": str(args.output),
-    }, indent=2))
-    return 0
+    ap.add_argument(
+        "--mode", choices=("personal", "team", "enterprise"), default="personal",
+    )
+    ap.add_argument(
+        "--output", type=Path, default=None,
+        help="Output markdown path (default: investigate.md).",
+    )
+    args = ap.parse_args(argv)
+    return run_lens("investigate", args.mode, args.output)
 
 
 if __name__ == "__main__":

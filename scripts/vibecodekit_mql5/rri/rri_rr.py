@@ -15,8 +15,6 @@ Output: an HTML report covering 2 dims × 8 axes (= 16 cells).
 
 from __future__ import annotations
 
-import argparse
-import json
 from pathlib import Path
 
 from .matrix import AXES, MatrixReport, render_html
@@ -71,34 +69,14 @@ def question_count(mode: str) -> int:
     )
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(prog="mql5-rri-rr")
-    ap.add_argument("--trader-check", type=Path, required=True)
-    ap.add_argument("--walkforward", type=Path, required=True)
-    ap.add_argument("--monte-carlo", type=Path, required=True)
-    ap.add_argument("--overfit", type=Path, required=True)
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("rri-rr.html"))
-    args = ap.parse_args()
+def main(argv: list[str] | None = None) -> int:
+    """Wave-3 alias for ``mql5-rri rr`` — forwards argv to the umbrella."""
 
-    payloads = {
-        "tc": json.loads(args.trader_check.read_text(encoding="utf-8")),
-        "wf": json.loads(args.walkforward.read_text(encoding="utf-8")),
-        "mc": json.loads(args.monte_carlo.read_text(encoding="utf-8")),
-        "of": json.loads(args.overfit.read_text(encoding="utf-8")),
-    }
-    matrix = review(payloads["tc"], payloads["wf"], payloads["mc"],
-                    payloads["of"], args.output)
-    out = {
-        "personas": list(RRI_RR_PERSONAS),
-        "mode": args.mode,
-        "questions_to_answer": question_count(args.mode),
-        "matrix_counts": matrix.counts(),
-        "output": str(args.output),
-    }
-    print(json.dumps(out, indent=2))
-    return 0
+    from . import main as umbrella_main
+    import sys as _sys
+
+    forwarded = ["rr", *(argv if argv is not None else _sys.argv[1:])]
+    return umbrella_main(forwarded)
 
 
 if __name__ == "__main__":

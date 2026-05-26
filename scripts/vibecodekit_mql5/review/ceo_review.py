@@ -1,53 +1,39 @@
-"""mql5-ceo-review — executive review (trader + strategy-architect).
+"""mql5-ceo-review — Wave-3 alias for ``mql5-review --lens ceo``.
 
-Frames the EA in business / strategy terms: are we shipping something
-the trader wants, and does the strategy edge actually exist? Bias
-toward VISION + REFINE steps.
+Executive review preset: ``trader`` + ``strategy-architect`` personas
+biased toward the ``vision`` and ``refine`` steps. Frames the EA in
+business / strategy terms (do we ship something the trader wants? does
+the strategy edge exist?). Body lives in :mod:`vibecodekit_mql5.review.review`.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-from ..rri.personas import filter_for_mode, load_persona
-from ..rri.step_workflow import render_template
+from .review import LENSES, run_lens
 
-PERSONAS: tuple[str, ...] = ("trader", "strategy-architect")
-DEFAULT_STEPS: tuple[str, ...] = ("vision", "refine")
+
+PERSONAS: tuple[str, ...] = LENSES["ceo"].personas
+DEFAULT_STEPS: tuple[str, ...] = LENSES["ceo"].steps
 
 
 def render(mode: str, steps: tuple[str, ...] = DEFAULT_STEPS) -> str:
-    out: list[str] = ["# CEO review", ""]
-    for pid in PERSONAS:
-        persona = load_persona(pid)
-        out.append(f"## Persona: {persona.persona}")
-        out.append(f"_{persona.description}_\n")
-        for q in filter_for_mode(persona, mode):
-            out.append(f"- [ ] **{q.id}** ({q.priority}) — {q.text}")
-        out.append("")
-    out.append("## Step templates\n")
-    for step in steps:
-        out.append(f"### {step}\n")
-        out.append(render_template(step))
-        out.append("")
-    return "\n".join(out)
+    from .review import render_lens
+    return render_lens(LENSES["ceo"], mode, steps)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mql5-ceo-review")
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("ceo-review.md"))
-    args = ap.parse_args()
-    args.output.write_text(render(args.mode), encoding="utf-8")
-    print(json.dumps({
-        "personas": list(PERSONAS),
-        "mode": args.mode,
-        "output": str(args.output),
-    }, indent=2))
-    return 0
+    ap.add_argument(
+        "--mode", choices=("personal", "team", "enterprise"), default="personal",
+    )
+    ap.add_argument(
+        "--output", type=Path, default=None,
+        help="Output markdown path (default: ceo-review.md).",
+    )
+    args = ap.parse_args(argv)
+    return run_lens("ceo", args.mode, args.output)
 
 
 if __name__ == "__main__":

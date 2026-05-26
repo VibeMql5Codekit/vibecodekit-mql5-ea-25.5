@@ -111,6 +111,8 @@ mql5-manifest = "vibecodekit_mql5.manifest:main"
 mql5-fixture = "vibecodekit_mql5.fixture:main"
 # Wave-2 onboarding: 5-question interactive bootstrap → ea-spec.yaml
 mql5-init = "vibecodekit_mql5.init:main"
+# Wave-3 closed forge loop: hermetic fixture → backtest parse, no Wine
+mql5-forge-loop = "vibecodekit_mql5.forge_loop:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

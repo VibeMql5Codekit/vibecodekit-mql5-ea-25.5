@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (58 commands)
+title: Command catalog (59 commands — 49 standalone + 10 Wave-3 aliases)
 applicable_phase: E
 ---
 
@@ -8,6 +8,22 @@ applicable_phase: E
 
 All commands callable directly via `python -m vibecodekit_mql5.<name>`.
 No master `/mql5` router — every command stands alone.
+
+**Wave 3 (v1.1) consolidated 10 commands into 2 umbrellas**:
+
+* The five review CLIs (`mql5-review`, `mql5-eng-review`, `mql5-ceo-review`,
+  `mql5-cso`, `mql5-investigate`) now share `mql5-review`'s umbrella — pick
+  a preset via `--lens {eng,ceo,cso,investigate}`. The four lens-named
+  console scripts remain as 1-line aliases so existing operator habits
+  keep working.
+* The four RRI CLIs (`mql5-rri`, `mql5-rri-bt`, `mql5-rri-rr`,
+  `mql5-rri-chart`) now share `mql5-rri`'s umbrella — pick a matrix
+  flavour via subcommand `mql5-rri {template,bt,rr,chart}`. The three
+  matrix-named console scripts remain as 1-line aliases.
+
+The pyproject `[project.scripts]` entry list is unchanged (59 entries
+post-Wave-3) — every alias still resolves to its existing console-script
+name. Wave 3 only consolidated the *implementation*, not the surface.
 
 ## Agent contracts (Wave 1)
 
@@ -27,7 +43,7 @@ mql5-rri-matrix --collect ./reports/ --output matrix.html
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, `mql5-fixture`, `mql5-init`.
+`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`.
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -102,17 +118,23 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-fitness`             — OnTester custom fitness template (positional name; omit to list)
 - `/mql5-mfe-mae`             — per-trade MFE/MAE CSV analyser (8-col schema; see USAGE)
 
-## RRI methodology (3)
-- `/mql5-rri-bt`     — Backtest review (5 personas × 7 dim × 8 axis)
-- `/mql5-rri-rr`     — Risk & Robustness review
-- `/mql5-rri-chart`  — Optional indicator-dev RRI
+## RRI methodology (4 — 1 umbrella + 3 Wave-3 aliases)
+- `/mql5-rri` — umbrella CLI. Subcommands (alias to the entry points below):
+  - `/mql5-rri` *(no subcommand)* / `/mql5-rri template` — print the Step-2 RRI markdown template (legacy default).
+  - `/mql5-rri bt --metrics bt.json [--mode personal] [--output rri-bt.html]` — Backtest review (5 personas × 7 dim × 8 axis).
+  - `/mql5-rri rr --trader-check tc.json --walkforward wf.json --monte-carlo mc.json --overfit of.json [--output rri-rr.html]` — Risk & Robustness review.
+  - `/mql5-rri chart --metrics chart.json [--output rri-chart.html]` — Optional indicator-dev RRI.
+- `/mql5-rri-bt`, `/mql5-rri-rr`, `/mql5-rri-chart` — kept as **Wave-3 aliases** for back-compat; each is a 1-line forward to the umbrella subcommand above. Use the umbrella for new code.
 
-## Review (5)
-- `/mql5-review`        — generic review opener
-- `/mql5-eng-review`    — engineering review opener
-- `/mql5-ceo-review`    — leadership review opener
-- `/mql5-cso`           — strategy review opener
-- `/mql5-investigate`   — incident investigation opener
+## Review (6 — 1 umbrella + 4 Wave-3 aliases + 1 standalone)
+- `/mql5-review` — umbrella CLI. Either `--lens <eng|ceo|cso|investigate>` (multi-persona preset) **or** the legacy `--persona <id> --step <id>` single-persona path:
+  - `mql5-review --lens eng    [--mode personal] [--output eng-review.md]` → broker-engineer + devops, steps BUILD + VERIFY.
+  - `mql5-review --lens ceo    [--mode personal] [--output ceo-review.md]` → trader + strategy-architect, steps VISION + REFINE.
+  - `mql5-review --lens cso    [--mode personal] [--output cso-review.md]` → risk-auditor, steps RRI + VERIFY.
+  - `mql5-review --lens investigate [--mode personal] [--output investigate.md]` → perf-analyst + strategy-architect + Hypotheses worksheet.
+  - `mql5-review --persona trader --step verify --mode personal --output review.md` → legacy single-persona dispatch (unchanged).
+- `/mql5-eng-review`, `/mql5-ceo-review`, `/mql5-cso`, `/mql5-investigate` — kept as **Wave-3 aliases** for back-compat; each forwards to the matching `--lens` on the umbrella. Use the umbrella for new code.
+- `/mql5-second-opinion` — standalone lint + Trader-17 fast pass on a `.mq5`; NOT a lens (not consolidated).
 
 ## Deploy (3)
 - `/mql5-deploy-vps`     — emit a MIGRATE-VPS.md checklist
@@ -125,13 +147,13 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-ship`     — `git tag` + push
 - `/mql5-refine`   — classify a diff as tweak/patch/rework
 
-## Other (5)
+## Other (4)
 - `/mql5-broker-safety`   — verify pip-norm + multi-broker
 - `/mql5-trader-check`    — Trader-17 checklist (positional `.mq5` path; outputs JSON verdict 6+/17 PASS threshold)
 - `/mql5-permission`      — 7-layer permission gate orchestrator (positional `.mq5` source; `--mode {personal,team,enterprise}` selects gate set: PERSONAL=1/2/3/4/7, TEAM=1-5/7, ENTERPRISE=1-7)
 - `/mql5-install`         — reconcile-install kit overlay
-- `/mql5-second-opinion`  — one-shot lint + Trader-17 (optional)
 
-## Agent contracts (2)
-- `/mql5-manifest`  — emit (or validate) a machine-readable catalogue of every CLI: `--emit [--output manifest.json]`, `--validate manifest.json`
-- `/mql5-fixture`   — generate hermetic MT5 Strategy Tester fixtures so the BT/WF/MC/MB pipeline runs on Linux without Wine: `--type {backtest,walkforward,monte-carlo,multibroker} --strategy {random,trend,mean-rev} --seed N --out <dir>`
+## Agent contracts (3)
+- `/mql5-manifest`     — emit (or validate) a machine-readable catalogue of every CLI: `--emit [--output manifest.json]`, `--validate manifest.json`
+- `/mql5-fixture`      — generate hermetic MT5 Strategy Tester fixtures so the BT/WF/MC/MB pipeline runs on Linux without Wine: `--type {backtest,walkforward,monte-carlo,multibroker} --strategy {random,trend,mean-rev} --seed N --out <dir>`
+- `/mql5-forge-loop`   — **Wave 3**: closed forge iteration loop. Chains `mql5-fixture --type backtest` into `mql5-backtest` parsing for `N` deterministic iterations (`--iterations 3 --strategy trend --base-seed 100 [--pf-floor F] [--sharpe-floor F] [--max-dd-ceiling F]`). No Wine, no MetaTester. Emits a per-iter `forge-loop-report.json` + Wave-1 `--json` envelope so the matrix collector consumes it unchanged.

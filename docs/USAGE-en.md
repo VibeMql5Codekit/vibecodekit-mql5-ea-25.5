@@ -271,28 +271,71 @@ python -m vibecodekit_mql5.mfe_mae mfe.csv
 > Cloud Network. `tester_run` and `optimize_run` *do* drive
 > `terminal64.exe` and parse the result; use them for local sweeps.
 
-### 3.5. RRI methodology (3)
+### 3.5. RRI methodology (4 — 1 umbrella + 3 Wave-3 aliases)
+
+Wave 3 consolidated the three RRI CLIs (`mql5-rri-bt`, `mql5-rri-rr`,
+`mql5-rri-chart`) into a single `mql5-rri` umbrella with subcommands.
+The legacy console scripts remain as Wave-3 aliases that forward
+1-line to the umbrella subcommand — JSON output is byte-identical
+under `data.kind`. **Use the umbrella for new code.**
 
 ```bash
-# BT review — 5 personas × 7 dims × 8 axes (needs metrics JSON from backtest)
-python -m vibecodekit_mql5.rri.rri_bt \
-    --metrics metrics.json --mode enterprise --output rri-bt.html
+# Umbrella (preferred):
+mql5-rri                                            # legacy: print Step-2 RRI template
+mql5-rri template                                   # explicit template subcommand
+mql5-rri bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+mql5-rri rr    --trader-check tc.json --walkforward wf.json \
+               --monte-carlo  mc.json --overfit     of.json \
+               --mode enterprise --output rri-rr.html
+mql5-rri chart --metrics chart.json --mode personal --output rri-chart.html
 
-# R&R review — needs 4 JSON inputs
-python -m vibecodekit_mql5.rri.rri_rr \
-    --trader-check trader-check.json --walkforward walkforward.json \
-    --monte-carlo  montecarlo.json   --overfit     overfit.json \
-    --mode enterprise --output rri-rr.html
+# Legacy aliases (kept for back-compat, equivalent to the umbrella subcommands above):
+mql5-rri-bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+mql5-rri-rr    --trader-check tc.json --walkforward wf.json \
+               --monte-carlo  mc.json --overfit     of.json \
+               --mode enterprise --output rri-rr.html
+mql5-rri-chart --metrics chart.json --mode personal --output rri-chart.html
 
-# Indicator-only review
-python -m vibecodekit_mql5.rri.rri_chart \
-    --metrics metrics.json --mode personal --output rri-chart.html
+# Module-level (works on both umbrella and legacy aliases):
+python -m vibecodekit_mql5.rri bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+python -m vibecodekit_mql5.rri.rri_bt    --metrics metrics.json --mode enterprise --output rri-bt.html
+python -m vibecodekit_mql5.rri.rri_rr    --trader-check tc.json --walkforward wf.json \
+                                         --monte-carlo  mc.json --overfit     of.json \
+                                         --mode enterprise --output rri-rr.html
+python -m vibecodekit_mql5.rri.rri_chart --metrics chart.json --mode personal --output rri-chart.html
 ```
 
-### 3.6. Review openers (5)
+### 3.6. Review openers (6 — 1 umbrella + 4 Wave-3 aliases + 1 standalone)
+
+Wave 3 consolidated four review-persona CLIs (`mql5-eng-review`,
+`mql5-ceo-review`, `mql5-cso`, `mql5-investigate`) into the single
+`mql5-review` umbrella via the new `--lens <eng|ceo|cso|investigate>`
+flag. Legacy console scripts remain as Wave-3 aliases (1-line forward
+to `mql5-review --lens <name>`); JSON output is byte-identical with
+`data.lens` and `data.steps` populated. **Use the umbrella for new
+code.** `mql5-second-opinion` is a separate standalone fast-pass and
+is NOT a lens (not consolidated).
 
 ```bash
-python -m vibecodekit_mql5.review.review
+# Umbrella (preferred):
+mql5-review                                              # legacy: open base review template
+mql5-review --lens eng         --mode personal --output eng-review.md
+mql5-review --lens ceo         --mode personal --output ceo-review.md
+mql5-review --lens cso         --mode personal --output cso-review.md
+mql5-review --lens investigate --mode personal --output investigate.md
+mql5-review --persona trader --step verify --mode personal --output review.md   # legacy single-persona path (unchanged)
+
+# Legacy aliases (kept for back-compat):
+mql5-eng-review   --mode personal --output eng-review.md
+mql5-ceo-review   --mode personal --output ceo-review.md
+mql5-cso          --mode personal --output cso-review.md
+mql5-investigate  --mode personal --output investigate.md
+
+# Standalone (NOT a lens — lint + Trader-17 fast pass on a .mq5):
+mql5-second-opinion EA.mq5
+
+# Module-level:
+python -m vibecodekit_mql5.review --lens eng --mode personal --output eng-review.md
 python -m vibecodekit_mql5.review.eng_review
 python -m vibecodekit_mql5.review.ceo_review
 python -m vibecodekit_mql5.review.cso
@@ -369,6 +412,37 @@ enterprise` so layer 2 doesn't block.
 The state dir (`--state-dir`, default `.rri-state`) caches per-layer
 payloads so subsequent CLI runs can re-use them without re-executing
 each tool.
+
+### 3.10. Forge closed loop (1, Wave 3)
+
+`mql5-forge-loop` runs a hermetic backtest iteration loop on Linux
+without Wine. Each iteration chains `mql5-fixture --type backtest`
+(deterministic by `--base-seed + i`) into the `mql5-backtest` XML
+parser and aggregates the per-iter metrics into a single report.
+Used to pin lint / parser contract regression and to drive forge-style
+robustness sweeps in CI.
+
+```bash
+# Minimal — 3 iterations of the trend strategy, deterministic from seed 100:
+mql5-forge-loop --iterations 3 --strategy trend --base-seed 100 \
+                --out ./forge-loop/
+
+# With hard gate floors — fail any iteration that breaches a threshold:
+mql5-forge-loop --iterations 5 --strategy mean-rev --base-seed 200 \
+                --pf-floor 1.10 --sharpe-floor 0.80 --max-dd-ceiling 35.0 \
+                --out ./forge-loop/ \
+                --gate-report forge-loop-report.json --json
+
+# Module-level:
+python -m vibecodekit_mql5.forge_loop \
+    --iterations 3 --strategy random --base-seed 42 --out ./forge-loop/
+```
+
+`mql5-forge-loop` ships the Wave-1 `--json` envelope
+(`schema_version=1`) and `--gate-report` flag, so the matrix collector
+(`mql5-rri-matrix --collect`) consumes it unchanged. No Wine, no
+MetaTester — the fixture generator emits the XML/CSV/journal artefacts
+the backtest parser ingests.
 
 ---
 
