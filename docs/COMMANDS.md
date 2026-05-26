@@ -23,9 +23,10 @@ No master `/mql5` router — every command stands alone.
 
 The pyproject `[project.scripts]` entry list grew by one in Wave 3.E
 (`mql5-bt-sim`), three in Wave 5.1 (`mql5-vision-gen`,
-`mql5-blueprint-gen`, `mql5-tip-gen`), and three in Wave 6.1
-(`mql5-contract-gen`, `mql5-verify-report`, `mql5-permission-layer5`)
-for a current total of 66 entries — every alias still resolves to its
+`mql5-blueprint-gen`, `mql5-tip-gen`), three in Wave 6.1
+(`mql5-contract-gen`, `mql5-verify-report`, `mql5-permission-layer5`),
+and two in Wave 6.2 (`mql5-task-graph-gen`, `mql5-completion-report`)
+for a current total of 68 entries — every alias still resolves to its
 existing console-script name. Wave-3.A/B/C consolidated
 the *implementation* of `mql5-review` / `mql5-rri`, not the surface.
 Wave-3.D adds an opt-in `mql5-lint --use-ast` flag (no new CLI) that
@@ -66,7 +67,11 @@ emit the envelope but intentionally OMIT `matrix_dim/axis` — they are
 emitters, not gate-report tools),
 `mql5-contract-gen`, `mql5-verify-report` (Wave 6.1 — same envelope-only
 rationale; the contract / verify-report are emitters consumed by the
-layer-5 sign-off sentinel rather than direct matrix inputs).
+layer-5 sign-off sentinel rather than direct matrix inputs),
+`mql5-task-graph-gen`, `mql5-completion-report` (Wave 6.2 — task-graph
+expands a signed contract into a per-TIP DAG; completion-report
+emits a per-TIP STATUS / Files / Tests / Issues / Gate Reports
+rollup. Both are emitters; both deliberately OMIT `matrix_dim/axis`).
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -104,7 +109,7 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-audit`    — run 70-test conformance battery
 - `/mql5-init`     — interactive 5-question bootstrap wizard → `ea-spec.yaml` (Wave 2). Use `--non-interactive` / `--from-answers <yaml>` in CI.
 
-## Plan (7)
+## Plan (9)
 - `/mql5-rri`       — open Step 2 RRI template
 - `/mql5-vision`    — open Step 3 VISION template
 - `/mql5-blueprint` — open Step 4 BLUEPRINT template
@@ -118,6 +123,10 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
   — **Wave 6.1**: aggregate Wave-1 gate-report envelopes into a single Markdown report. Derives `OVERALL STATUS = READY | NEEDS_FIXES | MAJOR_ISSUES`, splits gates into Tech Health / Scenario Results / Other, surfaces every FAIL, and (when blueprint+TIP dir supplied) emits an invariant↔TIP coverage table. Renders the four-choice REFINE menu so the Contractor LLM can copy-paste decisions to the Homeowner.
 - `/mql5-permission-layer5 --enforce-sign-off [--blueprint step-4-blueprint.md] [--contract contract.md]`
   — **Wave 6.1**: standalone audit of the homeowner sign-off lines (`APPROVED by …` on blueprint, `CONFIRM by …` on contract). Personal mode requires only the blueprint line; team/enterprise require both. Composes with `--enforce-activities` (Wave 5.2) so a single command can verify activities + sign-off in one shot.
+- `/mql5-task-graph-gen <contract.md> [--out-dir <dir>] [--force]`
+  — **Wave 6.2**: expand a signed contract into a per-TIP dependency DAG. Emits `tasks/TIP-001..N.md` (YAML frontmatter + `## Goal` / `## Acceptance criteria` / `## Dependencies` / `## Completion` sections) plus `task-graph.md` (Mermaid `graph TD` + index table). Dependencies are resolved structurally via a keyword classifier; cross-links contract invariants into each TIP. Deterministic. Standard `--json` + `--gate-report`.
+- `/mql5-completion-report --tip tasks/TIP-NNN.md [--gate-reports <dir>] [--file <p>]... [--test <p>]... [--issue <text>]... [--out completion-NNN.md]`
+  — **Wave 6.2**: per-TIP Completion Report for the Builder. Aggregates Wave-1 gate-report envelopes into a Markdown table, accepts repeated `--file` / `--test` / `--issue` flags, derives `STATUS = READY | IN_PROGRESS | BLOCKED` (BLOCKED on any FAIL or any `--issue`; READY when every envelope is PASS; otherwise IN_PROGRESS), and exits 1 only when BLOCKED. The Contractor's `mql5-verify-report --completion-dir` picks the resulting files up.
 
 ## Build (15)
 - `/mql5-build`             — render a scaffold

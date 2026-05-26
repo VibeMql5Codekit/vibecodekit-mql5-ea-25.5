@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "kit": "vibecodekit-mql5-ea",
-  "kit_version": "1.5.0",
+  "kit_version": "1.6.0",
   "generated_by": "mql5-manifest",
   "tools": [
     {
@@ -129,6 +129,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-completion-report",
+      "module": "vibecodekit_mql5.step_gen.completion_report",
+      "entry_point": "vibecodekit_mql5.step_gen.completion_report:main",
+      "description": "Wave 6.2 \u2014 per-TIP Completion Report emitter.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-contract-gen",
@@ -516,6 +525,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-task-graph-gen",
+      "module": "vibecodekit_mql5.step_gen.task_graph_gen",
+      "entry_point": "vibecodekit_mql5.step_gen.task_graph_gen:main",
+      "description": "Wave 6.2 \u2014 emit a per-TIP task graph from a Wave-6.1 contract.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-tester-run",
