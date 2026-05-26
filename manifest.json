@@ -108,7 +108,7 @@
       "module": "vibecodekit_mql5.compile",
       "entry_point": "vibecodekit_mql5.compile:main",
       "description": "mql5-compile \u2014 thin wrapper around MetaEditor's CLI compile mode.",
-      "supports_json": true,
+      "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
     },
@@ -217,6 +217,15 @@
       "entry_point": "vibecodekit_mql5.forge_pr:main",
       "description": "mql5-forge-pr \u2014 open a pull request on MQL5 Algo Forge.",
       "supports_json": false,
+      "supports_sarif": false,
+      "supports_gate_report": false
+    },
+    {
+      "name": "mql5-init",
+      "module": "vibecodekit_mql5.init",
+      "entry_point": "vibecodekit_mql5.init:main",
+      "description": "mql5-init \u2014 interactive 5-question wizard that emits ``ea-spec.yaml``.",
+      "supports_json": true,
       "supports_sarif": false,
       "supports_gate_report": false
     },

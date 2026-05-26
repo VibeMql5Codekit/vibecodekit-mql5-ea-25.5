@@ -351,6 +351,7 @@ def main(argv: list[str] | None = None) -> int:
                         "that plugs into Cursor / GitHub code-scanning.")
     _agent_io.add_json_flag(p)
     _agent_io.add_gate_report_flag(p)
+    _agent_io.add_draft_flag(p)
     args = p.parse_args(argv)
 
     any_error = False
@@ -381,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         matrix_axis="implement",
         matrix_status="PASS" if not any_error else "FAIL",
     )
+    _agent_io.apply_draft(envelope, args.draft)
 
     if args.format == "sarif":
         # SARIF is the structured output; suppress the per-finding text lines.
@@ -395,7 +397,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.gate_report is not None:
         _agent_io.write_gate_report(envelope, args.gate_report)
 
-    return exit_code
+    return envelope.exit_code
 
 
 if __name__ == "__main__":

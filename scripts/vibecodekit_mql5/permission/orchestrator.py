@@ -99,6 +99,7 @@ def main() -> int:
     ap.add_argument("--journal", type=Path, default=None)
     _agent_io.add_json_flag(ap)
     _agent_io.add_gate_report_flag(ap)
+    _agent_io.add_draft_flag(ap)
     args = ap.parse_args()
     report = run(args)
 
@@ -115,6 +116,7 @@ def main() -> int:
         matrix_axis="integration",
         matrix_status="PASS" if report.ok else "FAIL",
     )
+    _agent_io.apply_draft(envelope, args.draft)
 
     if args.emit_json:
         _agent_io.emit(envelope)
@@ -124,7 +126,7 @@ def main() -> int:
     if args.gate_report is not None:
         _agent_io.write_gate_report(envelope, args.gate_report)
 
-    return 0 if report.ok else 1
+    return envelope.exit_code
 
 
 if __name__ == "__main__":

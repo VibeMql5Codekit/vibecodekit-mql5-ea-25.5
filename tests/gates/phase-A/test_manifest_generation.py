@@ -96,6 +96,51 @@ def test_manifest_validate_detects_drift(tmp_path: Path):
     assert any("mql5-lint" in e for e in errs), errs
 
 
+def test_compile_does_not_falsely_advertise_envelope_json():
+    """`mql5-compile` has a *legacy* ``--json`` flag that emits a raw
+    ``CompileResult.to_dict()`` — not the Wave-1 ``Envelope`` schema.
+
+    The manifest heuristic must not flag it as ``supports_json=true``
+    or external agents would call it expecting the envelope and crash
+    on the missing ``schema_version`` / ``ok`` keys. Pinning this
+    behaviour here keeps the heuristic narrow.
+    """
+
+    from vibecodekit_mql5 import manifest as mfst
+
+    built = mfst.build_manifest()
+    compile_tool = next(t for t in built["tools"] if t["name"] == "mql5-compile")
+    assert compile_tool["supports_json"] is False, (
+        "mql5-compile has a legacy --json flag emitting CompileResult, "
+        "not the Wave-1 Envelope. The manifest heuristic must stay narrow."
+    )
+
+
+def test_manifest_itself_advertises_no_envelope_flags():
+    """`mql5-manifest`'s CLI exposes only --emit / --validate; the
+    needle strings live in its source as data. Regression guard for
+    the earlier self-reference false positive."""
+
+    from vibecodekit_mql5 import manifest as mfst
+
+    built = mfst.build_manifest()
+    tool = next(t for t in built["tools"] if t["name"] == "mql5-manifest")
+    assert tool["supports_json"] is False
+    assert tool["supports_sarif"] is False
+    assert tool["supports_gate_report"] is False
+
+
+def test_init_does_advertise_envelope_json():
+    """`mql5-init` is a new (W2.1) CLI that opts into the agent
+    envelope via ``--json``; the manifest must surface that."""
+
+    from vibecodekit_mql5 import manifest as mfst
+
+    built = mfst.build_manifest()
+    tool = next(t for t in built["tools"] if t["name"] == "mql5-init")
+    assert tool["supports_json"] is True
+
+
 def test_root_manifest_committed_is_in_sync():
     """The `manifest.json` committed at repo root MUST mirror the live build.
 

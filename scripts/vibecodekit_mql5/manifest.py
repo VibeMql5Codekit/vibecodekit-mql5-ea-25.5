@@ -130,10 +130,17 @@ def _module_supports(module_name: str, flag: str) -> bool:
         src = Path(spec.origin).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return False
+    # Each tuple lists strings that uniquely identify a *Wave-1-shaped*
+    # capability. Anything generic enough to also match the kit's
+    # pre-existing legacy flags (e.g. ``mql5-compile``'s home-grown
+    # ``--json`` that prints ``CompileResult.to_dict()`` instead of the
+    # ``Envelope``) is deliberately excluded — agents should see ``false``
+    # for those tools and call them via their bespoke contract.
     needles = {
-        "json":   ("add_json_flag", '"--json"', "'--json'", "emit_json"),
-        "sarif":  ("findings_to_sarif", "report_to_sarif", '"sarif"', "'sarif'"),
-        "gate":   ("add_gate_report_flag", '"--gate-report"', "'--gate-report'"),
+        "json":   ("add_json_flag", "emit_json"),
+        "sarif":  ("findings_to_sarif", "report_to_sarif",
+                   '"sarif"', "'sarif'"),
+        "gate":   ("add_gate_report_flag",),
     }[flag]
     return any(needle in src for needle in needles)
 
