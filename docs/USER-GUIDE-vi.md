@@ -10,10 +10,13 @@ audience: end_user, dev_team, ai_agent_operator
 > Tài liệu này đi từ **zero → file `.ex5` đã compile + dashboard public +
 > docs Neo-Retro Dev Deck tiếng Việt** qua đúng từng bước, kèm câu lệnh
 > thật và snippet output kỳ vọng. Mọi con số trong tài liệu đều khớp với
-> baseline mới nhất sau PR-19: **50 CLI command**, **4 MCP server (30
-> tool trên `vibecodekit-bridge`)**, **23 anti-pattern detector**, **8
-> schema block optional** trên `ea-spec.yaml`, **799 test passing / 2
-> skipped**.
+> baseline `v1.4.0`: **63 CLI command** (50 standalone + 10 alias
+> Wave-3 quy về 2 umbrella `mql5-review --lens` / `mql5-rri <sub>` + 3
+> generator Wave-5.1 `mql5-vision-gen` / `mql5-blueprint-gen` /
+> `mql5-tip-gen`), **4 MCP server (30 tool trên `vibecodekit-bridge`)**,
+> **26 anti-pattern detector** (25 đánh số AP-1…AP-25 + 1 method-hiding
+> theo build), **8 schema block optional** trên `ea-spec.yaml`,
+> **1303 test passing / 6 skipped** trên Phase 0/A/B/C/D/E.
 
 > 🇬🇧 Bản tiếng Anh: [USER-GUIDE-en.md](USER-GUIDE-en.md)
 > 📖 Reference manual đầy đủ: [USAGE-vi.md](USAGE-vi.md)
@@ -37,6 +40,7 @@ audience: end_user, dev_team, ai_agent_operator
   - [4.5. Test — backtest, walkforward, Monte Carlo](#45-test--backtest-walkforward-monte-carlo)
   - [4.6. Review — engineering, CSO, CEO, RRI](#46-review--engineering-cso-ceo-rri)
   - [4.7. Ship — dashboard + Algo Forge PR](#47-ship--dashboard--algo-forge-pr)
+  - [4.8. Wave 5 — chia vai trò "chủ-thầu-thợ" (generator + sentinel + persona prompt)](#48-wave-5--chia-vai-trò-chủ-thầu-thợ-generator--sentinel--persona-prompt)
 - [5. Lối B — AI coding agent qua MCP bridge](#5-lối-b--ai-coding-agent-qua-mcp-bridge)
   - [5.1. Cài `vibecodekit-bridge` vào tool](#51-cài-vibecodekit-bridge-vào-tool)
   - [5.2. Prompt mẫu cho agent](#52-prompt-mẫu-cho-agent)
@@ -44,7 +48,7 @@ audience: end_user, dev_team, ai_agent_operator
   - [5.4. Re-render docs qua `docs.ea_render`](#54-re-render-docs-qua-docsea_render)
 - [6. Schema `ea-spec.yaml` — 8 block optional](#6-schema-ea-specyaml--8-block-optional)
 - [7. Troubleshooting & FAQ](#7-troubleshooting--faq)
-- [8. Phụ lục — 50 CLI command theo nhóm](#8-phụ-lục--50-cli-command-theo-nhóm)
+- [8. Phụ lục — 63 CLI command theo nhóm](#8-phụ-lục--63-cli-command-theo-nhóm)
 
 ---
 
@@ -189,7 +193,7 @@ Kit cố tình hỗ trợ song song **2 con đường**:
 |---|---|---|
 | Đối tượng | Dev tự tay gõ lệnh, đọc output | Codex CLI / Claude Code / Cursor / Devin / Claude Desktop |
 | Transport | Shell / venv | JSON-RPC 2.0 over stdio |
-| Tool surface | 50 CLI command | 29 MCP tool wrap đúng 25/50 lệnh + 4 helper |
+| Tool surface | 63 CLI command (50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1) | 30 MCP tool wrap các lệnh chính + 4 helper |
 | Khi nào dùng | Học kit, debug, dạy lớp, demo cho khách | Build EA hàng loạt, fix-loop tự động, dùng trong IDE coding agent |
 | Pipeline | **Y hệt nhau** — cùng `auto_build`, lint, permission gate, dashboard | |
 
@@ -401,21 +405,21 @@ python -m vibecodekit_mql5.ea_docs \
 ```
 
 Lưu ý: artifact sinh ra từ CLI này **byte-identical** với artifact pipeline
-vì cả hai share helper `auto_build_docs_stage.write_docs_to_disk` (PR-19).
+vì cả hai share helper `auto_build_docs_stage.write_docs_to_disk`.
 
 ### 4.4. Verify — lint, method-hiding, trader17, permission
 
 `auto_build` đã chạy 3 verify đầu tự động (lint, method-hiding,
 permission). Bạn có thể chạy lẻ:
 
-**Lint 23 anti-pattern (8 ERROR + 14 WARN + 1 method-hiding)**
+**Lint 26 anti-pattern (8 ERROR + 17 WARN + 1 method-hiding theo build)**
 
 ```bash
 python -m vibecodekit_mql5.lint            ./dist/TrendEA_EURUSD_H1.mq5
 python -m vibecodekit_mql5.lint_best_practice ./dist/TrendEA_EURUSD_H1.mq5
 ```
 
-ERROR break CI. WARN chỉ log để xem xét. Danh sách 23 AP đầy đủ ở mục
+ERROR break CI. WARN chỉ log để xem xét. Danh sách 26 AP đầy đủ ở mục
 [6 trong USAGE-vi.md](USAGE-vi.md#6-23-anti-pattern-detector).
 
 **Method-hiding check** (chỉ áp dụng MetaEditor build ≥ 5260)
@@ -600,6 +604,68 @@ python -m vibecodekit_mql5.ship --tag v1.0.0 --push
 
 ---
 
+## 4.8. Wave 5 — chia vai trò "chủ-thầu-thợ" (generator + sentinel + persona prompt)
+
+`v1.4.0` thêm bộ Wave 5 để biến từng step methodology thành output
+machine-checkable + LLM-friendly:
+
+**Wave 5.1 — Generator deterministic** cho Step 3 / 4 / 5:
+
+```bash
+# Bước 3: emit step-3-vision.md từ RRI artefact đã fill (KHÔNG gọi LLM)
+mql5-vision-gen step-2-rri.md --out step-3-vision.md
+
+# Bước 4: emit step-4-blueprint.md từ ea-spec.yaml (+ optional vision)
+mql5-blueprint-gen ea-spec.yaml \
+    --vision step-3-vision.md \
+    --out step-4-blueprint.md
+
+# Bước 5: emit step-5-tip.md từ blueprint (sinh bảng invariant → module × test)
+mql5-tip-gen step-4-blueprint.md --out step-5-tip.md
+```
+
+Cả 3 emit envelope Wave-1 `--json` + `--gate-report <path>` chuẩn. Test
+name trong `step-5-tip.md` là snake_case pytest-compatible, dán thẳng
+vào `tests/gates/phase-*/` được.
+
+**Wave 5.2 — Sentinel content validator** đóng lỗ hổng "touch
+`.rri-state/<step>.done` mà không tick checkbox":
+
+```bash
+python -m vibecodekit_mql5.permission.layer5_methodology \
+    --state-dir .rri-state \
+    --mode team \
+    --enforce-activities
+```
+
+Validator đọc companion `step-N-<name>.md` của mỗi sentinel, đếm tỉ
+lệ `- [x]` / `- [ ]` dưới `## Activities`, fail nếu thấp hơn ngưỡng
+(`personal ≥ 50%` / `team ≥ 80%` / `enterprise = 100%`). Bind vào
+layer 5 của `mql5-permission` qua flag `--layer5-enforce-activities`.
+
+**Wave 5.3 — 6 persona prompt paste-and-run** dưới `docs/agent-prompts/`:
+
+| File | Vai trò ẩn dụ | Lens | Step chính |
+|---|---|---|---|
+| `strategy-architect.md` | Kiến trúc sư chiến lược (quant / chủ giả thuyết) | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| `broker-engineer.md` | Thợ code MQL5 chính (chủ code) | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| `risk-auditor.md` | Audit risk / compliance officer | `cso` | RRI, BLUEPRINT, VERIFY |
+| `devops.md` | Thợ deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| `perf-analyst.md` | Phân tích backtest / tester | `investigate` | VERIFY, REFINE |
+| `trader.md` | End-user — "chủ nhà" (owner) | `ceo` | SCAN, VISION, VERIFY |
+
+Copy nội dung file `.md` tương ứng vào ô system message của LLM chat
+ngoài (Claude, ChatGPT, Cursor, Devin). LLM sẽ bị ràng buộc đúng
+một vai một step. Frontmatter của mỗi prompt khai báo `owns_steps` /
+`contributes_steps` / `peers` / `forbidden` để LLM tự refuse khi
+bị đẩy ra ngoài scope. Schema găm bởi
+`tests/gates/phase-C/test_agent_prompts_schema.py` (50 test
+parametrised).
+
+Đọc thêm: `docs/agent-prompts/README.md` (operator playbook EN + VN).
+
+---
+
 ## 5. Lối B — AI coding agent qua MCP bridge
 
 Kit có 4 MCP server (JSON-RPC 2.0 over stdio):
@@ -623,7 +689,7 @@ Kit có 4 MCP server (JSON-RPC 2.0 over stdio):
 | `dashboard.*` | 1 | `dashboard.publish` |
 | `forge.*` | 1 | `forge.pr.create` |
 | `discover.*` | 3 | `discover.doctor`, `discover.scan`, `discover.llm_context` |
-| `docs.*` | 1 | `docs.ea_render` (PR-19) |
+| `docs.*` | 1 | `docs.ea_render` |
 
 ### 5.1. Cài `vibecodekit-bridge` vào tool
 
@@ -697,10 +763,10 @@ Agent sẽ tự gọi tuần tự:
 1. `spec.from_prompt` — tạo `ea-spec.yaml`.
 2. `spec.validate` — confirm schema OK.
 3. `build.auto` — render + compile + permission gate + docs + dashboard.
-4. `verify.lint` — quét 23 AP.
+4. `verify.lint` — quét 26 AP (8 ERROR + 17 WARN + 1 method-hiding).
 5. `verify.trader17` — 17 checklist.
 6. `dashboard.publish` — generate `dashboard.html`.
-7. `docs.ea_render` (PR-19) — tùy chọn, re-render docs tiếng Việt /
+7. `docs.ea_render` — tùy chọn, re-render docs tiếng Việt /
    xuất kèm PDF nếu agent cần version khác (xem [5.4](#54-re-render-docs-qua-docsea_render)).
 
 **Trong Cursor (chat sidebar):**
@@ -722,7 +788,7 @@ Loop:
 
 ### 5.4. Re-render docs qua `docs.ea_render`
 
-PR-19 mở tool số 30: `docs.ea_render`. Agent có thể gọi trực tiếp khi
+Tool số 30 trên bridge là `docs.ea_render`. Agent có thể gọi trực tiếp khi
 chỉ cần re-render docs (đổi ngôn ngữ, thêm PDF, tưới lại sau khi tweak
 spec) mà không muốn re-run cả pipeline `build.auto`.
 
@@ -940,7 +1006,7 @@ Tách phần code thừa sang module helper (xem
 
 ---
 
-## 8. Phụ lục — 50 CLI command theo nhóm
+## 8. Phụ lục — 63 CLI command theo nhóm
 
 Tham khảo nhanh. Reference đầy đủ ở [USAGE-vi.md](USAGE-vi.md).
 
@@ -993,7 +1059,7 @@ Tổng: **49 CLI** + 1 router meta = **50 entry**.
 - Schema `ea-spec.yaml` đã mở rộng đủ 8 block optional (3 PR-2 +
   5 PR-8) cho EA prop firm / trailing / partial close / correlation
   / swap filter / logs.
-- Baseline mới nhất: **799 test passed / 2 skipped**, ruff clean,
+- Baseline mới nhất (v1.4.0): **1303 test passed / 6 skipped**, ruff clean,
   audit post-phase-E pass.
 
 Khi gặp blocker không có trong mục [7. Troubleshooting](#7-troubleshooting--faq), mở issue ở

@@ -1,15 +1,23 @@
 ---
 id: usage-vi
-title: Hướng dẫn sử dụng vibecodekit-mql5-ea v1.0.1 (Tiếng Việt)
+title: Hướng dẫn sử dụng vibecodekit-mql5-ea v1.4.0 (Tiếng Việt)
 applicable_phase: E
 audience: end_user, dev_team
 ---
 
-# Hướng dẫn sử dụng `vibecodekit-mql5-ea` v1.0.1
+# Hướng dẫn sử dụng `vibecodekit-mql5-ea` v1.4.0
 
-Tài liệu này hướng dẫn từng bước cách dùng toàn bộ 50 lệnh để build một
-Expert Advisor MQL5 hoàn chỉnh, từ ý tưởng đến ship live. Phù hợp cho cả
-người mới và dev team.
+Tài liệu này hướng dẫn từng bước cách dùng toàn bộ **63 lệnh CLI**
+(50 lệnh độc lập + 10 alias Wave-3 quy về 2 umbrella `mql5-review --lens`
+và `mql5-rri <subcommand>` + 3 generator Wave-5.1 `mql5-vision-gen` /
+`mql5-blueprint-gen` / `mql5-tip-gen`) để build một Expert Advisor MQL5
+hoàn chỉnh, từ ý tưởng đến ship live. Phù hợp cho cả người mới, dev team
+và LLM agent (Devin, Claude Code, Cursor, ChatGPT).
+
+Baseline hiện tại: **`v1.4.0`**, **1303 test passing / 6 skipped** trên
+Phase 0/A/B/C/D/E, **26 anti-pattern detector** (25 đánh số AP-1…AP-25
++ 1 method-hiding theo build), **4 MCP server**, **23 scaffold archetype**,
+**8 schema block optional** trên `ea-spec.yaml`.
 
 > 📚 Phiên bản tiếng Anh: [USAGE-en.md](USAGE-en.md)
 > 🛠️ Tích hợp IDE / CLI (Devin, Codex, Claude Code, Cursor, …): [ENV-SETUP-vi.md](ENV-SETUP-vi.md)
@@ -22,7 +30,7 @@ người mới và dev team.
 3. [Lệnh theo từng giai đoạn](#3-lệnh-theo-từng-giai-đoạn)
 4. [Ví dụ hoàn chỉnh: MACD+SAR EURUSD H1](#4-ví-dụ-hoàn-chỉnh-macdsar-eurusd-h1)
 5. [Tích hợp 4 MCP server](#5-tích-hợp-4-mcp-server)
-6. [23 anti-pattern detector](#6-23-anti-pattern-detector)
+6. [26 anti-pattern detector](#6-26-anti-pattern-detector)
 7. [Troubleshooting](#7-troubleshooting)
 
 ---
@@ -51,11 +59,23 @@ cd vibecodekit-mql5-ea
 # Tạo venv riêng cho kit
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+
+# Cài kit (pyyaml auto-pull; thêm [dev] cho pytest + ruff)
+pip install -e .[dev]
 
 # Health check — mọi probe phải là ok: true
 python -m vibecodekit_mql5.doctor
+
+# Không có Wine? Dùng soft mode (chỉ relax probe môi trường,
+# vẫn check Python + scaffolds + manifest):
+python -m vibecodekit_mql5.doctor --soft
 ```
+
+Kit chạy đầy đủ trên Linux **không cần Wine** cho mọi tác vụ
+lint / docs / unit test / Wave-5 generator / sentinel validator /
+`mql5-bt-sim` (in-process tick-bar simulator) / `mql5-forge-loop`
+(hermetic). Wine + MetaEditor chỉ cần khi muốn compile `.mq5` →
+`.ex5` thật và chạy Strategy Tester end-to-end.
 
 ### 1.3. macOS
 
@@ -91,16 +111,33 @@ python -m vibecodekit_mql5.doctor
 Plan v5 chia toàn bộ vòng đời EA thành 8 bước. Mỗi bước có template
 markdown trong `docs/rri-templates/` và lệnh chuyên dụng để mở nó:
 
-| Bước | Tên | Lệnh mở template | Output |
-|------|-----|------------------|--------|
-| 1 | **SCAN** | `python -m vibecodekit_mql5.scan <thư mục>` | Liệt kê tree project |
-| 2 | **RRI** (Research / Risk / Robustness) | `python -m vibecodekit_mql5.rri --mode {personal,team,enterprise}` | `docs/rri-report.md` |
-| 3 | **VISION** | `python -m vibecodekit_mql5.vision` | `docs/vision.md` |
-| 4 | **BLUEPRINT** | `python -m vibecodekit_mql5.blueprint` | `docs/blueprint.md` |
-| 5 | **TIP** (8 Technical Implementation Points) | `python -m vibecodekit_mql5.tip` | `docs/tip.md` |
-| 6 | **BUILD** | `python -m vibecodekit_mql5.build <archetype>` hoặc `wizard`, `async-build` | Mã `.mq5` từ scaffold |
-| 7 | **VERIFY** | 10 lệnh từ `compile` → `multibroker` | XML report + ma trận 64 ô |
-| 8 | **REFINE + SHIP** | `python -m vibecodekit_mql5.refine` + `ship` | Tag git + push |
+| Bước | Tên | Lệnh mở template (renderer) | Lệnh auto-gen (Wave 5.1) | Output |
+|------|-----|------------------------------|---------------------------|--------|
+| 1 | **SCAN** | `python -m vibecodekit_mql5.scan <thư mục>` | — | Liệt kê tree project |
+| 2 | **RRI** (Research / Risk / Robustness) | `python -m vibecodekit_mql5.rri --mode {personal,team,enterprise}` | — | `docs/rri-report.md` (25 câu × 6 persona) |
+| 3 | **VISION** | `python -m vibecodekit_mql5.vision` | `mql5-vision-gen <step-2-rri.md>` | `step-3-vision.md` |
+| 4 | **BLUEPRINT** | `python -m vibecodekit_mql5.blueprint` | `mql5-blueprint-gen <ea-spec.yaml> [--vision <step-3-vision.md>]` | `step-4-blueprint.md` (18 preset-keyed invariant + module diagram + state machine) |
+| 5 | **TIP** (Technical Implementation Plan) | `python -m vibecodekit_mql5.tip` | `mql5-tip-gen <step-4-blueprint.md>` | `step-5-tip.md` (bảng module × test pytest-compatible) |
+| 6 | **BUILD** | `python -m vibecodekit_mql5.build <archetype>` hoặc `wizard`, `async-build` | — | Mã `.mq5` từ scaffold |
+| 7 | **VERIFY** | 10 lệnh từ `compile` → `multibroker` | — | XML report + ma trận 64 ô |
+| 8 | **REFINE + SHIP** | `python -m vibecodekit_mql5.refine` + `ship` | — | Tag git + push |
+
+**Wave 5.1 generator** (`mql5-vision-gen` / `mql5-blueprint-gen` /
+`mql5-tip-gen`) emit `step-3..5-*.md` deterministic từ artefact của
+step trước. Không gọi LLM, không hardcode per-archetype. Skeleton sau
+khi sinh ra cần một LLM agent (paste prompt từ `docs/agent-prompts/`,
+xem §3.13) tinh chỉnh narrative.
+
+**Wave 5.2 sentinel-content validator** đảm bảo từng step output có
+đủ checkbox `## Activities` tick (`personal ≥ 50%` / `team ≥ 80%` /
+`enterprise = 100%`) trước khi gate Layer 5 cho qua — xem §3.9
+(`mql5-permission --layer5-enforce-activities`).
+
+**Wave 5.3 — 6 persona prompt paste-and-run** dưới `docs/agent-prompts/`
+biến mọi LLM chat ngoài (Claude, ChatGPT, Cursor, Devin) thành một
+trong các vai: `strategy-architect` (quant), `broker-engineer` (kỹ sư
+MQL5), `risk-auditor` (compliance), `devops`, `perf-analyst`,
+`trader` (chủ nhà / end-user) — xem §3.13.
 
 ### Phân loại 3 mode
 
@@ -1054,8 +1091,9 @@ pip install MetaTrader5  # chỉ chạy được trên Windows hoặc Wine với
 
 ## Tài nguyên bổ sung
 
-- [`docs/COMMANDS.md`](COMMANDS.md) — Bảng tra cứu 43 lệnh
-- [`docs/references/`](references/) — 28 cheatsheet kỹ thuật (50-survey → 79-pip-norm)
+- [`docs/COMMANDS.md`](COMMANDS.md) — Bảng tra cứu 63 lệnh CLI (50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1)
+- [`docs/agent-prompts/`](agent-prompts/) — 6 persona prompt paste-and-run (Wave 5.3) + README operator playbook
+- [`docs/references/`](references/) — 29 cheatsheet kỹ thuật (50-survey → 80-input-syntax)
 - [`docs/PLAN-v5.md`](PLAN-v5.md) — Spec gốc 1089 dòng
 - [`docs/anti-patterns-AVOID.md`](anti-patterns-AVOID.md) — Anti-pattern phải tránh từ VCK-HU
 - [`docs/rri-personas/`](rri-personas/) — 6 file YAML × 25 câu hỏi
