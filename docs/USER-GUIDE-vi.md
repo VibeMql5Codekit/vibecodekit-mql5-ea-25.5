@@ -420,7 +420,7 @@ python -m vibecodekit_mql5.lint_best_practice ./dist/TrendEA_EURUSD_H1.mq5
 ```
 
 ERROR break CI. WARN chỉ log để xem xét. Danh sách 26 AP đầy đủ ở mục
-[6 trong USAGE-vi.md](USAGE-vi.md#6-23-anti-pattern-detector).
+[6 trong USAGE-vi.md](USAGE-vi.md#6-26-anti-pattern-detector).
 
 **Method-hiding check** (chỉ áp dụng MetaEditor build ≥ 5260)
 
@@ -1039,7 +1039,25 @@ Verify CLI.)
 **Other (4)** — `broker_safety`, `trader_check`, `install`,
 `second_opinion`
 
-Tổng: **49 CLI** + 1 router meta = **50 entry**.
+**Wave-3 umbrella + aliases (10)** — `mql5-review` /
+`mql5-rri` (2 umbrella console script, gọi qua `--lens {eng,ceo,cso,investigate}`
+và `<subcommand> {template,bt,rr,chart}` tương ứng) và 8 alias
+backward-compat: `mql5-eng-review` / `mql5-ceo-review` / `mql5-cso` /
+`mql5-investigate` / `mql5-second-opinion` / `mql5-rri-template` /
+`mql5-rri-bt` / `mql5-rri-rr` / `mql5-rri-chart` — alias delegate
+về umbrella nên byte-identical output.
+
+**Wave-3 backtest loop (1)** — `mql5-forge-loop` (closed-loop
+backtest hermetic, N iteration, không cần Wine).
+
+**Wave-5.1 step-output generators (3)** — `mql5-vision-gen` /
+`mql5-blueprint-gen` / `mql5-tip-gen` (auto-emit `step-3-vision.md`
+/ `step-4-blueprint.md` / `step-5-tip.md` từ artefact step trước,
+không gọi LLM).
+
+Tổng: **49 CLI standalone** + 1 router meta + 10 Wave-3 umbrella/alias
++ 3 Wave-5.1 generator = **63 entry**
+(khớp `python -m vibecodekit_mql5.manifest --emit | jq '.tools | length'`).
 
 ---
 
