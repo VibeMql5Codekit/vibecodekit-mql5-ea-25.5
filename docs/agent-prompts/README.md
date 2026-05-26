@@ -1,0 +1,131 @@
+# Agent prompts — six personas, paste-and-run
+
+> **Wave 5.3.** This directory ships **six paste-and-run prompts** that
+> turn a generic LLM chat (Claude Chat, ChatGPT, Cursor, Devin, …) into
+> a focused, single-role assistant aligned with this kit's 8-step RRI
+> methodology. Pair them with the Wave-5.1 deterministic generators
+> (`mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`) and the
+> Wave-5.2 sentinel-content validator to get an honest **Architect /
+> Builder / Owner role split** without inviting an LLM into the kit's
+> hot path.
+
+The kit deliberately does **not** call any LLM internally — every CLI
+tool is deterministic. These prompts are for the operator's *external*
+agent. They make the role split explicit so the human running the
+session knows which persona is speaking at any given step.
+
+## The six personas
+
+| Prompt file | Persona | Review lens | Primary steps |
+|---|---|---|---|
+| [`strategy-architect.md`](./strategy-architect.md) | Strategy / quant author — owns the trading hypothesis | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| [`broker-engineer.md`](./broker-engineer.md) | Senior MQL5 implementer — owns the code | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| [`risk-auditor.md`](./risk-auditor.md) | Compliance / risk officer — signs off on exposure | `cso` | RRI, BLUEPRINT, VERIFY |
+| [`devops.md`](./devops.md) | Deploy / VPS / observability engineer | `eng` | BUILD, VERIFY, REFINE |
+| [`perf-analyst.md`](./perf-analyst.md) | Backtest + tester analyst | `investigate` | VERIFY, REFINE |
+| [`trader.md`](./trader.md) | End-user (the **owner** in homeowner / contractor / worker metaphor) | `ceo` | SCAN, VISION, VERIFY |
+
+## How to use a prompt
+
+1. Pick the persona you want the LLM to adopt for the next session
+   (or for the next handoff segment of a longer task).
+2. Open the matching `.md` file and copy **the whole file** —
+   frontmatter included.
+3. Paste it as the **system / opening message** in your LLM chat.
+4. Provide the input artefacts listed under `inputs:` (e.g. paste the
+   `step-2-rri.md` content for the architect, the `ea-spec.yaml` for
+   the engineer, etc.).
+5. Ask the agent to do exactly one thing the persona owns at the
+   current step (see "Step-by-step responsibilities" inside each
+   prompt). When the persona has finished, switch prompts before
+   moving to the next step — do not let one persona impersonate
+   another.
+
+## How these prompts relate to the kit's CLI surface
+
+* The Wave-5.1 generators (`mql5-vision-gen`, `mql5-blueprint-gen`,
+  `mql5-tip-gen`) emit *deterministic* step outputs from the prior
+  step's artefact — they are the **scaffolding** that the persona's
+  LLM then refines (filling in narrative, prioritising invariants,
+  selecting modules, writing rationales). The persona never replaces
+  the generator; it edits the generator's output.
+* The Wave-5.2 sentinel-content validator (`mql5-permission-layer5
+  --enforce-activities`) is the kit's enforcement layer. A persona is
+  not "done" with a step until the matching `step-N-<name>.md` has
+  enough ticked `## Activities` checkboxes to pass the per-mode
+  threshold (`personal ≥ 50%`, `team ≥ 80%`, `enterprise = 100%`).
+* The four review lenses (`mql5-review --lens
+  {eng,ceo,cso,investigate}`) map onto the personas as shown in the
+  table above. Use the lens after the persona's step is done to
+  cross-check.
+
+## Forbidden in every persona
+
+These rules from `AGENTS.md` are baked into every prompt — the persona
+is told not to do these things, even if the operator asks. Removing
+them re-creates the failure modes the kit was forked to fix.
+
+- Do **not** propose a master router, `query_loop.py`,
+  `intent_router.py`, or `pipeline_router.py`. Every command is a
+  flat `python -m vibecodekit_mql5.<name>`.
+- Do **not** propose adding an LLM client inside the kit. The kit is
+  deterministic; LLM authorship happens externally.
+- Do **not** propose `OrderSend` without `CPipNormalizer`, async
+  sends without `OnTradeTransaction`, `WebRequest` inside
+  `OnTick/OnTimer`, or hardcoded magic numbers.
+- Do **not** claim a test passed without a real Strategy Tester XML
+  report or `mql5-bt-sim` artefact to back it.
+- Do **not** skip the 7-layer permission gate in `team` or
+  `enterprise` mode.
+
+## Frontmatter schema
+
+Every prompt file starts with a YAML block exposing machine-readable
+metadata. The schema is intentionally minimal so a script can list,
+filter, or cross-check the prompts without parsing prose:
+
+```yaml
+persona: <slug matching docs/rri-personas/*.yaml>
+role: <one-line role description>
+review_lens: <eng|ceo|cso|investigate>      # primary lens
+owns_steps: [<step slug>, …]                 # steps this persona drives
+contributes_steps: [<step slug>, …]          # steps this persona supports
+peers: [<persona slug>, …]                   # other personas to coordinate with
+inputs: [<artefact path>, …]                 # what must be on the desk
+outputs: [<artefact path>, …]                # what the persona produces
+forbidden:                                   # role-specific don'ts
+  - <free-text bullet>
+```
+
+The schema is pinned by
+`tests/gates/phase-C/test_agent_prompts_schema.py`. Adding a new
+persona prompt requires extending the test's allow-list.
+
+---
+
+## Tiếng Việt — chia vai trò "chủ nhà / thầu / thợ"
+
+Sáu prompt này là phần **vai trò người** của Wave 5.3, đi kèm các
+generator deterministic của Wave 5.1 (máy điền sẵn step output) và
+sentinel validator của Wave 5.2 (máy kiểm tra checkbox).
+
+Mỗi prompt biến một LLM chat (Claude Chat, ChatGPT, Cursor, Devin,…)
+thành đúng một vai cụ thể trong 8-bước RRI:
+
+| File prompt | Vai trò | Lens review | Step chính |
+|---|---|---|---|
+| `strategy-architect.md` | Kiến trúc sư chiến lược (quant) — chủ giả thuyết giao dịch | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| `broker-engineer.md` | Kỹ sư MQL5 — chủ code | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| `risk-auditor.md` | Compliance / risk officer — ký duyệt rủi ro | `cso` | RRI, BLUEPRINT, VERIFY |
+| `devops.md` | Kỹ sư deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| `perf-analyst.md` | Phân tích backtest + tester | `investigate` | VERIFY, REFINE |
+| `trader.md` | End-user — "chủ nhà" trong ẩn dụ chủ-nhà/thầu/thợ | `ceo` | SCAN, VISION, VERIFY |
+
+Cách dùng: chọn 1 prompt, **copy toàn bộ file** (cả frontmatter), paste
+làm system / opening message trong LLM chat, đính kèm các artefact ở
+mục `inputs:`, rồi yêu cầu agent làm đúng một việc thuộc vai đó. Khi
+xong, **đổi prompt** trước khi sang step mới — không để một persona
+giả mạo persona khác.
+
+Kit **không** gọi LLM nào trong CLI. Persona là chuyện của agent
+ngoài; CLI vẫn deterministic 100%.
