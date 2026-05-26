@@ -781,6 +781,98 @@ Tiếng Việt).
 
 ---
 
+### 3.14. Triangle of Power — 3 vai actor + contract + verify-report (Wave 6.1)
+
+Wave 6.1 thêm một tầng governance bên trên 6 persona Wave 5.3. Kit
+giờ ship 3 **actor prompt** dưới `docs/agent-prompts/actors/`, cộng
+với 2 emitter CLI mới và một mở rộng layer-5 permission gate để audit
+ritual sign-off thủ công giữa các actor.
+
+#### 3.14.1. Ba actor (Tam giác quyền lực)
+
+| File | Vai trò | Persona con (Wave 5.3) | Sở hữu | Sign-off |
+|---|---|---|---|---|
+| `chu-nha.md` | **Chủ nhà** — operator con người | `trader` | SCAN, VISION (quyết), REFINE (quyết) | `APPROVED by <tên>` trên blueprint, `CONFIRM by <tên>` trên contract |
+| `chu-thau.md` | **Chủ thầu** — ghế thiết kế (Claude Chat / GPT-4 / Cursor Ask) | `strategy-architect`, `risk-auditor` | VISION (thiết kế), BLUEPRINT, CONTRACT, TASK-GRAPH, VERIFY-REPORT | Emit khối `CHECKPOINT` + `CONFIRM`; KHÔNG bao giờ chạy build/compile |
+| `tho-thi-cong.md` | **Thợ thi công** — ghế triển khai (Claude Code / Devin / Cursor Edit) | `broker-engineer`, `devops`, `perf-analyst` | SCAN (thực thi), TIP triển khai, BUILD, VERIFY run | Emit Completion Report + `gate-report-*.json` mỗi step |
+
+Mỗi file actor khai báo `sub_personas:` (binding sang 6 persona Wave
+5.3), graph edge `escalates_to:` / `delegates_to:`, và allow-list
+`forbidden_tools:`. Sáu persona Wave 5.3 hiện có thêm field
+`super_actor:` neo về actor cha; cả hai schema được pin bởi
+`tests/gates/phase-C/test_actor_prompts_schema.py` và
+`tests/gates/phase-C/test_agent_prompts_schema.py`.
+
+#### 3.14.2. `mql5-contract-gen` — emitter contract Step 4.5
+
+Chủ thầu emit contract gửi Chủ nhà từ Step-4 blueprint đã APPROVED
+cộng với `ea-spec.yaml` canonical:
+
+```bash
+mql5-contract-gen step-4-blueprint.md \
+    --ea-spec ea-spec.yaml \
+    --out contract.md
+```
+
+Output có 6 section cố định (`## DELIVERABLES`, `## EXCLUSIONS`,
+`## TECH STACK`, `## INVARIANTS`, `## TASK GRAPH SUMMARY`,
+`## ACCEPTANCE OVERVIEW`) theo sau bởi khối thủ công `## CONFIRM`
+Chủ nhà phải điền (`CONFIRM by <tên> at <YYYY-MM-DD>`). Bullet
+deliverable/exclusion được preset-key (`trend`, `mean-rev`,
+`breakout`, `grid`, `martingale`, `scalping`, `swing`, `news`, …) nên
+cùng `(preset, stack)` luôn cho ra cùng nội dung contract. CLI hỗ
+trợ envelope `--json` chuẩn + `--gate-report <path>`.
+
+Nếu blueprint thiếu dòng `APPROVED by …`, contract header chèn callout
+`> WARNING` để operator nhận biết trước khi forward.
+
+#### 3.14.3. `mql5-verify-report` — aggregator Step 7
+
+Sau khi Thợ thi công đã chạy mọi Wave-1 gate và drop
+`gate-report-*.json` vào thư mục, Chủ thầu aggregate thành một
+verify-report Markdown duy nhất:
+
+```bash
+mql5-verify-report \
+    --gate-reports reports/ \
+    --blueprint step-4-blueprint.md \
+    --tip-dir tasks/ \
+    --completion-dir completions/ \
+    --out verify-report.md
+```
+
+Report derive `OVERALL STATUS = READY | NEEDS_FIXES | MAJOR_ISSUES`,
+phân loại gate thành Tech Health / Scenario Results / Other, phơi
+mọi FAIL kèm path, và (khi cấp blueprint + TIP dir) emit bảng
+coverage `INVARIANT ↔ TIP` bằng greedy keyword match. Cũng roll-up
+mọi dòng STATUS từ `completion-*.md` và kết thúc bằng menu 4 lựa
+chọn REFINE (`Ship as-is`, `Tighten`, `Add tests`, `Reopen VISION`)
+để Chủ thầu đưa Chủ nhà bản nháp quyết định.
+
+#### 3.14.4. `mql5-permission-layer5 --enforce-sign-off` — audit con dấu thủ công
+
+Layer-5 gate giờ optional enforce ritual sign-off:
+
+```bash
+mql5-permission-layer5 \
+    --state-dir .rri-state/ \
+    --mode team \
+    --enforce-activities \
+    --enforce-sign-off \
+    --blueprint step-4-blueprint.md \
+    --contract contract.md
+```
+
+Audit tìm `APPROVED by <tên> at <ngày>` trên blueprint và
+`CONFIRM by <tên> at <ngày>` trên contract, capture signer + ngày,
+tính sha256 canonical trên body **trừ đi** dòng sign-off. Mọi mutation
+body sau khi đã ký sẽ silently đổi hash để reviewer detect re-edit.
+Personal mode contract sign-off optional; team/enterprise mode cả hai
+đều bắt buộc. Flag compose với `--enforce-activities` (Wave 5.2) —
+một lệnh chạy được cả hai check.
+
+---
+
 ## 4. Ví dụ hoàn chỉnh: MACD+SAR EURUSD H1
 
 Worked example đầy đủ ở `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/`.

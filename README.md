@@ -1,12 +1,12 @@
 # vibecodekit-mql5-ea
 
-[![version](https://img.shields.io/badge/version-v1.4.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.4.0)
-[![tests](https://img.shields.io/badge/tests-1245%20passing-success)]()
+[![version](https://img.shields.io/badge/version-v1.5.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.5.0)
+[![tests](https://img.shields.io/badge/tests-1390%20passing-success)]()
 [![lint](https://img.shields.io/badge/ruff-clean-success)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 > **Vibecode methodology kit** for building production-grade MQL5 Expert
-> Advisors on MetaTrader 5. **Sixty-three CLI commands** — 53 standalone
+> Advisors on MetaTrader 5. **Sixty-six CLI commands** — 56 standalone
 > plus 10 Wave-3 aliases delegating to the new `mql5-review --lens` and
 > `mql5-rri <subcommand>` umbrellas — including the interactive
 > `mql5-init` 5-question bootstrap, a single-shot `mql5-auto-build`
@@ -51,11 +51,11 @@ stdlib.
 
 ## English
 
-### What you get in v1.4.0
+### What you get in v1.5.0
 
 | Layer | Shipped |
 |-------|---------|
-| **Commands** | 63 (53 standalone + 10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens {eng,ceo,cso,investigate}` and `mql5-rri {template,bt,rr,chart}`). Every CLI is router-free and stands alone via `python -m vibecodekit_mql5.<name>` — see [`docs/COMMANDS.md`](docs/COMMANDS.md) for the full alphabetical catalogue + capability flags (`--json`, `--format sarif`, `--gate-report`, `--draft`). Wave 5.1 adds three deterministic step-output generators: `mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`. |
+| **Commands** | 66 (56 standalone + 10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens {eng,ceo,cso,investigate}` and `mql5-rri {template,bt,rr,chart}`). Every CLI is router-free and stands alone via `python -m vibecodekit_mql5.<name>` — see [`docs/COMMANDS.md`](docs/COMMANDS.md) for the full alphabetical catalogue + capability flags (`--json`, `--format sarif`, `--gate-report`, `--draft`). Wave 5.1 adds three deterministic step-output generators: `mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`. Wave 6.1 adds two governance emitters: `mql5-contract-gen` and `mql5-verify-report`, plus the standalone `mql5-permission-layer5 --enforce-sign-off` audit. |
 | **Wave 3 additions** | `mql5-review --lens` + `mql5-rri <subcommand>` umbrella consolidation (10 legacy console scripts kept as aliases). A 20-EA golden dataset under `tests/fixtures/ea-bugs/ap_NN_*/EA.mq5` + `expected.json` pins the lint detector contract. `mql5-forge-loop` chains the hermetic fixture generator into the backtest XML parser for N deterministic iterations — no Wine. |
 | **MCP servers** | 4 (`metaeditor-bridge`, `mt5-bridge` READ-ONLY[^1], `algo-forge-bridge`, `vibecodekit-bridge`) |
 | **Reference docs** | 29 (`docs/references/50-survey.md` → `80-input-syntax.md`) |
@@ -68,7 +68,7 @@ stdlib.
 | **Worked example** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — 4-hour enterprise turnaround |
 | **Auto-build pipeline** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — single command, idempotent JSON report, optional publish-to-public-URL |
 | **Reproducible env** | `requirements.lock` (pip-compile pinned) + `Dockerfile.devin` (3-stage: base / wine / ci) |
-| **Test gate** | 1245 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator). |
+| **Test gate** | 1390 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit). |
 
 [^1]: `mt5-bridge` requires the `MetaTrader5` Python package, which only
     installs on Windows or Wine MT5 desktop. On a Linux Devin VM without
@@ -128,6 +128,7 @@ Detailed walk-throughs:
 | **Wave 4.3** | **`v1.3.0`** | **RRI matrix cell-coverage audit** | **`python -m vibecodekit_mql5.rri.matrix --audit` exposes the schema-level coverage map: 6 of 64 cells are auto-fillable from W1.4 `--gate-report` artefacts (discriminative per (dim, axis)), 50 cells come from RRI HTML reviews that broadcast a dim status across all 8 axes, and the 8 `d_inference` cells stay manual-only. New envelope fields `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` give an honest verdict over the 6 discriminative cells (the legacy 56/64 threshold is unattainable when the matrix is built solely from the W1.4 collector). HTML report visually distinguishes the three coverage classes.** |
 | **Wave 5.1 + 5.2** | **`v1.4.0`** | **Role-split step-output generators + sentinel-content validator** | **Three deterministic emitters auto-render `step-3-vision.md`, `step-4-blueprint.md`, `step-5-tip.md` from the prior step's artefact (`mql5-vision-gen <rri.md>`, `mql5-blueprint-gen <ea-spec.yaml> [--vision]`, `mql5-tip-gen <blueprint.md>`). 18 preset-keyed invariants seed Step-4, and Step-5 emits a pytest-compatible invariant→module×test coverage matrix. Wave 5.2 hooks layer-5 of the permission gate: `mql5-permission-layer5 --enforce-activities` audits each rendered step output for ticked `## Activities` checkboxes and fails the gate when the ratio is below `personal ≥ 50%` / `team ≥ 80%` / `enterprise = 100%`. Closes the "touch the sentinel without filling the template" loophole.** |
 | **Wave 5.3** | **`v1.4.0`** | **Six paste-and-run persona prompts under `docs/agent-prompts/`** | **`strategy-architect.md` / `broker-engineer.md` / `risk-auditor.md` / `devops.md` / `perf-analyst.md` / `trader.md` — each declares YAML frontmatter (`persona`, `role`, `review_lens`, `owns_steps`, `contributes_steps`, `peers`, `inputs`, `outputs`, `forbidden`) plus a fixed set of operator sections (Operating principles / Step-by-step responsibilities / Handoff contracts / What you must refuse to do / How to use this prompt). Schema pinned by `tests/gates/phase-C/test_agent_prompts_schema.py`. Pairs with the Wave-5.1 generators and the Wave-5.2 sentinel-content validator so the operator can run an external LLM chat as exactly one role per step. The kit itself still never calls an LLM.** |
+| **Wave 6.1** | **`v1.5.0`** | **Triangle of Power — 3 actor roles + contract-gen + verify-report + sign-off audit** | **Three actor prompts under `docs/agent-prompts/actors/` (`chu-nha.md` Homeowner, `chu-thau.md` Contractor, `tho-thi-cong.md` Builder) wrap the six Wave-5.3 personas. Each Wave-5.3 persona now declares a `super_actor:` field; each actor declares `sub_personas:` + `escalates_to:` / `delegates_to:` graph edges + a `forbidden_tools:` allow-list. Two new emitter CLIs: `mql5-contract-gen <blueprint> --ea-spec ea-spec.yaml --out contract.md` emits a homeowner-facing contract (6 sections + manual `## CONFIRM` block), and `mql5-verify-report --gate-reports <dir> [--blueprint] [--tip-dir]` aggregates Wave-1 gate envelopes into a single Markdown report with `OVERALL STATUS = READY \| NEEDS_FIXES \| MAJOR_ISSUES` + INVARIANT↔TIP coverage table. The new standalone `mql5-permission-layer5 --enforce-sign-off [--blueprint] [--contract]` audits the manual sign-off ritual: `APPROVED by <name>` on blueprint + `CONFIRM by <name>` on contract, with canonical sha256 over the body minus the sign-off line so any re-edit is detectable. Composes with Wave 5.2 `--enforce-activities`. Personal mode requires only the blueprint signature; team/enterprise require both. Schemas pinned by `tests/gates/phase-C/test_actor_prompts_schema.py` + `test_agent_prompts_schema.py`.** |
 
 ### Anti-patterns this kit refuses to ship
 
@@ -154,11 +155,11 @@ hot-spots:
 
 ## Tiếng Việt
 
-### v1.4.0 có gì
+### v1.5.0 có gì
 
 | Thành phần | Đã giao |
 |-----------|---------|
-| **Lệnh CLI** | 63 lệnh (Wave 3 cứng 10 lệnh review/RRI về 2 umbrella: `mql5-review --lens {eng,ceo,cso,investigate}` và `mql5-rri {template,bt,rr,chart}`; 10 console-script cũ vẫn chạy như alias) — đầy đủ chu trình `scan → plan → build → verify → review → deploy → ship`, cộng `mql5-init` wizard, `mql5-auto-build --draft`, `mql5-auto-fix`, `mql5-spec-from-prompt`, `mql5-fixture` (hermetic XML, không cần Wine), `mql5-forge-loop` (Wave-3.A/B/C), `mql5-bt-sim` (Wave-3.E: backtest tick-bar in-process bằng Python thuần, emit XML đúng schema MT5), bộ sinh step-output Wave 5.1 (`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`), `mql5-manifest`, `mql5-dashboard`. |
+| **Lệnh CLI** | 66 lệnh (Wave 3 cứng 10 lệnh review/RRI về 2 umbrella: `mql5-review --lens {eng,ceo,cso,investigate}` và `mql5-rri {template,bt,rr,chart}`; 10 console-script cũ vẫn chạy như alias) — đầy đủ chu trình `scan → plan → build → verify → review → deploy → ship`, cộng `mql5-init` wizard, `mql5-auto-build --draft`, `mql5-auto-fix`, `mql5-spec-from-prompt`, `mql5-fixture` (hermetic XML, không cần Wine), `mql5-forge-loop` (Wave-3.A/B/C), `mql5-bt-sim` (Wave-3.E: backtest tick-bar in-process bằng Python thuần, emit XML đúng schema MT5), bộ sinh step-output Wave 5.1 (`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`), bộ governance emitter Wave 6.1 (`mql5-contract-gen` / `mql5-verify-report` / `mql5-permission-layer5 --enforce-sign-off`), `mql5-manifest`, `mql5-dashboard`. |
 | **MCP server** | 4 (`metaeditor-bridge`, `mt5-bridge` chỉ-đọc[^2], `algo-forge-bridge`, `vibecodekit-bridge`) — chuẩn MCP JSON-RPC 2.0 over stdio |
 | **Tài liệu tham khảo** | 29 cheatsheet (`docs/references/50-survey.md` → `80-input-syntax.md`) |
 | **Scaffold** | 23 archetype × biến thể tài khoản (`trend/netting`, `scalping/hedging`, `hft-async/netting`, 3 biến thể LLM bridge, ml-onnx, `wizard-composable/netting`, `service/standalone`, …) |
@@ -170,7 +171,7 @@ hot-spots:
 | **Ví dụ hoàn chỉnh** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — turnaround 4 tiếng ở chế độ enterprise |
 | **Pipeline auto-build** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — 1 lệnh, JSON report idempotent, hook publish public URL tuỳ chọn |
 | **Môi trường reproducible** | `requirements.lock` (pip-compile pin chặt) + `Dockerfile.devin` (3 stage: base / wine / ci) |
-| **Test gate** | 1245 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
+| **Test gate** | 1390 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
 
 [^2]: `mt5-bridge` cần package `MetaTrader5` Python — chỉ cài được trên
     Windows hoặc Wine MT5 desktop. Trên Linux Devin VM, import fail và
@@ -229,6 +230,7 @@ Hướng dẫn chi tiết:
 | **Wave 4.3** | **`v1.3.0`** | **Audit cell-coverage cho ma trận RRI** | **`python -m vibecodekit_mql5.rri.matrix --audit` phơi bày coverage ở schema level: 6/64 cell auto-fill discriminative từ artefact `--gate-report` (W1.4), 50 cell đến từ RRI HTML review (broadcast cùng dim status cho cả 8 axes), 8 cell `d_inference` chỉ fill manual qua `--inputs`. Envelope thêm field `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` cho verdict trung thực trên 6 cell discriminative (threshold legacy 56/64 luôn fail khi matrix build chỉ từ collector W1.4). HTML report phân biệt 3 coverage class bằng border.** |
 | **Wave 5.1 + 5.2** | **`v1.4.0`** | **Chia vai trò kiến trúc sư/thợ + sentinel content validator** | **Ba bộ sinh deterministic tự động emit `step-3-vision.md`, `step-4-blueprint.md`, `step-5-tip.md` từ artefact của step trước (`mql5-vision-gen <rri.md>`, `mql5-blueprint-gen <ea-spec.yaml> [--vision]`, `mql5-tip-gen <blueprint.md>`). 18 preset được seed sẵn invariants cho Step-4, và Step-5 emit bảng coverage invariant→module×test theo tên test snake_case pytest-compatible. Wave 5.2 gắn vào layer-5 của permission gate: `mql5-permission-layer5 --enforce-activities` audit từng step output cho checkbox `## Activities` và fail gate khi tỷ lệ dưới `personal ≥ 50%` / `team ≥ 80%` / `enterprise = 100%`. Đóng lỗ hổng "touch sentinel mà không điền template".** |
 | **Wave 5.3** | **`v1.4.0`** | **6 prompt persona paste-and-run dưới `docs/agent-prompts/`** | **`strategy-architect.md` / `broker-engineer.md` / `risk-auditor.md` / `devops.md` / `perf-analyst.md` / `trader.md` — mỗi file khai báo YAML frontmatter (`persona`, `role`, `review_lens`, `owns_steps`, `contributes_steps`, `peers`, `inputs`, `outputs`, `forbidden`) + bộ section cố định (Operating principles / Step-by-step responsibilities / Handoff contracts / What you must refuse to do / How to use this prompt). Schema găm bởi `tests/gates/phase-C/test_agent_prompts_schema.py`. Đi cặp với generator Wave 5.1 + sentinel validator Wave 5.2 để operator chạy LLM chat ngoài đúng một vai một step. Kit vẫn không gọi LLM trong CLI.** |
+| **Wave 6.1** | **`v1.5.0`** | **Tam giác quyền lực — 3 vai actor + contract-gen + verify-report + audit sign-off** | **Ba actor prompt dưới `docs/agent-prompts/actors/` (`chu-nha.md` Chủ nhà, `chu-thau.md` Chủ thầu, `tho-thi-cong.md` Thợ thi công) bao bên trên 6 persona Wave 5.3. Mỗi persona Wave 5.3 hiện có field `super_actor:` neo về actor cha; mỗi actor khai báo `sub_personas:` + graph edge `escalates_to:` / `delegates_to:` + allow-list `forbidden_tools:`. Hai emitter CLI mới: `mql5-contract-gen <blueprint> --ea-spec ea-spec.yaml --out contract.md` emit contract gửi Chủ nhà (6 section + khối thủ công `## CONFIRM`), và `mql5-verify-report --gate-reports <dir> [--blueprint] [--tip-dir]` aggregate envelope Wave-1 thành Markdown report duy nhất với `OVERALL STATUS = READY \| NEEDS_FIXES \| MAJOR_ISSUES` + bảng coverage INVARIANT↔TIP. Audit standalone mới `mql5-permission-layer5 --enforce-sign-off [--blueprint] [--contract]` kiểm tra ritual sign-off thủ công: `APPROVED by <tên>` trên blueprint + `CONFIRM by <tên>` trên contract, sha256 canonical trên body trừ đi dòng sign-off nên mọi re-edit body sau khi ký đều detect được. Compose với Wave 5.2 `--enforce-activities`. Personal mode chỉ cần sign-off blueprint; team/enterprise cần cả hai. Schema găm bởi `tests/gates/phase-C/test_actor_prompts_schema.py` + `test_agent_prompts_schema.py`.** |
 
 ### Anti-pattern kit từ chối ship
 

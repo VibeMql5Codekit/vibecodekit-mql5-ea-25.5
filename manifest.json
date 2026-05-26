@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "kit": "vibecodekit-mql5-ea",
-  "kit_version": "1.4.0",
+  "kit_version": "1.5.0",
   "generated_by": "mql5-manifest",
   "tools": [
     {
@@ -129,6 +129,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-contract-gen",
+      "module": "vibecodekit_mql5.step_gen.contract_gen",
+      "entry_point": "vibecodekit_mql5.step_gen.contract_gen:main",
+      "description": "mql5-contract-gen \u2014 Wave 6.1 \u2014 emit ``contract.md`` from blueprint + spec.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-cso",
@@ -392,6 +401,15 @@
       "supports_gate_report": true
     },
     {
+      "name": "mql5-permission-layer5",
+      "module": "vibecodekit_mql5.permission.layer5_methodology",
+      "entry_point": "vibecodekit_mql5.permission.layer5_methodology:main",
+      "description": "Permission Layer 5 \u2014 METHODOLOGY-GATE (RRI 8-step completed).",
+      "supports_json": false,
+      "supports_sarif": false,
+      "supports_gate_report": false
+    },
+    {
       "name": "mql5-pip-normalize",
       "module": "vibecodekit_mql5.pip_normalize",
       "entry_point": "vibecodekit_mql5.pip_normalize:main",
@@ -531,6 +549,15 @@
       "module": "vibecodekit_mql5.trader_check",
       "entry_point": "vibecodekit_mql5.trader_check:main",
       "description": "mql5-trader-check \u2014 Plan v5 \u00a78 Trader-17 safety + technical checklist.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
+    },
+    {
+      "name": "mql5-verify-report",
+      "module": "vibecodekit_mql5.step_gen.verify_report",
+      "entry_point": "vibecodekit_mql5.step_gen.verify_report:main",
+      "description": "mql5-verify-report \u2014 Wave 6.1 \u2014 emit ``verify-report.md`` summary.",
       "supports_json": true,
       "supports_sarif": false,
       "supports_gate_report": true

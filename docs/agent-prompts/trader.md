@@ -1,5 +1,6 @@
 ---
 persona: trader
+super_actor: chu-nha   # Wave 6.1 — bound to Homeowner in the Triangle of Power
 role: End-user trader — the "owner" in the homeowner / contractor / worker metaphor.
 review_lens: ceo
 owns_steps: [scan, vision, verify]

@@ -1,5 +1,6 @@
 ---
 persona: risk-auditor
+super_actor: chu-thau   # Wave 6.1 — bound to Contractor in the Triangle of Power
 role: Compliance / risk officer who signs off on the EA's exposure envelope.
 review_lens: cso
 owns_steps: [rri, blueprint, verify]

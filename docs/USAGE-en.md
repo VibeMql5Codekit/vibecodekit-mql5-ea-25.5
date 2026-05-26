@@ -653,6 +653,104 @@ See `docs/agent-prompts/README.md` for the operator playbook
 
 ---
 
+### 3.13. Triangle of Power — three actor roles + contract + verify-report (Wave 6.1)
+
+Wave 6.1 introduces a governance layer on top of the six Wave-5.3
+personas. The kit now ships three **actor prompts** under
+`docs/agent-prompts/actors/`, plus two new emitter CLIs and an
+extension to the layer-5 permission gate that audits the manual
+sign-off ritual between actors.
+
+#### 3.13.1. Three actors
+
+| File | Actor (English) | Sub-personas (Wave 5.3) | Owns | Sign-off |
+|---|---|---|---|---|
+| `chu-nha.md` | Homeowner — the human operator | `trader` | SCAN, VISION (decide), REFINE (decide) | `APPROVED by <name>` on blueprint, `CONFIRM by <name>` on contract |
+| `chu-thau.md` | Contractor — the design seat (Claude Chat / GPT-4 / Cursor Ask) | `strategy-architect`, `risk-auditor` | VISION (design), BLUEPRINT, CONTRACT, TASK-GRAPH, VERIFY-REPORT | Emits `CHECKPOINT` + `CONFIRM` blocks; never runs build/compile |
+| `tho-thi-cong.md` | Builder — the implementation seat (Claude Code / Devin / Cursor Edit) | `broker-engineer`, `devops`, `perf-analyst` | SCAN (execute), TIP execution, BUILD, VERIFY runs | Emits Completion Reports + per-step `gate-report-*.json` |
+
+Each actor file declares a `sub_personas:` mapping (binding it to the
+six Wave-5.3 personas), an `escalates_to:` / `delegates_to:` graph
+edge, and a `forbidden_tools:` allow-list. The six Wave-5.3 personas
+got a matching `super_actor:` field; both schemas are pinned by
+`tests/gates/phase-C/test_actor_prompts_schema.py` and
+`tests/gates/phase-C/test_agent_prompts_schema.py`.
+
+#### 3.13.2. `mql5-contract-gen` — Step 4.5 contract emitter
+
+The Contractor emits a homeowner-facing contract from an APPROVED
+Step-4 blueprint plus the canonical `ea-spec.yaml`:
+
+```bash
+mql5-contract-gen step-4-blueprint.md \
+    --ea-spec ea-spec.yaml \
+    --out contract.md
+```
+
+The output has six fixed sections (`## DELIVERABLES`, `## EXCLUSIONS`,
+`## TECH STACK`, `## INVARIANTS`, `## TASK GRAPH SUMMARY`,
+`## ACCEPTANCE OVERVIEW`) followed by a manual `## CONFIRM` block the
+Homeowner must complete (`CONFIRM by <name> at <YYYY-MM-DD>`).
+Deliverable and exclusion bullets are preset-keyed (`trend`,
+`mean-rev`, `breakout`, `grid`, `martingale`, `scalping`, `swing`,
+`news`, …) so the same `(preset, stack)` always produces the same
+contract body. The CLI supports the standard `--json` envelope and
+`--gate-report <path>`.
+
+If the blueprint is missing its `APPROVED by …` line, the contract
+header includes a `> WARNING` callout so the operator notices before
+forwarding.
+
+#### 3.13.3. `mql5-verify-report` — Step 7 aggregator
+
+Once the Builder has run every Wave-1 gate and dropped
+`gate-report-*.json` envelopes into a directory, the Contractor
+aggregates them into a single Markdown verify report:
+
+```bash
+mql5-verify-report \
+    --gate-reports reports/ \
+    --blueprint step-4-blueprint.md \
+    --tip-dir tasks/ \
+    --completion-dir completions/ \
+    --out verify-report.md
+```
+
+The report derives `OVERALL STATUS = READY | NEEDS_FIXES |
+MAJOR_ISSUES`, splits gates into Tech Health / Scenario Results /
+Other, surfaces every FAIL with file pointer, and (when blueprint +
+TIP dir are supplied) emits an `INVARIANT ↔ TIP` coverage table by
+greedy keyword match. It also rolls up any `completion-*.md` STATUS
+lines and ends with the four-choice REFINE menu (`Ship as-is`,
+`Tighten`, `Add tests`, `Reopen VISION`) so the Contractor can hand
+the Homeowner a decision draft.
+
+#### 3.13.4. `mql5-permission-layer5 --enforce-sign-off` — manual seal audit
+
+The layer-5 gate now optionally enforces the manual sign-off ritual:
+
+```bash
+mql5-permission-layer5 \
+    --state-dir .rri-state/ \
+    --mode team \
+    --enforce-activities \
+    --enforce-sign-off \
+    --blueprint step-4-blueprint.md \
+    --contract contract.md
+```
+
+The audit looks for `APPROVED by <name> at <date>` on the blueprint
+and `CONFIRM by <name> at <date>` on the contract, captures the
+signer + date, and computes a canonical sha256 over the body
+**minus** the sign-off line. Any mutation to the body after the line
+is added will silently change the hash so reviewers can detect a
+re-edit. In `personal` mode the contract sign-off is optional; in
+`team` and `enterprise` modes both are required. The flag composes
+with `--enforce-activities` (Wave 5.2) — both can run in a single
+invocation.
+
+---
+
 ## 4. End-to-end example
 
 The full worked example lives at

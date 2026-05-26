@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibecodekit-mql5-ea"
-version = "1.4.0"
+version = "1.5.0"
 description = "Vibecode methodology kit for MQL5 Expert Advisor development"
 readme = "README.md"
 license = {text = "MIT"}
@@ -119,6 +119,11 @@ mql5-bt-sim = "vibecodekit_mql5.bt_engine:main"
 mql5-vision-gen = "vibecodekit_mql5.step_gen.vision_gen:main"
 mql5-blueprint-gen = "vibecodekit_mql5.step_gen.blueprint_gen:main"
 mql5-tip-gen = "vibecodekit_mql5.step_gen.tip_gen:main"
+# Wave-6.1 actor-role artefact generators (Triangle of Power)
+mql5-contract-gen = "vibecodekit_mql5.step_gen.contract_gen:main"
+mql5-verify-report = "vibecodekit_mql5.step_gen.verify_report:main"
+# Wave-6.1 layer-5 methodology gate is reachable as a standalone CLI too
+mql5-permission-layer5 = "vibecodekit_mql5.permission.layer5_methodology:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

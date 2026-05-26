@@ -50,6 +50,23 @@ REQUIRED_FIELDS = {
     "inputs",
     "outputs",
     "forbidden",
+    # Wave 6.1 — mandatory binding to the Triangle of Power
+    "super_actor",
+}
+
+ALLOWED_SUPER_ACTORS = {"chu-nha", "chu-thau", "tho-thi-cong"}
+
+# Wave 6.1 — expected super_actor mapping per persona. Pinned here so
+# the contractor/builder/owner split cannot drift silently. Updates to
+# this map must be paired with an `actors/<slug>.md` change and a docs
+# refresh in docs/agent-prompts/README.md.
+EXPECTED_SUPER_ACTOR = {
+    "strategy-architect": "chu-thau",
+    "risk-auditor": "chu-thau",
+    "broker-engineer": "tho-thi-cong",
+    "devops": "tho-thi-cong",
+    "perf-analyst": "tho-thi-cong",
+    "trader": "chu-nha",
 }
 
 ALLOWED_STEPS = {
@@ -125,6 +142,19 @@ def test_agent_prompt_review_lens_is_known(slug: str) -> None:
     lenses = {tok.strip() for tok in str(raw).split(",")}
     unknown = lenses - ALLOWED_LENSES
     assert not unknown, f"{slug}.md has unknown review_lens token(s): {unknown}"
+
+
+@pytest.mark.parametrize("slug", sorted(EXPECTED_PERSONAS))
+def test_agent_prompt_super_actor_is_known(slug: str) -> None:
+    fm = _load_frontmatter(PROMPT_DIR / f"{slug}.md")
+    super_actor = fm["super_actor"]
+    assert super_actor in ALLOWED_SUPER_ACTORS, (
+        f"{slug}.md has unknown super_actor: {super_actor!r}"
+    )
+    assert super_actor == EXPECTED_SUPER_ACTOR[slug], (
+        f"{slug}.md super_actor={super_actor!r} but expected "
+        f"{EXPECTED_SUPER_ACTOR[slug]!r}"
+    )
 
 
 @pytest.mark.parametrize("slug", sorted(EXPECTED_PERSONAS))
