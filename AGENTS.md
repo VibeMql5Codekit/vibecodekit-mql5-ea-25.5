@@ -8,7 +8,7 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.4.0`. 63 CLI commands (53 standalone +
+- **Status:** shipped product, `v1.5.0`. 66 CLI commands (56 standalone +
   10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
   `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
   anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
@@ -22,15 +22,22 @@ to read first, what to use, and what NOT to introduce.
   verdicts, **Wave-5.1 deterministic step-output generators**
   (`mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`) +
   **Wave-5.2 sentinel-content validator** hooked into Layer-5 via
-  `mql5-permission-layer5 --enforce-activities`, 7-layer permission
-  gate, 1245 tests across Phase 0 / A / B / C / D / E.
+  `mql5-permission-layer5 --enforce-activities`, **Wave-5.3 six
+  paste-and-run persona prompts** under `docs/agent-prompts/`,
+  **Wave-6.1 Triangle of Power governance layer** — three
+  `docs/agent-prompts/actors/{chu-nha,chu-thau,tho-thi-cong}.md`
+  prompts wrapping the six Wave-5.3 personas, two new emitter CLIs
+  (`mql5-contract-gen`, `mql5-verify-report`), and a
+  `mql5-permission-layer5 --enforce-sign-off` audit that pins the
+  manual `APPROVED` / `CONFIRM` ritual on blueprint + contract,
+  7-layer permission gate, 1390 tests across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (63) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (66) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -43,6 +50,12 @@ to read first, what to use, and what NOT to introduce.
     `devops.md`, `perf-analyst.md`, `trader.md`). Use these to make an
     external LLM chat adopt exactly one role per step. Schema pinned
     by `tests/gates/phase-C/test_agent_prompts_schema.py`.
+12. `docs/agent-prompts/actors/` — three Wave-6.1 actor prompts
+    (`chu-nha.md` = Homeowner, `chu-thau.md` = Contractor,
+    `tho-thi-cong.md` = Builder). These are the governance layer
+    above the six Wave-5.3 personas; each persona has a
+    `super_actor:` field binding it to its parent actor. Schema
+    pinned by `tests/gates/phase-C/test_actor_prompts_schema.py`.
 
 ## What you may change directly
 
@@ -234,7 +247,7 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.4.0`,
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.5.0`,
   63 lệnh CLI (53 standalone + 10 alias Wave-3 quy về 2 umbrella:
   `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
   scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo

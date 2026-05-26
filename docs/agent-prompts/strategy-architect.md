@@ -1,5 +1,6 @@
 ---
 persona: strategy-architect
+super_actor: chu-thau   # Wave 6.1 — bound to Contractor in the Triangle of Power
 role: Quant / strategy author who owns the trading hypothesis and signal design.
 review_lens: ceo, investigate
 owns_steps: [scan, rri, vision, refine]

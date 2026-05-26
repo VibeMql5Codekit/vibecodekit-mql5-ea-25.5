@@ -1,13 +1,36 @@
-# Agent prompts — six personas, paste-and-run
+# Agent prompts — six personas + three actors, paste-and-run
 
-> **Wave 5.3.** This directory ships **six paste-and-run prompts** that
-> turn a generic LLM chat (Claude Chat, ChatGPT, Cursor, Devin, …) into
-> a focused, single-role assistant aligned with this kit's 8-step RRI
-> methodology. Pair them with the Wave-5.1 deterministic generators
-> (`mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`) and the
-> Wave-5.2 sentinel-content validator to get an honest **Architect /
-> Builder / Owner role split** without inviting an LLM into the kit's
-> hot path.
+> **Wave 5.3 + Wave 6.1.** This directory ships **six paste-and-run
+> persona prompts** (Wave 5.3) + **three actor prompts** (Wave 6.1,
+> under `actors/`) that turn a generic LLM chat (Claude Chat, ChatGPT,
+> Cursor, Devin, …) into a focused, single-role assistant aligned with
+> this kit's 8-step RRI methodology. Pair them with the Wave-5.1
+> deterministic generators (`mql5-vision-gen`, `mql5-blueprint-gen`,
+> `mql5-tip-gen`) and the Wave-5.2 sentinel-content validator to get an
+> honest **Homeowner / Contractor / Builder** role split (the Triangle
+> of Power from VIBECODE Master v5.0) without inviting an LLM into the
+> kit's hot path.
+
+## Two layers — actors above personas (Wave 6.1)
+
+The six Wave-5.3 personas are the **vocational layer** (specialist
+skill: signal design, risk audit, MQL5 implementation, deploy, backtest,
+end-user). Wave 6.1 introduces a **governance layer** above them — the
+three actors of the Triangle of Power, mapping the metaphor used by
+VIBECODE Master v5.0 (`Chủ nhà → Chủ thầu → Thợ thi công`).
+
+| Actor (`actors/`) | Persona sub-roles (Wave 5.3) | Owns | Sign-off |
+|---|---|---|---|
+| [`chu-nha.md`](./actors/chu-nha.md) — Homeowner | `trader` | SCAN, VISION (decide), REFINE (decide) | APPROVED on blueprint, CONFIRM on contract |
+| [`chu-thau.md`](./actors/chu-thau.md) — Contractor | `strategy-architect`, `risk-auditor` | VISION (design), BLUEPRINT, CONTRACT, TASK-GRAPH, VERIFY-REPORT, REFINE (propose) | Emits CHECKPOINT + CONFIRM blocks |
+| [`tho-thi-cong.md`](./actors/tho-thi-cong.md) — Builder | `broker-engineer`, `devops`, `perf-analyst` | SCAN (execute), TIP execution, BUILD, VERIFY (run tools) | Emits Completion Reports + gate-reports |
+
+Every Wave-5.3 persona frontmatter now carries a `super_actor:` field
+binding it to one of the three actors. The schema test
+(`tests/gates/phase-C/test_agent_prompts_schema.py`) verifies the
+two-layer mapping is consistent (Contractor includes design specialists
+only, Builder includes implementation specialists only, Homeowner is
+the single human seat).
 
 The kit deliberately does **not** call any LLM internally — every CLI
 tool is deterministic. These prompts are for the operator's *external*
@@ -25,7 +48,37 @@ session knows which persona is speaking at any given step.
 | [`perf-analyst.md`](./perf-analyst.md) | Backtest + tester analyst | `investigate` | VERIFY, REFINE |
 | [`trader.md`](./trader.md) | End-user (the **owner** in homeowner / contractor / worker metaphor) | `ceo` | SCAN, VISION, VERIFY |
 
-## How to use a prompt
+## How to use an actor prompt (Wave 6.1)
+
+The Homeowner is **the human running the session** — read
+`actors/chu-nha.md` once as training, then play yourself. The other two
+are LLM seats:
+
+1. Open **Claude Chat / GPT-4 / Cursor Ask** and paste `actors/chu-thau.md`
+   verbatim into the system message slot. This LLM instance is now the
+   Contractor and is bound by `forbidden_tools` (no `mql5-auto-build`,
+   no `mql5-compile`, etc.).
+2. Open **Claude Code / Devin Implementation / Cursor Edit** and paste
+   `actors/tho-thi-cong.md` verbatim into the system message slot. This
+   LLM instance is now the Builder and is bound by `forbidden_tools`
+   (no `mql5-vision-gen`, no `mql5-blueprint-gen`, etc.).
+3. As Homeowner, you copy-paste artefacts between the two seats:
+   - SCAN Report + ea-spec.yaml + RRI answers → Contractor seat
+   - TIP-NNN.md → Builder seat
+   - Completion Report → Contractor seat
+   - Verify Report + REFINE options → you decide.
+4. At Step 4 you reply `APPROVED by <name> at <YYYY-MM-DD>` at the
+   bottom of `step-4-blueprint.md`. At Step 4.5 you reply
+   `CONFIRM by <name> at <YYYY-MM-DD>` at the bottom of `contract.md`.
+   The sign-off sentinel (`mql5-permission --layer 5 --enforce-sign-off`)
+   will FAIL if either line is missing.
+
+## How to use a persona prompt (Wave 5.3, still valid)
+
+The six persona prompts remain useful for **finer-grained sub-role
+switching inside one actor seat** — e.g., the Contractor LLM can re-prime
+itself with `risk-auditor.md` for a compliance review then swap to
+`strategy-architect.md` for a signal refinement. Use them like this:
 
 1. Pick the persona you want the LLM to adopt for the next session
    (or for the next handoff segment of a longer task).

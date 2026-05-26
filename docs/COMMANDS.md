@@ -22,9 +22,11 @@ No master `/mql5` router — every command stands alone.
   matrix-named console scripts remain as 1-line aliases.
 
 The pyproject `[project.scripts]` entry list grew by one in Wave 3.E
-(`mql5-bt-sim`) and three in Wave 5.1 (`mql5-vision-gen`,
-`mql5-blueprint-gen`, `mql5-tip-gen`) for a current total of 63 entries
-— every alias still resolves to its existing console-script name. Wave-3.A/B/C consolidated
+(`mql5-bt-sim`), three in Wave 5.1 (`mql5-vision-gen`,
+`mql5-blueprint-gen`, `mql5-tip-gen`), and three in Wave 6.1
+(`mql5-contract-gen`, `mql5-verify-report`, `mql5-permission-layer5`)
+for a current total of 66 entries — every alias still resolves to its
+existing console-script name. Wave-3.A/B/C consolidated
 the *implementation* of `mql5-review` / `mql5-rri`, not the surface.
 Wave-3.D adds an opt-in `mql5-lint --use-ast` flag (no new CLI) that
 routes AP-1 / AP-2 / AP-7 through a lightweight MQL5 AST scanner under
@@ -61,7 +63,10 @@ Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`, `mql5-bt-sim`,
 `mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen` (Wave 5.1 generators
 emit the envelope but intentionally OMIT `matrix_dim/axis` — they are
-emitters, not gate-report tools).
+emitters, not gate-report tools),
+`mql5-contract-gen`, `mql5-verify-report` (Wave 6.1 — same envelope-only
+rationale; the contract / verify-report are emitters consumed by the
+layer-5 sign-off sentinel rather than direct matrix inputs).
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -107,6 +112,12 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-vision-gen <step-2-rri.md>`     — **Wave 5.1**: auto-emit `step-3-vision.md` from a filled RRI artefact. Parses `## Constraints` + `- [x] persona::q-id` lines, fills Scope / Active personas, leaves Timeline + Risk register as `TODO`. Supports `--json` + `--gate-report`.
 - `/mql5-blueprint-gen <ea-spec.yaml>`   — **Wave 5.1**: auto-emit `step-4-blueprint.md` from `ea-spec.yaml` (preset-keyed invariants + module diagram + state machine). Optional `--vision <step-3-vision.md>` fuses scope.
 - `/mql5-tip-gen <step-4-blueprint.md>`  — **Wave 5.1**: auto-emit `step-5-tip.md` (module table + invariant → module × test coverage). Test names are pytest-compatible snake_case identifiers.
+- `/mql5-contract-gen <step-4-blueprint.md> --ea-spec ea-spec.yaml --out contract.md`
+  — **Wave 6.1**: emit a homeowner-facing contract from an APPROVED blueprint + EA spec. Output has 6 sections (DELIVERABLES, EXCLUSIONS, TECH STACK, INVARIANTS, TASK GRAPH SUMMARY, ACCEPTANCE OVERVIEW) + a `## CONFIRM` block the Homeowner must complete with `CONFIRM by <name> at <YYYY-MM-DD>`. Deterministic per preset/stack; supports `--json` + `--gate-report`.
+- `/mql5-verify-report --gate-reports <dir> [--blueprint step-4-blueprint.md] [--tip-dir tasks/] [--completion-dir completions/] --out verify-report.md`
+  — **Wave 6.1**: aggregate Wave-1 gate-report envelopes into a single Markdown report. Derives `OVERALL STATUS = READY | NEEDS_FIXES | MAJOR_ISSUES`, splits gates into Tech Health / Scenario Results / Other, surfaces every FAIL, and (when blueprint+TIP dir supplied) emits an invariant↔TIP coverage table. Renders the four-choice REFINE menu so the Contractor LLM can copy-paste decisions to the Homeowner.
+- `/mql5-permission-layer5 --enforce-sign-off [--blueprint step-4-blueprint.md] [--contract contract.md]`
+  — **Wave 6.1**: standalone audit of the homeowner sign-off lines (`APPROVED by …` on blueprint, `CONFIRM by …` on contract). Personal mode requires only the blueprint line; team/enterprise require both. Composes with `--enforce-activities` (Wave 5.2) so a single command can verify activities + sign-off in one shot.
 
 ## Build (15)
 - `/mql5-build`             — render a scaffold
@@ -202,5 +213,28 @@ CLIs — every prompt declares a YAML frontmatter (`persona`, `role`,
 These prompts pair with the Wave-5.1 generators (`mql5-vision-gen` /
 `mql5-blueprint-gen` / `mql5-tip-gen`) and the Wave-5.2
 sentinel-content validator (`mql5-permission --layer5-enforce-activities`).
+
+### Triangle of Power — three actor prompts (Wave 6.1)
+
+In addition to the six Wave-5.3 personas, Wave 6.1 ships three
+governance-layer **actor prompts** under `docs/agent-prompts/actors/`:
+
+- `chu-nha.md` — Homeowner (the human operator). Owns SCAN, VISION,
+  APPROVED on blueprint, CONFIRM on contract, REFINE decision.
+- `chu-thau.md` — Contractor (Claude Chat / GPT-4 / Cursor Ask seat).
+  Owns VISION design, BLUEPRINT, CONTRACT, TASK-GRAPH, VERIFY-REPORT,
+  REFINE proposals. Forbidden from running build / compile / tester
+  tools.
+- `tho-thi-cong.md` — Builder (Claude Code / Devin / Cursor Edit seat).
+  Owns SCAN execution, TIP implementation, BUILD, VERIFY runs.
+  Forbidden from running design CLIs (vision-gen / blueprint-gen /
+  contract-gen / verify-report).
+
+Each actor file declares `sub_personas:` mapping to the Wave-5.3
+personas it wraps, plus an `escalates_to:` / `delegates_to:` graph and a
+`forbidden_tools:` allow-list. The Wave-5.3 persona frontmatter gained
+a `super_actor:` field binding it to its parent actor; the schema test
+(`tests/gates/phase-C/test_agent_prompts_schema.py` +
+`test_actor_prompts_schema.py`) pins the mapping.
 See [`docs/agent-prompts/README.md`](./agent-prompts/README.md) for the
 operator playbook.
