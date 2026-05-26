@@ -197,8 +197,8 @@ def run_strategy(
                 elif in_pos and bar.close < window_low:
                     signal_exit = True
         else:
-            # ``random`` falls back to the dumb-baseline: enter on odd
-            # bars, exit on even ones. Provides a non-degenerate
+            # ``random`` falls back to the dumb-baseline: enter on
+            # i%3==1 bars, exit on i%3==0 bars. Provides a non-degenerate
             # series for tests against zero-edge fixtures.
             if not in_pos and i % 3 == 1:
                 signal_long = True

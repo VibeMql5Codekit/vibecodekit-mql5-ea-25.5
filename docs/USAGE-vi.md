@@ -567,7 +567,7 @@ Bốn strategy built-in:
 | `sma-cross`   | Cross SMA nhanh/chậm, long-only. Bar synth có drift dương → PF > 1.                          |
 | `mean-rev`    | Kiểu Bollinger: vào long khi giá < SMA−k·σ, thoát ở SMA. AR(1) hệ số −0.5 trong bar synth.   |
 | `breakout`    | Kênh Donchian: vào khi break đỉnh N-bar, thoát khi xuyên đáy N-bar. Edge xuất hiện khi trend. |
-| `random`      | Baseline ngu (vào bar lẻ, ra bar chẵn). Dùng làm fixture không-edge.                          |
+| `random`      | Baseline ngu (vào bar i%3==1, ra bar i%3==0). Dùng làm fixture không-edge.                    |
 
 ```bash
 # Tối giản — sma-cross trên 500 bar tổng hợp, deterministic seed 42:

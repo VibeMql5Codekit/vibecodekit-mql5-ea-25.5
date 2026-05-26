@@ -469,7 +469,7 @@ Four built-in strategies:
 | `sma-cross`   | Fast/slow SMA crossover, long-only. Trending drift baked into bar synth → PF > 1.        |
 | `mean-rev`    | Bollinger-style: enter long < SMA−k·σ, exit at SMA. AR(1) coefficient -0.5 in bar synth. |
 | `breakout`    | Donchian-channel: enter on N-bar high breakout, exit on N-bar low. Edge under trend.     |
-| `random`      | Dumb baseline (enter on odd bars, exit on even). Useful as a zero-edge fixture.          |
+| `random`      | Dumb baseline (enter on i%3==1 bars, exit on i%3==0). Useful as a zero-edge fixture.     |
 
 ```bash
 # Minimal — sma-cross on 500 synthetic bars, deterministic from seed 42:
