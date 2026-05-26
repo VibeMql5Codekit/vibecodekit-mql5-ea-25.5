@@ -1,7 +1,7 @@
 # vibecodekit-mql5-ea
 
-[![version](https://img.shields.io/badge/version-v1.2.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.2.0)
-[![tests](https://img.shields.io/badge/tests-1190%20passing-success)]()
+[![version](https://img.shields.io/badge/version-v1.3.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.3.0)
+[![tests](https://img.shields.io/badge/tests-1205%20passing-success)]()
 [![lint](https://img.shields.io/badge/ruff-clean-success)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
@@ -51,7 +51,7 @@ stdlib.
 
 ## English
 
-### What you get in v1.2.0
+### What you get in v1.3.0
 
 | Layer | Shipped |
 |-------|---------|
@@ -68,7 +68,7 @@ stdlib.
 | **Worked example** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — 4-hour enterprise turnaround |
 | **Auto-build pipeline** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — single command, idempotent JSON report, optional publish-to-public-URL |
 | **Reproducible env** | `requirements.lock` (pip-compile pinned) + `Dockerfile.devin` (3-stage: base / wine / ci) |
-| **Test gate** | 1190 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3). |
+| **Test gate** | 1205 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit). |
 
 [^1]: `mt5-bridge` requires the `MetaTrader5` Python package, which only
     installs on Windows or Wine MT5 desktop. On a Linux Devin VM without
@@ -124,7 +124,8 @@ Detailed walk-throughs:
 | **E** | **`v1.0.1`** | **Polish & ship** | **29 reference docs, 4 MCP servers, `/mql5-canary` + `/mql5-tester-run`, 4-hour worked example, full `[project.scripts]` entry-point coverage** |
 | **E+** | _(post-v1.0.1)_ | Auto-build pipeline | `mql5-auto-build` single-shot orchestrator, `mql5-auto-fix` AP-1/3/5/15/17/18/20/21 transformer, `mql5-spec-from-prompt` natural-language → `ea-spec.yaml`, `mql5-dashboard` quality-matrix publisher with public-URL hook, schema-driven `ea-spec.yaml` (risk / signals / filters / hooks), `requirements.lock` + `Dockerfile.devin`, expanded Devin Wine setup with `terminal64.exe` |
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **CLI consolidation + golden dataset + hermetic forge loop** | **`mql5-review --lens {eng,ceo,cso,investigate}` consolidates the 5 review CLIs; `mql5-rri {template,bt,rr,chart}` consolidates the 4 RRI CLIs (all 10 legacy console scripts kept as aliases). 20-EA golden dataset under `tests/fixtures/ea-bugs/` pins the lint detector contract. `mql5-forge-loop` chains the hermetic fixture generator into the backtest parser for N deterministic iterations — no Wine.** |
-| **Wave 3 (D/E)** | **`v1.2.0`** | **AST parser POC + in-process backtest engine** | **Lightweight MQL5 AST scanner under `scripts/vibecodekit_mql5/ast_parser/` retrofits AP-1 (no SL) / AP-2 (SL too tight) / AP-7 (hardcoded magic) detectors behind opt-in `mql5-lint --use-ast`. Byte-identical findings vs the regex pipeline on the 20-EA + 23-scaffold golden corpus. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` runs a deterministic synthetic-OHLC backtest in pure Python and emits XML the existing `mql5-backtest` parser accepts unchanged — no Wine, no fake returns.** |
+| **Wave 3 (D/E)** | `v1.2.0` | AST parser POC + in-process backtest engine | Lightweight MQL5 AST scanner under `scripts/vibecodekit_mql5/ast_parser/` retrofits AP-1 (no SL) / AP-2 (SL too tight) / AP-7 (hardcoded magic) detectors behind opt-in `mql5-lint --use-ast`. Byte-identical findings vs the regex pipeline on the 20-EA + 23-scaffold golden corpus. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` runs a deterministic synthetic-OHLC backtest in pure Python and emits XML the existing `mql5-backtest` parser accepts unchanged — no Wine, no fake returns. |
+| **Wave 4.3** | **`v1.3.0`** | **RRI matrix cell-coverage audit** | **`python -m vibecodekit_mql5.rri.matrix --audit` exposes the schema-level coverage map: 6 of 64 cells are auto-fillable from W1.4 `--gate-report` artefacts (discriminative per (dim, axis)), 50 cells come from RRI HTML reviews that broadcast a dim status across all 8 axes, and the 8 `d_inference` cells stay manual-only. New envelope fields `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` give an honest verdict over the 6 discriminative cells (the legacy 56/64 threshold is unattainable when the matrix is built solely from the W1.4 collector). HTML report visually distinguishes the three coverage classes.** |
 
 ### Anti-patterns this kit refuses to ship
 
@@ -151,7 +152,7 @@ hot-spots:
 
 ## Tiếng Việt
 
-### v1.2.0 có gì
+### v1.3.0 có gì
 
 | Thành phần | Đã giao |
 |-----------|---------|
@@ -167,7 +168,7 @@ hot-spots:
 | **Ví dụ hoàn chỉnh** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — turnaround 4 tiếng ở chế độ enterprise |
 | **Pipeline auto-build** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — 1 lệnh, JSON report idempotent, hook publish public URL tuỳ chọn |
 | **Môi trường reproducible** | `requirements.lock` (pip-compile pin chặt) + `Dockerfile.devin` (3 stage: base / wine / ci) |
-| **Test gate** | 1190 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
+| **Test gate** | 1205 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage cho ma trận RRI 8×8, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
 
 [^2]: `mt5-bridge` cần package `MetaTrader5` Python — chỉ cài được trên
     Windows hoặc Wine MT5 desktop. Trên Linux Devin VM, import fail và
@@ -222,7 +223,8 @@ Hướng dẫn chi tiết:
 | **E** | **`v1.0.1`** | **Polish & ship** | **29 tài liệu tham khảo, 4 MCP server, `/mql5-canary` + `/mql5-tester-run`, worked example 4 tiếng, đầy đủ entry-point `[project.scripts]`** |
 | **E+** | _(post-v1.0.1)_ | Pipeline auto-build | `mql5-auto-build` orchestrator 1 lệnh, `mql5-auto-fix` transform AP-1/3/5/15/17/18/20/21, `mql5-spec-from-prompt` free-text → `ea-spec.yaml`, `mql5-dashboard` publisher ma trận chất lượng có hook URL public, `ea-spec.yaml` schema-driven (risk / signals / filters / hooks), `requirements.lock` + `Dockerfile.devin`, mở rộng setup Devin Wine kèm `terminal64.exe` |
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **Gộp CLI + golden dataset + forge loop hermetic** | **`mql5-review --lens {eng,ceo,cso,investigate}` gộp 5 CLI review; `mql5-rri {template,bt,rr,chart}` gộp 4 CLI RRI (10 console-script cũ vẫn chạy như alias). Golden dataset 20 EA ở `tests/fixtures/ea-bugs/` ghăm hợp đồng detector lint. `mql5-forge-loop` nối fixture hermetic vào backtest parser N iter — không cần Wine.** |
-| **Wave 3 (D/E)** | **`v1.2.0`** | **POC AST parser + backtest engine in-process** | **AST scanner MQL5 nhẹ dưới `scripts/vibecodekit_mql5/ast_parser/` retrofit AP-1 (thiếu SL) / AP-2 (SL quá chặt) / AP-7 (magic hardcode) sau cờ opt-in `mql5-lint --use-ast`. Finding byte-identical so với pipeline regex trên toàn bộ 20 EA + 23 scaffold golden. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` chạy backtest tick-bar deterministic bằng Python thuần và emit XML đúng schema MT5 để `mql5-backtest` parser ăn thẳng — không cần Wine, không emit return giả.** |
+| **Wave 3 (D/E)** | `v1.2.0` | POC AST parser + backtest engine in-process | AST scanner MQL5 nhẹ dưới `scripts/vibecodekit_mql5/ast_parser/` retrofit AP-1 (thiếu SL) / AP-2 (SL quá chặt) / AP-7 (magic hardcode) sau cờ opt-in `mql5-lint --use-ast`. Finding byte-identical so với pipeline regex trên toàn bộ 20 EA + 23 scaffold golden. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` chạy backtest tick-bar deterministic bằng Python thuần và emit XML đúng schema MT5 để `mql5-backtest` parser ăn thẳng — không cần Wine, không emit return giả. |
+| **Wave 4.3** | **`v1.3.0`** | **Audit cell-coverage cho ma trận RRI** | **`python -m vibecodekit_mql5.rri.matrix --audit` phơi bắng coverage ở schema level: 6/64 cell auto-fill discriminative từ artefact `--gate-report` (W1.4), 50 cell đến từ RRI HTML review (broadcast cùng dim status cho cả 8 axes), 8 cell `d_inference` chỉ fill manual qua `--inputs`. Envelope thêm field `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` cho verdict trung thực trên 6 cell discriminative (threshold legacy 56/64 luôn fail khi matrix build chỉ từ collector W1.4). HTML report phân biệt 3 coverage class bằng border.** |
 
 ### Anti-pattern kit từ chối ship
 

@@ -349,6 +349,55 @@ python -m vibecodekit_mql5.rri.rri_rr    --trader-check tc.json --walkforward wf
 python -m vibecodekit_mql5.rri.rri_chart --metrics chart.json --mode personal --output rri-chart.html
 ```
 
+#### Matrix cell-coverage audit (Wave 4.3)
+
+Ma trận RRI 8×8 có 64 cell, nhưng chỉ **6** cell được fill
+discriminative bằng artefact `--gate-report` Wave-1 (mỗi cell tương
+ứng đúng 1 (dim, axis)). 58 cell còn lại hoặc đến từ RRI HTML review
+broadcast cùng dim status cho cả 8 axes (`rri_broadcast`, 50 cell),
+hoặc hoàn toàn không có automation (`manual`, 8 cell — toàn bộ hàng
+`d_inference`).
+
+Threshold legacy `passes_personal()` / `passes_enterprise()` giả định
+**toàn bộ** 64 cell được fill, nên trong thực tế **luôn fail** khi
+matrix chỉ được build từ collector W1.4. Dùng **gate-only verdict**
+thay thế — chỉ tính 6 cell mà collector thật sự fill được.
+
+```bash
+# Audit độc lập — không cần inputs / không cần report:
+python -m vibecodekit_mql5.rri.matrix --audit
+# In ra:
+# {
+#   "schema_version": "1",
+#   "total_cells": 64,
+#   "counts": {"gate_auto": 6, "rri_broadcast": 50, "manual": 8},
+#   "cells": { … per-cell map kèm tool gate-report cho mỗi gate_auto cell … }
+# }
+
+# Collect → matrix → HTML, envelope thêm gate-only verdict:
+python -m vibecodekit_mql5.rri.matrix --collect ./reports/ --output matrix.html
+# Envelope thêm field (Wave 4.3):
+#   counts_by_coverage:      đếm status theo coverage class
+#   passes_personal_gate_only:   verdict PASS theo 6 gate_auto cell
+#   passes_enterprise_gate_only: PASS strict (0 WARN) trên cùng 6 cell
+```
+
+HTML report giờ phân biệt 3 coverage class bằng border: viền xanh đậm
+= `gate_auto`, đường gạch tím = `rri_broadcast`, dotted xám mờ =
+`manual` — reviewer thấy ngay cell nào có signal thật sự per-(dim,
+axis), cell nào chỉ là filler.
+
+| Cell                                | Coverage class    | Tool discriminative                                                    |
+|-------------------------------------|-------------------|------------------------------------------------------------------------|
+| `d_correctness × implement`         | `gate_auto`       | `mql5-lint`, `mql5-method-hiding-check`, `mql5-bt-sim`                 |
+| `d_correctness × integration`       | `gate_auto`       | `mql5-permission`                                                      |
+| `d_risk × design`                   | `gate_auto`       | `mql5-trader-check`                                                    |
+| `d_robustness × backtest`           | `gate_auto`       | `mql5-backtest`, `mql5-monte-carlo`, `mql5-mfe-mae`, `mql5-forge-loop` |
+| `d_robustness × walk_forward`       | `gate_auto`       | `mql5-walkforward`, `mql5-overfit-check`                               |
+| `d_broker_safety × multi_broker`    | `gate_auto`       | `mql5-broker-safety`, `mql5-multibroker`                               |
+| `d_inference × *`  (toàn hàng)      | `manual`          | không có — phải fill qua `--inputs` JSON                               |
+| _(50 cell khác)_                    | `rri_broadcast`   | `mql5-rri bt|rr|chart` (broadcast cùng dim status cho cả 8 axes)       |
+
 ### 3.6. Review opener (6 — 1 umbrella + 4 alias Wave-3 + 1 standalone)
 
 Wave 3 gộp 4 CLI review-persona (`mql5-eng-review`, `mql5-ceo-review`,

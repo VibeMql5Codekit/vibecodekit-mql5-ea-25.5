@@ -44,8 +44,15 @@ matrix collector picks them up:
 mql5-lint EA.mq5 --json
 mql5-lint EA.mq5 --format sarif                # SARIF 2.1.0
 mql5-walkforward is.xml oos.xml --gate-report gate-report-wf.json
-mql5-rri-matrix --collect ./reports/ --output matrix.html
+python -m vibecodekit_mql5.rri.matrix --collect ./reports/ --output matrix.html
+python -m vibecodekit_mql5.rri.matrix --audit                          # Wave 4.3 cell-coverage audit
 ```
+
+The matrix collector recognises **6 discriminative cells** (one per
+(dim, axis) pair) — see [USAGE-en §3.5 → Matrix cell-coverage audit
+(Wave 4.3)](USAGE-en.md#matrix-cell-coverage-audit-wave-43) for the
+full coverage table and the new `passes_personal_gate_only` /
+`passes_enterprise_gate_only` envelope fields.
 
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
