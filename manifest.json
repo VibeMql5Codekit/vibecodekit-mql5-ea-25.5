@@ -261,9 +261,9 @@
       "module": "vibecodekit_mql5.manifest",
       "entry_point": "vibecodekit_mql5.manifest:main",
       "description": "mql5-manifest \u2014 emit a root agent manifest of all CLI tools.",
-      "supports_json": true,
-      "supports_sarif": true,
-      "supports_gate_report": true
+      "supports_json": false,
+      "supports_sarif": false,
+      "supports_gate_report": false
     },
     {
       "name": "mql5-method-hiding-check",

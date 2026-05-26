@@ -200,7 +200,7 @@ def series_to_journal(series: Series, *, with_pipnorm: bool = True) -> str:
     if with_pipnorm:
         lines.append("2024.06.01 09:00:00.000  EURUSD [PipNorm] base_digits=5 pip=0.00010")
     for i, r in enumerate(series.returns[:10], start=1):
-        lines.append(f"2024.06.01 09:0{i:02d}:00.000  Trade#{i:03d} pnl={r:+.2f}")
+        lines.append(f"2024.06.01 09:{i:02d}:00.000  Trade#{i:03d} pnl={r:+.2f}")
     return "\n".join(lines) + "\n"
 
 

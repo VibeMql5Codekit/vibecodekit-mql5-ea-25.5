@@ -27,12 +27,15 @@ mql5-rri-matrix --collect ./reports/ --output matrix.html
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, plus the two new commands below.
+`mql5-audit`, `mql5-fixture`.
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
-Run `mql5-manifest --emit > manifest.json` for a machine-readable
-catalogue of every command (capability flags + module path).
+`mql5-manifest` is the discovery tool itself — it has its own
+`--emit` / `--validate` surface and does NOT participate in the
+`--json` envelope contract. Run `mql5-manifest --emit > manifest.json`
+for a machine-readable catalogue of every command (capability flags
++ module path).
 
 ## Discovery (4)
 - `/mql5-scan`     — survey project tree, classify artefacts

@@ -105,7 +105,20 @@ def _module_supports(module_name: str, flag: str) -> bool:
 
     This is a heuristic — agents that need a stronger guarantee should
     consult the SARIF or JSON envelope at runtime. The heuristic is good
-    enough for catalogue discovery."""
+    enough for catalogue discovery.
+
+    The manifest module itself is hard-excluded: it lists every needle
+    string in its own source (as data, not as a flag registration) so
+    a naive substring match would flag it as supporting every flag,
+    yet its CLI deliberately exposes only ``--emit`` / ``--validate``."""
+
+    # NOTE: a literal package-qualified name is used here on purpose.
+    # ``__name__`` resolves to ``"__main__"`` when this file is run via
+    # ``python -m vibecodekit_mql5.manifest``, so an ``__name__`` compare
+    # would silently fail to short-circuit when the manifest is generated
+    # from the CLI.
+    if module_name == "vibecodekit_mql5.manifest":
+        return False
 
     try:
         spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
