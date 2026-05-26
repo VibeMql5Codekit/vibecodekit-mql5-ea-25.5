@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (57 commands)
+title: Command catalog (58 commands)
 applicable_phase: E
 ---
 
@@ -27,21 +27,43 @@ mql5-rri-matrix --collect ./reports/ --output matrix.html
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, `mql5-fixture`.
+`mql5-audit`, `mql5-fixture`, `mql5-init`.
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
 `mql5-manifest` is the discovery tool itself — it has its own
 `--emit` / `--validate` surface and does NOT participate in the
-`--json` envelope contract. Run `mql5-manifest --emit > manifest.json`
-for a machine-readable catalogue of every command (capability flags
-+ module path).
+`--json` envelope contract. `mql5-compile` carries a *legacy*
+`--json` flag (emits `CompileResult` directly, not the Wave-1
+envelope) and is therefore also kept out of the table above.
 
-## Discovery (4)
+Run `mql5-manifest --emit > manifest.json` for a machine-readable
+catalogue of every command (capability flags + module path).
+
+## Draft mode (Wave 2)
+
+Four gates accept the new `--draft` flag, which downgrades errors to
+non-blocking warnings and forces exit 0 — useful inside the
+chat-driven build loop where the EA is still half-written:
+
+```bash
+mql5-lint EA.mq5 --draft
+mql5-trader-check EA.mq5 --draft
+mql5-permission --mode personal EA.mq5 --draft
+mql5-auto-build --spec ea-spec.yaml --draft       # implies --no-compile --no-gate --no-docs
+```
+
+The JSON envelope still records the original verdict under
+`data.original_ok` so downstream tooling can see what would have
+blocked in non-draft mode. Draft is distinct from `--soft` (used by
+`mql5-doctor` to relax *environment* probes); both flags can coexist.
+
+## Discovery (5)
 - `/mql5-scan`     — survey project tree, classify artefacts
 - `/mql5-survey`   — match free-text strategy → scaffold archetype
 - `/mql5-doctor`   — installation + environment health check (use `--soft` for docs/lint-only CI without Wine: Wine/MetaEditor/terminal probes become warnings, exit 0)
 - `/mql5-audit`    — run 70-test conformance battery
+- `/mql5-init`     — interactive 5-question bootstrap wizard → `ea-spec.yaml` (Wave 2). Use `--non-interactive` / `--from-answers <yaml>` in CI.
 
 ## Plan (4)
 - `/mql5-rri`       — open Step 2 RRI template

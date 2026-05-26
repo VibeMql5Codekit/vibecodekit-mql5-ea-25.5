@@ -8,9 +8,9 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.0.1`. 57 CLI commands, 4 MCP servers,
+- **Status:** shipped product, `v1.0.1`. 58 CLI commands, 4 MCP servers,
   23 scaffold archetypes, 26 anti-pattern detectors (25 numbered AP-1…AP-25
-  + 1 build-aware method-hiding), 7-layer permission gate, 1021 tests
+  + 1 build-aware method-hiding), 7-layer permission gate, 1057 tests
   across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
@@ -18,7 +18,7 @@ to read first, what to use, and what NOT to introduce.
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (55) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (58) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -97,6 +97,21 @@ backtest / walkforward / monte-carlo / multibroker parsers accept
 unchanged. Tests for this loop live under
 `tests/gates/phase-B/test_fixture_generator.py`.
 
+## Agent Contracts (Wave 2)
+
+- `mql5-init` is a 5-question interactive bootstrap wizard that emits
+  `ea-spec.yaml` (the same artefact `mql5-auto-build --spec` consumes).
+  It exposes `--non-interactive`, `--from-answers <yaml>`,
+  `--list-presets`, and the standard `--json` envelope. Use it as the
+  one-shot newcomer entry-point; the `README.md` 30-second quickstart
+  pipes its output into `mql5-auto-build --draft`.
+- `--draft` is a kit-wide flag on `mql5-lint`, `mql5-trader-check`,
+  `mql5-permission`, and `mql5-auto-build`. It downgrades every
+  finding to a non-blocking warning and exits 0, but the JSON envelope
+  still records `data.original_ok` so the chat-driven build loop can
+  inspect what would have failed. Distinct from `mql5-doctor --soft`
+  (which only relaxes *environment* probes). The two flags compose.
+
 ## Task Loop
 
 For every coding task:
@@ -147,8 +162,8 @@ mql5-permission --mode personal FirstEA.mq5
 ## Tiếng Việt — tóm tắt cho agent
 
 - `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.0.1`,
-  55 lệnh CLI, 4 MCP server, 23 scaffold, 26 AP detector (25 đánh số
-  AP-1…AP-25 + 1 method-hiding theo build), 946 test gate.
+  58 lệnh CLI, 4 MCP server, 23 scaffold, 26 AP detector (25 đánh số
+  AP-1…AP-25 + 1 method-hiding theo build), 1057 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

@@ -109,6 +109,8 @@ mql5-permission = "vibecodekit_mql5.permission.orchestrator:main"
 # Wave-1 agent contracts: catalogue + hermetic CI fixture generator
 mql5-manifest = "vibecodekit_mql5.manifest:main"
 mql5-fixture = "vibecodekit_mql5.fixture:main"
+# Wave-2 onboarding: 5-question interactive bootstrap → ea-spec.yaml
+mql5-init = "vibecodekit_mql5.init:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

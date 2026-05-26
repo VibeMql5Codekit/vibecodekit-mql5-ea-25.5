@@ -164,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--mode", choices=["personal", "enterprise"], default="personal")
     _agent_io.add_json_flag(p)
     _agent_io.add_gate_report_flag(p)
+    _agent_io.add_draft_flag(p)
     args = p.parse_args(argv)
 
     from .mq5_io import read_mq5_text
@@ -183,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         matrix_axis="design",
         matrix_status="PASS" if ok else "FAIL",
     )
+    _agent_io.apply_draft(envelope, args.draft)
 
     if args.emit_json:
         _agent_io.emit(envelope)
@@ -193,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.gate_report is not None:
         _agent_io.write_gate_report(envelope, args.gate_report)
 
-    return 0 if ok else 1
+    return envelope.exit_code
 
 
 if __name__ == "__main__":

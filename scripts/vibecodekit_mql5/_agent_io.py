@@ -61,6 +61,56 @@ def add_json_flag(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_draft_flag(parser: argparse.ArgumentParser) -> None:
+    """Register the standard ``--draft`` flag (Wave 2 §W2.3).
+
+    Draft mode tells a gate to keep collecting findings but downgrade
+    every ``ERROR`` to a non-blocking warning: the tool exits 0 and the
+    envelope reports ``ok=true`` so a downstream pipeline (Devin chat
+    loop, CI smoke job) can iterate quickly on a half-finished EA
+    without the gate slamming the door on every commit.
+
+    Draft is intentionally **different** from ``--soft`` (see
+    ``mql5-doctor``): ``--soft`` relaxes environment probes (Wine /
+    MetaEditor / terminal) so docs-only CI passes; ``--draft`` relaxes
+    the *gate acceptance threshold* itself. Both flags can coexist on
+    the same tool.
+    """
+
+    parser.add_argument(
+        "--draft",
+        action="store_true",
+        help="Draft mode: downgrade errors to non-blocking warnings, "
+        "exit 0 regardless of findings (still emits a JSON envelope "
+        "marked ``draft=true``).",
+    )
+
+
+def apply_draft(envelope: Envelope, draft: bool) -> Envelope:
+    """Mutate ``envelope`` in place when ``draft`` is true.
+
+    Sets ``ok=True``, ``exit_code=0`` and adds ``data.draft=True`` +
+    ``data.original_*`` so consumers can still see what the gate would
+    have rejected in non-draft mode. The matrix status downgrades from
+    ``FAIL`` to ``WARN`` (PASS stays PASS); other statuses are left
+    alone so a draft run doesn't poison the quality matrix.
+    """
+
+    if not draft:
+        return envelope
+    envelope.data = dict(envelope.data)  # ensure we don't share mutable
+    envelope.data["draft"] = True
+    envelope.data["original_ok"] = envelope.ok
+    envelope.data["original_exit_code"] = envelope.exit_code
+    envelope.ok = True
+    envelope.exit_code = 0
+    if envelope.matrix_status == "FAIL":
+        envelope.data["original_matrix_status"] = "FAIL"
+        envelope.matrix_status = "WARN"
+    envelope.summary += " (draft mode — errors downgraded to warnings)"
+    return envelope
+
+
 def add_gate_report_flag(parser: argparse.ArgumentParser) -> None:
     """Register the standard ``--gate-report`` flag.
 
