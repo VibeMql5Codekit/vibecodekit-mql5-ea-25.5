@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (59 commands — 49 standalone + 10 Wave-3 aliases)
+title: Command catalog (60 commands — 50 standalone + 10 Wave-3 aliases)
 applicable_phase: E
 ---
 
@@ -21,9 +21,16 @@ No master `/mql5` router — every command stands alone.
   flavour via subcommand `mql5-rri {template,bt,rr,chart}`. The three
   matrix-named console scripts remain as 1-line aliases.
 
-The pyproject `[project.scripts]` entry list is unchanged (59 entries
-post-Wave-3) — every alias still resolves to its existing console-script
-name. Wave 3 only consolidated the *implementation*, not the surface.
+The pyproject `[project.scripts]` entry list grew by one in Wave 3.E
+(`mql5-bt-sim`) for a current total of 60 entries — every alias still
+resolves to its existing console-script name. Wave-3.A/B/C consolidated
+the *implementation* of `mql5-review` / `mql5-rri`, not the surface.
+Wave-3.D adds an opt-in `mql5-lint --use-ast` flag (no new CLI) that
+routes AP-1 / AP-2 / AP-7 through a lightweight MQL5 AST scanner under
+`scripts/vibecodekit_mql5/ast_parser/` — byte-identical to the regex
+pipeline on the 20-EA + 23-scaffold golden corpus, regex remains the
+default. Wave-3.E adds the new `mql5-bt-sim` in-process tick-bar
+simulator.
 
 ## Agent contracts (Wave 1)
 
@@ -43,7 +50,7 @@ mql5-rri-matrix --collect ./reports/ --output matrix.html
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`.
+`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`, `mql5-bt-sim`.
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -104,9 +111,9 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-llm-context`       — wire an LLM bridge into an existing EA
 - `/mql5-forge-init`        — initialise an Algo Forge repo
 
-## Verify (12)
+## Verify (13)
 - `/mql5-compile`             — MetaEditor build (Wine on Linux)
-- `/mql5-lint`                — 8 critical anti-pattern detectors
+- `/mql5-lint`                — 8 critical anti-pattern detectors. Add **`--use-ast`** (Wave 3.D POC) to route AP-1 / AP-2 / AP-7 through the lightweight MQL5 AST scanner instead of the regex detector. Byte-identical findings vs the regex pipeline on the 20-EA + 23-scaffold golden corpus. Regex remains the default.
 - `/mql5-method-hiding-check` — build-aware method-hiding detector (ERROR on build ≥ 5260, WARN below)
 - `/mql5-backtest`            — parse Strategy Tester XML → 14 metrics JSON (you run the tester)
 - `/mql5-tester-run`          — drive `terminal64.exe` (Wine or native) with a rendered `tester.ini` and parse the XML end-to-end
@@ -117,6 +124,7 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-multibroker`         — N-broker stability orchestrator (`--reports a.xml,b.xml,c.xml`)
 - `/mql5-fitness`             — OnTester custom fitness template (positional name; omit to list)
 - `/mql5-mfe-mae`             — per-trade MFE/MAE CSV analyser (8-col schema; see USAGE)
+- `/mql5-bt-sim`              — **Wave 3.E**: deterministic Python tick-bar simulator. Generates synthetic OHLC bars under a seed, runs a built-in strategy (`--strategy sma-cross|mean-rev|breakout|random`), emits XML in the MT5 Strategy Tester schema. The `mql5-backtest` parser ingests the file unchanged → chain `mql5-bt-sim --out tester.xml && mql5-backtest --report tester.xml --json` for hermetic CI without Wine.
 
 ## RRI methodology (4 — 1 umbrella + 3 Wave-3 aliases)
 - `/mql5-rri` — umbrella CLI. Subcommands (alias to the entry points below):

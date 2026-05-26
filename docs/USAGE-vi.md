@@ -238,7 +238,7 @@ overrides) nằm ở `scripts/vibecodekit_mql5/spec_schema.py`. Bảng
 recogniser của `mql5-spec-from-prompt` có ở
 [`devin-chat-driven-build.md`](devin-chat-driven-build.md#what-the-parser-understands).
 
-### 3.4. Verify (12 lệnh)
+### 3.4. Verify (13 lệnh)
 
 ```bash
 # 1. Compile qua MetaEditor (Wine trên Linux)
@@ -246,6 +246,14 @@ python -m vibecodekit_mql5.compile MyEA.mq5
 
 # 2. Lint 8 anti-pattern nghiêm trọng (ERROR-level, block ship)
 python -m vibecodekit_mql5.lint MyEA.mq5
+
+# 2b. Wave 3.D POC — bật AST scanner MQL5 nhẹ cho AP-1 (no SL) /
+#     AP-2 (SL quá chặt) / AP-7 (magic hardcode). Các AP code khác
+#     vẫn dùng regex. Finding byte-identical so với pipeline regex
+#     trên toàn bộ 20 EA + 23 scaffold golden, nên cờ này an toàn
+#     để cắm vào CI hiện tại:
+mql5-lint MyEA.mq5 --use-ast
+mql5-lint MyEA.mq5 --use-ast --json --gate-report gate-report-lint.json
 
 # 3. Method-hiding linter (build ≥ 5260 → ERROR; build < 5260 → WARN)
 python -m vibecodekit_mql5.method_hiding_check MyEA.mq5 --build 5260
@@ -542,6 +550,52 @@ python -m vibecodekit_mql5.forge_loop \
 + `--gate-report`, nên matrix collector (`mql5-rri-matrix --collect`)
 ăn unchanged. Không Wine, không MetaTester — fixture generator emit
 XML/CSV/journal đúng schema mà backtest parser nhận.
+
+### 3.12. Backtest engine — tick-bar simulator in-process (1 lệnh, Wave 3.E)
+
+`mql5-bt-sim` sinh **OHLC tổng hợp** dưới random-walk có seed, chạy
+một chiến lược long-only built-in, rồi emit XML đúng schema MT5
+Strategy Tester. Parser `mql5-backtest` hiện tại ăn file đó unchanged
+→ chain `mql5-bt-sim → mql5-backtest` để thay `mql5-fixture --type
+backtest` mỗi khi agent muốn *logic entry / exit thật* trong vòng
+lặp thay vì raw return synthesis.
+
+Bốn strategy built-in:
+
+| `--strategy`  | Logic                                                                                        |
+|---------------|----------------------------------------------------------------------------------------------|
+| `sma-cross`   | Cross SMA nhanh/chậm, long-only. Bar synth có drift dương → PF > 1.                          |
+| `mean-rev`    | Kiểu Bollinger: vào long khi giá < SMA−k·σ, thoát ở SMA. AR(1) hệ số −0.5 trong bar synth.   |
+| `breakout`    | Kênh Donchian: vào khi break đỉnh N-bar, thoát khi xuyên đáy N-bar. Edge xuất hiện khi trend. |
+| `random`      | Baseline ngu (vào bar lẻ, ra bar chẵn). Dùng làm fixture không-edge.                          |
+
+```bash
+# Tối giản — sma-cross trên 500 bar tổng hợp, deterministic seed 42:
+mql5-bt-sim --strategy sma-cross --bars 500 --seed 42 --out tester.xml
+
+# Chain vào parser XML hiện tại unchanged:
+mql5-backtest --report tester.xml --json
+
+# Envelope JSON + gate-report cho matrix collector:
+mql5-bt-sim --strategy mean-rev --bars 500 --seed 99 \
+            --out tester.xml --returns-csv returns.csv \
+            --json --gate-report gate-report-btsim.json
+
+# Tune chu kỳ MA / band width mean-rev:
+mql5-bt-sim --strategy sma-cross --fast 5 --slow 20 --bars 800 --seed 7 \
+            --out tester.xml
+mql5-bt-sim --strategy mean-rev  --slow 30 --k 2.5  --bars 800 --seed 7 \
+            --out tester.xml
+
+# Module-level:
+python -m vibecodekit_mql5.bt_engine \
+    --strategy breakout --bars 600 --seed 123 --out tester.xml
+```
+
+Cùng bộ ba `(strategy, seed, bars)` → XML byte-identical mỗi lần chạy.
+Pure-Python, không depend, không Wine, không MetaTester. File
+`--returns-csv` cũng vào thẳng `mql5-monte-carlo` /
+`mql5-overfit-check` unchanged cho robustness phân tích downstream.
 
 ---
 

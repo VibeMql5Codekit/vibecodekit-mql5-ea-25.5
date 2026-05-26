@@ -216,13 +216,21 @@ stack overrides) lives at `scripts/vibecodekit_mql5/spec_schema.py`;
 recognisers for `mql5-spec-from-prompt` are tabulated in
 [`devin-chat-driven-build.md`](devin-chat-driven-build.md#what-the-parser-understands).
 
-### 3.4. Verify (12)
+### 3.4. Verify (13)
 
 ```bash
 # Code-quality (run anytime; no XML needed)
 python -m vibecodekit_mql5.compile             MyEA.mq5
 python -m vibecodekit_mql5.lint                MyEA.mq5
 python -m vibecodekit_mql5.method_hiding_check MyEA.mq5 --build 5260
+
+# Wave 3.D POC — opt in to the lightweight MQL5 AST scanner for
+# AP-1 (no SL) / AP-2 (SL too tight) / AP-7 (hardcoded magic). All
+# other AP codes still use the regex pipeline. Findings are
+# byte-identical to the regex pipeline on the 20-EA + 23-scaffold
+# golden corpus, so this flag is safe to wedge into existing CI:
+mql5-lint MyEA.mq5 --use-ast
+mql5-lint MyEA.mq5 --use-ast --json --gate-report gate-report-lint.json
 
 # Parse Strategy Tester XML report (run backtest manually first, then parse)
 python -m vibecodekit_mql5.backtest MyEA.ex5 inputs.set \
@@ -443,6 +451,53 @@ python -m vibecodekit_mql5.forge_loop \
 (`mql5-rri-matrix --collect`) consumes it unchanged. No Wine, no
 MetaTester — the fixture generator emits the XML/CSV/journal artefacts
 the backtest parser ingests.
+
+### 3.11. Backtest engine — in-process tick-bar simulator (1, Wave 3.E)
+
+`mql5-bt-sim` generates **synthetic OHLC bars** under a seed-controlled
+random walk, runs a built-in long-only strategy on those bars, and
+emits an XML report in the same schema as MetaTrader 5's Strategy
+Tester output. The existing `mql5-backtest` parser accepts the file
+unchanged → chain `mql5-bt-sim → mql5-backtest` to replace
+`mql5-fixture --type backtest` whenever the agent wants *real*
+strategy entry / exit logic in the loop instead of raw return synthesis.
+
+Four built-in strategies:
+
+| `--strategy`  | Logic                                                                                    |
+|---------------|------------------------------------------------------------------------------------------|
+| `sma-cross`   | Fast/slow SMA crossover, long-only. Trending drift baked into bar synth → PF > 1.        |
+| `mean-rev`    | Bollinger-style: enter long < SMA−k·σ, exit at SMA. AR(1) coefficient -0.5 in bar synth. |
+| `breakout`    | Donchian-channel: enter on N-bar high breakout, exit on N-bar low. Edge under trend.     |
+| `random`      | Dumb baseline (enter on odd bars, exit on even). Useful as a zero-edge fixture.          |
+
+```bash
+# Minimal — sma-cross on 500 synthetic bars, deterministic from seed 42:
+mql5-bt-sim --strategy sma-cross --bars 500 --seed 42 --out tester.xml
+
+# Chain into the existing XML parser unchanged:
+mql5-backtest --report tester.xml --json
+
+# JSON envelope + gate-report for the matrix collector:
+mql5-bt-sim --strategy mean-rev --bars 500 --seed 99 \
+            --out tester.xml --returns-csv returns.csv \
+            --json --gate-report gate-report-btsim.json
+
+# Tune the moving-average periods / mean-rev band width:
+mql5-bt-sim --strategy sma-cross --fast 5 --slow 20 --bars 800 --seed 7 \
+            --out tester.xml
+mql5-bt-sim --strategy mean-rev  --slow 30 --k 2.5  --bars 800 --seed 7 \
+            --out tester.xml
+
+# Module-level:
+python -m vibecodekit_mql5.bt_engine \
+    --strategy breakout --bars 600 --seed 123 --out tester.xml
+```
+
+Same `(strategy, seed, bars)` triple → byte-identical XML on re-run.
+Pure-Python, dependency-free, no Wine, no MetaTester. The `--returns-csv`
+output also drops into `mql5-monte-carlo` / `mql5-overfit-check`
+unchanged for downstream robustness analysis.
 
 ---
 

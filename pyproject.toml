@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibecodekit-mql5-ea"
-version = "1.0.1"
+version = "1.2.0"
 description = "Vibecode methodology kit for MQL5 Expert Advisor development"
 readme = "README.md"
 license = {text = "MIT"}
@@ -113,6 +113,8 @@ mql5-fixture = "vibecodekit_mql5.fixture:main"
 mql5-init = "vibecodekit_mql5.init:main"
 # Wave-3 closed forge loop: hermetic fixture → backtest parse, no Wine
 mql5-forge-loop = "vibecodekit_mql5.forge_loop:main"
+# Wave-3.E in-process backtest engine: synthetic bars → strategy logic → MT5-XML
+mql5-bt-sim = "vibecodekit_mql5.bt_engine:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

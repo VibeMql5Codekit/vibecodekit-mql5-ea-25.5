@@ -8,20 +8,23 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.1.0`. 59 CLI commands (49 standalone +
+- **Status:** shipped product, `v1.2.0`. 60 CLI commands (50 standalone +
   10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
   `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
   anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
   method-hiding) pinned by a 20-EA golden dataset under
-  `tests/fixtures/ea-bugs/`, 7-layer permission gate, 1102 tests across
-  Phase 0 / A / B / C / D / E.
+  `tests/fixtures/ea-bugs/`, lightweight MQL5 AST parser POC under
+  `scripts/vibecodekit_mql5/ast_parser/` retrofitting AP-1/2/7 behind
+  `mql5-lint --use-ast`, in-process Python tick-bar simulator
+  `mql5-bt-sim` emitting MT5-compatible XML for hermetic backtests,
+  7-layer permission gate, 1190 tests across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (59) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (60) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -186,11 +189,13 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.1.0`,
-  59 lệnh CLI (49 standalone + 10 alias Wave-3 quy về 2 umbrella:
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.2.0`,
+  60 lệnh CLI (50 standalone + 10 alias Wave-3 quy về 2 umbrella:
   `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
   scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo
-  build) găm bởi 20-EA golden dataset, 1102 test gate.
+  build) găm bởi 20-EA golden dataset, AST parser POC (`ast_parser/`,
+  bật bằng `mql5-lint --use-ast`) + Python tick-bar simulator
+  (`mql5-bt-sim`), 1190 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**
