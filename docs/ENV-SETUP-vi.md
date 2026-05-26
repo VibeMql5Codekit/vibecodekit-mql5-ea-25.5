@@ -7,9 +7,15 @@ audience: dev_team
 
 # Tích hợp `vibecodekit-mql5-ea` với 6 môi trường dev / agent
 
-Hướng dẫn này áp dụng v1.0.0+. Mỗi section hoàn chỉnh và độc lập:
-chọn section IDE/CLI bạn dùng, paste config, sẵn sàng chạy 50 lệnh +
-4 MCP server.
+Hướng dẫn này áp dụng `v1.4.0+`. Mỗi section hoàn chỉnh và độc lập:
+chọn section IDE/CLI bạn dùng, paste config, sẵn sàng chạy **63 lệnh CLI**
+(50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1) + **4 MCP server**.
+
+Sau Wave 5, ngoài CLI + MCP, kit còn cung cấp **6 persona prompt
+paste-and-run** dưới `docs/agent-prompts/` để bind LLM chat ngoài
+(Claude, ChatGPT, Cursor, Devin) thành một vai cố định cho một step
+methodology — xem `docs/USAGE-vi.md` §3.13 hoặc
+`docs/USER-GUIDE-vi.md` §4.8.
 
 > 🇬🇧 English version pending — sections below are bilingual where it
 > matters; CLI snippets are language-neutral.
@@ -23,6 +29,7 @@ chọn section IDE/CLI bạn dùng, paste config, sẵn sàng chạy 50 lệnh +
 5. [Cursor](#5-cursor)
 6. [VS Code + Copilot Chat](#6-vs-code--copilot-chat)
 7. [MCP server config bảng tổng hợp](#7-mcp-server-config-bảng-tổng-hợp)
+8. [Wave 5 persona prompt (paste-and-run, không cần CLI)](#8-wave-5-persona-prompt-paste-and-run-không-cần-cli)
 
 ---
 
@@ -122,7 +129,7 @@ Codex tự đọc `AGENTS.md` khi ở trong repo. Tạo file này:
 ## Setup
 - Wine 8.0.2 đã được cài qua `./scripts/setup-wine-metaeditor.sh`.
 - Python venv ở `.venv/`. Activate: `source .venv/bin/activate`.
-- 50 lệnh `python -m vibecodekit_mql5.<name>` (xem `docs/COMMANDS.md`).
+- 63 lệnh `python -m vibecodekit_mql5.<name>` (xem `docs/COMMANDS.md`).
 - Đọc `docs/USAGE-vi.md` để biết workflow đầy đủ.
 - Shortcut 1-lệnh:
   `mql5-spec-from-prompt "<prompt>" --out ea-spec.yaml && mql5-auto-build --spec ea-spec.yaml`.
@@ -417,8 +424,12 @@ python -m vibecodekit_mql5.audit
 ruff check scripts/ mcp/
 ```
 
-## 50 lệnh
-Xem `docs/COMMANDS.md`. Gọi: `python -m vibecodekit_mql5.<name>`.
+## 63 lệnh
+Xem `docs/COMMANDS.md` (50 standalone + 10 alias Wave-3 quy về umbrella
+`mql5-review --lens` / `mql5-rri <subcommand>` + 3 generator Wave-5.1
+`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`). Gọi:
+`python -m vibecodekit_mql5.<name>` hoặc dùng console-script
+`mql5-<name>` (entry point trong `pyproject.toml`).
 ```
 
 ### 6.2. MCP qua `.vscode/mcp.json`
@@ -489,7 +500,7 @@ path với forward slash hoặc escaped backslash.
 | metaeditor-bridge | 3 | `metaeditor.compile`, `metaeditor.parse_log`, `metaeditor.includes_resolve` | `METAEDITOR_BIN` (optional) |
 | mt5-bridge | 10 (chỉ-đọc) | `mt5.symbols.list`, `mt5.symbol.info`, `mt5.rates.copy`, `mt5.tick.last`, `mt5.account.info`, `mt5.terminal.info`, `mt5.positions.list`, `mt5.positions.history`, `mt5.history.deals`, `mt5.market.book` | MT5 desktop chạy + login (Windows/Wine) |
 | algo-forge-bridge | 6 | `forge.init`, `forge.clone`, `forge.commit`, `forge.pr.create`, `forge.pr.list`, `forge.repo.list` | `ALGO_FORGE_API_KEY` |
-| vibecodekit-bridge | 29 | `spec.from_prompt`, `spec.validate`, `build.auto`, `verify.{permission,lint,lint_best_practice,method_hiding,trader17,compile,broker_safety,audit,backtest,walkforward,montecarlo,multibroker,fitness,mfe_mae,overfit,auto_fix}`, `review.{eng,cso,ceo,investigate}`, `rri.persona`, `dashboard.publish`, `forge.pr.create`, `discover.{doctor,scan,llm_context}` | (hermetic; `MQL5_FORGE_TOKEN` only for real-mode `forge.pr.create`, `MQL5_DASHBOARD_PUBLISH_CMD` for `dashboard.publish` upload) |
+| vibecodekit-bridge | 30 | `spec.from_prompt`, `spec.validate`, `build.auto`, `verify.{permission,lint,lint_best_practice,method_hiding,trader17,compile,broker_safety,audit,backtest,walkforward,montecarlo,multibroker,fitness,mfe_mae,overfit,auto_fix}`, `review.{eng,cso,ceo,investigate}`, `rri.persona`, `dashboard.publish`, `forge.pr.create`, `discover.{doctor,scan,llm_context}`, `docs.ea_render` | (hermetic; `MQL5_FORGE_TOKEN` only for real-mode `forge.pr.create`, `MQL5_DASHBOARD_PUBLISH_CMD` for `dashboard.publish` upload) |
 
 ### Tại sao mt5-bridge READ-ONLY?
 
@@ -497,6 +508,38 @@ Cố ý — kit này KHÔNG ship trade-execution qua MCP để tránh risk LLM
 gửi lệnh nhầm. Mọi trade phải qua EA `.ex5` đã compile + Strategy
 Tester. Test `test_mt5_bridge_readonly_no_trade` grep code base verify
 zero token `order_send`, `order_close`, `position_modify`, `position_close`.
+
+---
+
+## 8. Wave 5 persona prompt (paste-and-run, không cần CLI)
+
+Khi muốn LLM chat ngoài (Claude, ChatGPT, Cursor, Devin) đóng đúng
+**một vai** ở **một step** của 8-step RRI methodology, copy file
+tương ứng dưới `docs/agent-prompts/` rồi paste làm system message:
+
+| File | Vai trò | Lens | Step chính |
+|---|---|---|---|
+| `docs/agent-prompts/strategy-architect.md` | Quant / kiến trúc sư chiến lược | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| `docs/agent-prompts/broker-engineer.md` | Kỹ sư MQL5 — chủ code | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| `docs/agent-prompts/risk-auditor.md` | Risk auditor / compliance | `cso` | RRI, BLUEPRINT, VERIFY |
+| `docs/agent-prompts/devops.md` | Thợ deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| `docs/agent-prompts/perf-analyst.md` | Phân tích backtest / Tester | `investigate` | VERIFY, REFINE |
+| `docs/agent-prompts/trader.md` | End-user — "chủ nhà" | `ceo` | SCAN, VISION, VERIFY |
+
+Workflow điển hình cho 1 step:
+1. Chạy generator deterministic Wave-5.1 (`mql5-vision-gen` /
+   `mql5-blueprint-gen` / `mql5-tip-gen`) để emit skeleton
+   `step-N-<name>.md`.
+2. Mở LLM chat mới, paste persona prompt tương ứng với step đó vào
+   system message.
+3. Yêu cầu LLM refine narrative trong các block `TODO` của skeleton.
+4. Chạy sentinel validator (`mql5-permission-layer5
+   --enforce-activities`) để check tỉ lệ `- [x] / - [ ]` dưới
+   `## Activities` đạt ngưỡng `personal ≥ 50%` / `team ≥ 80%` /
+   `enterprise = 100%` trước khi pass step.
+
+Đọc thêm: `docs/agent-prompts/README.md` (operator playbook EN + VN),
+`docs/USAGE-vi.md` §3.13 (chi tiết schema YAML frontmatter).
 
 ---
 
