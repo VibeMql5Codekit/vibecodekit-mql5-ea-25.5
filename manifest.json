@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "kit": "vibecodekit-mql5-ea",
-  "kit_version": "1.0.1",
+  "kit_version": "1.2.0",
   "generated_by": "mql5-manifest",
   "tools": [
     {
@@ -63,6 +63,15 @@
       "module": "vibecodekit_mql5.broker_safety",
       "entry_point": "vibecodekit_mql5.broker_safety:main",
       "description": "mql5-broker-safety \u2014 standalone Layer-7 (broker-safety) checks.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
+    },
+    {
+      "name": "mql5-bt-sim",
+      "module": "vibecodekit_mql5.bt_engine",
+      "entry_point": "vibecodekit_mql5.bt_engine:main",
+      "description": "mql5-bt-sim \u2014 Wave 3.E Python tick-bar simulator (in-process).",
       "supports_json": true,
       "supports_sarif": false,
       "supports_gate_report": true

@@ -226,6 +226,20 @@ def lint_file(path: Path) -> list[Finding]:
     return lint_source(str(path), read_mq5_text(path, errors="replace"))
 
 
+def lint_file_ast(path: Path) -> list[Finding]:
+    """Wave-3.D POC: AST-retrofitted lint pass.
+
+    Runs the lightweight MQL5 structure-scanner under
+    :mod:`vibecodekit_mql5.ast_parser` and uses AST-flavoured
+    detectors for AP-1, AP-2 and AP-7. All other detectors still
+    run as regex so the full Plan-v5 §7 coverage is preserved.
+    """
+    from .ast_parser import lint_source_ast
+    from .mq5_io import read_mq5_text
+
+    return lint_source_ast(str(path), read_mq5_text(path, errors="replace"))
+
+
 # ----------------------------------------------------------------------------
 # Output formatters
 # ----------------------------------------------------------------------------
@@ -349,6 +363,13 @@ def main(argv: list[str] | None = None) -> int:
                    default="text",
                    help="Output format. `sarif` emits a SARIF 2.1.0 log "
                         "that plugs into Cursor / GitHub code-scanning.")
+    p.add_argument("--use-ast",
+                   action="store_true",
+                   help="Wave-3.D POC: run AP-1, AP-2 and AP-7 through the "
+                        "lightweight MQL5 AST scanner instead of the regex "
+                        "detector. All other AP codes still use regex. "
+                        "Findings are byte-identical to the regex pipeline "
+                        "on the golden EA-bug fixtures.")
     _agent_io.add_json_flag(p)
     _agent_io.add_gate_report_flag(p)
     _agent_io.add_draft_flag(p)
@@ -357,13 +378,14 @@ def main(argv: list[str] | None = None) -> int:
     any_error = False
     all_findings: list[Finding] = []
     evidence: list[str] = []
+    lint_fn = lint_file_ast if args.use_ast else lint_file
     for f in args.files:
         path = Path(f)
         if not path.is_file():
             print(f"{f}: not a file", file=sys.stderr)
             return 2
         evidence.append(str(path))
-        for finding in lint_file(path):
+        for finding in lint_fn(path):
             all_findings.append(finding)
             if finding.severity == "ERROR":
                 any_error = True
