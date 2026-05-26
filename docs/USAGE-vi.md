@@ -387,6 +387,17 @@ HTML report giờ phân biệt 3 coverage class bằng border: viền xanh đậ
 `manual` — reviewer thấy ngay cell nào có signal thật sự per-(dim,
 axis), cell nào chỉ là filler.
 
+4 trong 6 cell `gate_auto` được fill bởi **nhiều hơn một** emitter
+Wave-1 (ví dụ `d_correctness × implement` có 3 tool: `mql5-lint`,
+`mql5-method-hiding-check`, `mql5-bt-sim`). Khi nhiều gate-report
+cùng đổ về một cell, `--collect` giữ **status xấu nhất**
+(`FAIL > WARN > PASS > N/A`) và nối note của mọi tool vào cell-note để
+reviewer trace được verdict. Một `FAIL` từ bất kỳ emitter nào sẽ không
+bị một `PASS` có tên file alphabetically lớn hơn ghi đè im lặng.
+
+`--audit` bỏ qua `--output` và in JSON ra stdout. Nếu user truyền cả
+hai cờ, CLI in cảnh báo stderr và vẫn exit 0.
+
 | Cell                                | Coverage class    | Tool discriminative                                                    |
 |-------------------------------------|-------------------|------------------------------------------------------------------------|
 | `d_correctness × implement`         | `gate_auto`       | `mql5-lint`, `mql5-method-hiding-check`, `mql5-bt-sim`                 |

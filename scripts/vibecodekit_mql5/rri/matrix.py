@@ -71,6 +71,17 @@ AXES: tuple[str, ...] = (
 
 STATUSES: tuple[str, ...] = ("PASS", "WARN", "FAIL", "N/A")
 
+# Precedence for merging multiple gate-report emitters that target the
+# same (dim, axis) cell.  Higher value = more severe.  Any FAIL
+# clobbers WARN/PASS/N/A; PASS only wins when every emitter for the
+# cell agrees.  See ``merge_status`` below.
+_STATUS_PRECEDENCE: dict[str, int] = {
+    "N/A":  0,
+    "PASS": 1,
+    "WARN": 2,
+    "FAIL": 3,
+}
+
 _STATUS_COLORS: dict[str, str] = {
     "PASS": "#2e7d32",
     "WARN": "#ed6c02",
@@ -128,6 +139,35 @@ def _build_cell_coverage() -> dict[tuple[str, str], str]:
 
 
 CELL_COVERAGE: dict[tuple[str, str], str] = _build_cell_coverage()
+
+# Pre-computed coverage class counts so HTML rendering doesn't iterate
+# the CELL_COVERAGE map three times.  Pinned alongside CELL_COVERAGE
+# by ``test_cell_coverage_counts_match_audit_summary``.
+COVERAGE_COUNTS: dict[str, int] = {
+    cls: sum(1 for v in CELL_COVERAGE.values() if v == cls)
+    for cls in COVERAGE_CLASSES
+}
+
+
+def merge_status(existing: str, incoming: str) -> str:
+    """Combine two statuses for the same (dim, axis) cell.
+
+    Used by :func:`populate_from_gate_reports` when more than one
+    Wave-1 emitter targets the same cell — e.g. ``mql5-lint``,
+    ``mql5-method-hiding-check`` and ``mql5-bt-sim`` all write to
+    ``(d_correctness, implement)``.  Without merging, the
+    alphabetically-last filename silently wins, which is a real
+    correctness hazard: a FAIL from ``mql5-lint`` would be hidden by a
+    PASS from ``mql5-bt-sim`` if ``rglob`` happened to enumerate them
+    in that order.
+
+    Precedence (highest wins): ``FAIL`` > ``WARN`` > ``PASS`` > ``N/A``.
+    """
+    if existing not in _STATUS_PRECEDENCE or incoming not in _STATUS_PRECEDENCE:
+        raise ValueError(
+            f"unknown status to merge: existing={existing!r} incoming={incoming!r}"
+        )
+    return existing if _STATUS_PRECEDENCE[existing] >= _STATUS_PRECEDENCE[incoming] else incoming
 
 
 @dataclass(frozen=True)
@@ -294,6 +334,9 @@ def populate_from_gate_reports(report_dir: Path) -> tuple[MatrixReport, list[str
 
     matrix = MatrixReport()
     evidence: list[str] = []
+    # Aggregate by (dim, axis): the worst status wins; notes are
+    # concatenated so reviewers can see every contributing tool.
+    notes: dict[tuple[str, str], list[str]] = {}
     for path in sorted(report_dir.rglob("gate-report-*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -311,8 +354,17 @@ def populate_from_gate_reports(report_dir: Path) -> tuple[MatrixReport, list[str
             continue
         if status not in STATUSES:
             continue
-        note = str(payload.get("summary", "")).strip()
-        matrix.set(dim, axis, status, note)
+        existing = matrix.get(dim, axis).status
+        merged = merge_status(existing, status)
+        tool = str(payload.get("tool", path.stem)).strip() or path.stem
+        note_summary = str(payload.get("summary", "")).strip()
+        if note_summary:
+            notes.setdefault((dim, axis), []).append(
+                f"{tool}={status}: {note_summary}"
+            )
+        else:
+            notes.setdefault((dim, axis), []).append(f"{tool}={status}")
+        matrix.set(dim, axis, merged, "; ".join(notes[(dim, axis)]))
         evidence.append(str(path))
     return matrix, evidence
 
@@ -352,9 +404,9 @@ def render_html(matrix: MatrixReport) -> str:
     )
     legend = (
         "<p style='font-size:12px'>Coverage: "
-        f"<span style='border:{_COVERAGE_BORDER['gate_auto']};padding:2px 4px'>gate_auto={len([c for c in CELL_COVERAGE.values() if c == 'gate_auto'])}</span>&nbsp;"
-        f"<span style='border:{_COVERAGE_BORDER['rri_broadcast']};padding:2px 4px'>rri_broadcast={len([c for c in CELL_COVERAGE.values() if c == 'rri_broadcast'])}</span>&nbsp;"
-        f"<span style='border:{_COVERAGE_BORDER['manual']};padding:2px 4px;opacity:0.55'>manual={len([c for c in CELL_COVERAGE.values() if c == 'manual'])}</span>"
+        f"<span style='border:{_COVERAGE_BORDER['gate_auto']};padding:2px 4px'>gate_auto={COVERAGE_COUNTS['gate_auto']}</span>&nbsp;"
+        f"<span style='border:{_COVERAGE_BORDER['rri_broadcast']};padding:2px 4px'>rri_broadcast={COVERAGE_COUNTS['rri_broadcast']}</span>&nbsp;"
+        f"<span style='border:{_COVERAGE_BORDER['manual']};padding:2px 4px;opacity:0.55'>manual={COVERAGE_COUNTS['manual']}</span>"
         f"<br>gate-auto PASS={bucket['gate_auto']['PASS']}/{sum(bucket['gate_auto'].values())} "
         f"(gate-only verdict: {'PASS' if matrix.passes_personal_gate_only() else 'FAIL'})</p>"
     )
@@ -370,8 +422,12 @@ def render_html(matrix: MatrixReport) -> str:
     )
 
 
-def main() -> int:
+_OUTPUT_DEFAULT = Path("quality-matrix.html")
+
+
+def main(argv: list[str] | None = None) -> int:
     import argparse
+    import sys
 
     ap = argparse.ArgumentParser(prog="mql5-rri-matrix")
     src = ap.add_mutually_exclusive_group()
@@ -383,10 +439,16 @@ def main() -> int:
     src.add_argument("--audit", action="store_true",
                      help="Print the cell-coverage audit (Wave 4.3) and "
                           "exit — no inputs or reports needed.")
-    ap.add_argument("--output", type=Path, default=Path("quality-matrix.html"))
-    args = ap.parse_args()
+    ap.add_argument("--output", type=Path, default=_OUTPUT_DEFAULT)
+    args = ap.parse_args(argv)
 
     if args.audit:
+        if args.output != _OUTPUT_DEFAULT:
+            print(
+                "warning: --output is ignored when --audit is set "
+                "(audit prints JSON to stdout).",
+                file=sys.stderr,
+            )
         print(json.dumps(audit_coverage(), indent=2))
         return 0
 
