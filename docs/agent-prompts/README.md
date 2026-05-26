@@ -1,15 +1,18 @@
 # Agent prompts — six personas + three actors, paste-and-run
 
-> **Wave 5.3 + Wave 6.1.** This directory ships **six paste-and-run
-> persona prompts** (Wave 5.3) + **three actor prompts** (Wave 6.1,
-> under `actors/`) that turn a generic LLM chat (Claude Chat, ChatGPT,
-> Cursor, Devin, …) into a focused, single-role assistant aligned with
-> this kit's 8-step RRI methodology. Pair them with the Wave-5.1
-> deterministic generators (`mql5-vision-gen`, `mql5-blueprint-gen`,
-> `mql5-tip-gen`) and the Wave-5.2 sentinel-content validator to get an
-> honest **Homeowner / Contractor / Builder** role split (the Triangle
-> of Power from VIBECODE Master v5.0) without inviting an LLM into the
-> kit's hot path.
+> **Wave 5.3 + Wave 6.1 + Wave 6.2.** This directory ships **six
+> paste-and-run persona prompts** (Wave 5.3) + **three actor prompts**
+> (Wave 6.1, under `actors/`) that turn a generic LLM chat (Claude
+> Chat, ChatGPT, Cursor, Devin, …) into a focused, single-role
+> assistant aligned with this kit's 8-step RRI methodology. Pair them
+> with the Wave-5.1 deterministic generators (`mql5-vision-gen`,
+> `mql5-blueprint-gen`, `mql5-tip-gen`), the Wave-5.2 sentinel-content
+> validator, the Wave-6.1 contract/verify emitters
+> (`mql5-contract-gen`, `mql5-verify-report`), and the Wave-6.2
+> task-graph / completion emitters (`mql5-task-graph-gen`,
+> `mql5-completion-report`) to get an honest **Homeowner / Contractor
+> / Builder** role split (the Triangle of Power from VIBECODE Master
+> v5.0) without inviting an LLM into the kit's hot path.
 
 ## Two layers — actors above personas (Wave 6.1)
 
@@ -64,14 +67,28 @@ are LLM seats:
    (no `mql5-vision-gen`, no `mql5-blueprint-gen`, etc.).
 3. As Homeowner, you copy-paste artefacts between the two seats:
    - SCAN Report + ea-spec.yaml + RRI answers → Contractor seat
-   - TIP-NNN.md → Builder seat
-   - Completion Report → Contractor seat
+   - `tasks/TIP-NNN.md` → Builder seat (one TIP at a time, follow the
+     `task-graph.md` DAG roots-first)
+   - `completions/completion-NNN.md` → Contractor seat (BLOCKED rows
+     trigger escalation back to the Contractor)
    - Verify Report + REFINE options → you decide.
 4. At Step 4 you reply `APPROVED by <name> at <YYYY-MM-DD>` at the
    bottom of `step-4-blueprint.md`. At Step 4.5 you reply
    `CONFIRM by <name> at <YYYY-MM-DD>` at the bottom of `contract.md`.
    The sign-off sentinel (`mql5-permission --layer 5 --enforce-sign-off`)
    will FAIL if either line is missing.
+5. After Step 4.5 the Contractor runs `mql5-task-graph-gen
+   contract.md --out-dir .` to expand the contract into per-TIP files
+   plus a Mermaid DAG (Wave 6.2). Pick TIPs roots-first using
+   `task-graph.md` so dependencies are always satisfied before the
+   Builder starts.
+6. When the Builder finishes a TIP, they run `mql5-completion-report
+   --tip tasks/TIP-NNN.md --gate-reports reports/TIP-NNN/ --out
+   completions/completion-NNN.md --file ... --test ... [--issue ...]`
+   to emit a per-TIP STATUS / Files / Tests / Issues / Gate Reports
+   rollup (Wave 6.2). The Contractor's `mql5-verify-report
+   --completion-dir completions/` picks the resulting files up at
+   Step 7.
 
 ## How to use a persona prompt (Wave 5.3, still valid)
 

@@ -873,6 +873,126 @@ một lệnh chạy được cả hai check.
 
 ---
 
+### 3.15. Task Graph + Completion Report (Wave 6.2)
+
+Wave 6.2 mở rộng contract `chu-nha` đã ký thành DAG nhiều TIP và đưa
+ra **shape cố định** cho Completion Report mà `tho-thi-cong` phải nộp
+khi hoàn thành mỗi TIP.
+
+#### 3.15.1. `mql5-task-graph-gen` — bung `contract.md` thành nhiều file TIP
+
+`chu-thau` chạy ngay sau khi `chu-nha` ký `contract.md`:
+
+```bash
+mql5-task-graph-gen contract.md --out-dir .
+```
+
+Output (deterministic — cùng contract → cùng file):
+
+* `tasks/TIP-001.md` … `tasks/TIP-NNN.md` — một file mỗi dòng
+  `TIP-NNN — <desc>` trong `## TASK GRAPH SUMMARY`. Frontmatter YAML
+  (`tip_id`, `title`, `status: PENDING`, `actor: tho-thi-cong`,
+  `depends_on: [...]`, `invariant_refs: [...]`,
+  `contract_sha256_prefix:`) + 4 section markdown (`## Goal`,
+  `## Acceptance criteria`, `## Dependencies`, `## Completion`).
+* `task-graph.md` — diagram Mermaid `graph TD` của các cạnh phụ
+  thuộc + bảng index cross-link mọi TIP với actor và số invariant
+  liên quan.
+
+Cạnh DAG resolve hoàn toàn theo classifier keyword trên description
+từng TIP:
+
+| Loại | Keyword | Phụ thuộc vào |
+|---|---|---|
+| `scaffold` | `scaffold` | _none — root_ |
+| `risk` | `risk guard`, `risk per` | mọi TIP scaffold |
+| `signal` | `signal` | mọi TIP risk (fallback: scaffold) |
+| `filter` | `filter` | mọi TIP signal (fallback chain) |
+| `backtest` | `backtest`, `walk-forward` | mọi filter + signal |
+| `permission` | `permission`, `gate` | mọi backtest |
+| `other` | (còn lại) | TIP liền trước |
+
+Invariants từ `## INVARIANTS` của contract được cross-link vào
+frontmatter từng TIP bằng greedy match token ≥ 6 ký tự alphabetic,
+giúp `tho-thi-cong` biết TIP đang implement invariant BLUEPRINT nào.
+Classifier + matcher deterministic — chạy lại trên cùng contract sẽ
+sinh ra file byte-identical. Hỗ trợ `--json` envelope chuẩn và
+`--gate-report <path>`.
+
+Thêm `--force` để overwrite `tasks/TIP-*.md` hoặc `task-graph.md`
+nếu đã tồn tại (mặc định CLI refuse với exit code 2).
+
+#### 3.15.2. `mql5-completion-report` — STATUS / Files / Tests / Issues từng TIP
+
+Sau khi `tho-thi-cong` xong một TIP, emit Completion Report bằng
+file TIP + directory gate-report envelope Wave-1:
+
+```bash
+mql5-completion-report \
+    --tip tasks/TIP-001.md \
+    --gate-reports reports/TIP-001/ \
+    --file Include/CRiskGuard.mqh \
+    --file TrendEA.mq5 \
+    --test tests/gates/phase-D/test_risk_guard.py \
+    --out completions/completion-001.md
+```
+
+Output (`completion-001.md`):
+
+* `# Completion Report — TIP-001`
+* `**TITLE:**`, `**STATUS:**` (READY / IN_PROGRESS / BLOCKED),
+  `**ACTOR:** tho-thi-cong`, path TIP source + sha256 prefix
+* `## Files Changed` — mỗi `--file` 1 bullet
+* `## Tests Added` — mỗi `--test` 1 bullet
+* `## Issues Encountered` — mỗi `--issue` 1 bullet
+* `## Gate Reports Referenced` — bảng auto-generate (Tool / Status /
+  Summary / Path) cho mọi envelope Wave-1 dưới `--gate-reports`
+* `## Invariants Referenced` — copy verbatim từ frontmatter TIP
+
+Status derive deterministic:
+
+| Điều kiện | STATUS |
+|---|---|
+| Có envelope `FAIL` HOẶC có `--issue` | `BLOCKED` |
+| Toàn `PASS`/`WARN`, không có FAIL/issue | `IN_PROGRESS` (nếu có WARN) hoặc `READY` (toàn PASS) |
+| Không load envelope nào | `IN_PROGRESS` |
+
+CLI emit envelope `--json` chuẩn + `--gate-report <path>`. Khi STATUS
+= BLOCKED exit code = 1 (cho CI / shell chain short-circuit); ngược
+lại exit code = 0. CLI **cố ý không** sửa field `status:` trong
+frontmatter TIP — đó là quyết định manual của `tho-thi-cong` sau khi
+đọc report. `mql5-verify-report` (Wave 6.1) pick-up các
+`completion-*.md` qua flag `--completion-dir`.
+
+#### 3.15.3. Luồng end-to-end
+
+```
+CHỦ-NHÀ ký blueprint                  (APPROVED by <tên>)
+        │
+        ▼
+CHỦ-THẦU chạy mql5-contract-gen
+        │
+        ▼
+CHỦ-NHÀ ký contract                   (CONFIRM by <tên>)
+        │
+        ▼
+CHỦ-THẦU chạy mql5-task-graph-gen     → tasks/TIP-001..N.md + task-graph.md
+        │
+        ▼
+THỢ THI CÔNG nhận TIP gốc → implement → emit gate-report-*.json
+        │
+        ▼
+THỢ THI CÔNG chạy mql5-completion-report → completions/completion-NNN.md
+        │
+        ▼
+CHỦ-THẦU chạy mql5-verify-report      → verify-report.md
+        │
+        ▼
+CHỦ-NHÀ chọn REFINE option (Ship / Tighten / Add tests / Reopen VISION)
+```
+
+---
+
 ## 4. Ví dụ hoàn chỉnh: MACD+SAR EURUSD H1
 
 Worked example đầy đủ ở `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/`.

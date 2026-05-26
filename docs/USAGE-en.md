@@ -751,6 +751,131 @@ invocation.
 
 ---
 
+### 3.14. Task Graph + Completion Report (Wave 6.2)
+
+Wave 6.2 expands the homeowner-facing contract into a per-TIP
+dependency DAG and gives the Builder a deterministic shape for the
+Completion Report they hand back.
+
+#### 3.14.1. `mql5-task-graph-gen` — expand contract.md into per-TIP files
+
+The Contractor calls this CLI immediately after the Homeowner signs
+the contract:
+
+```bash
+mql5-task-graph-gen contract.md --out-dir .
+```
+
+Outputs (deterministic given a fixed contract):
+
+* `tasks/TIP-001.md` … `tasks/TIP-NNN.md` — one file per `TIP-NNN —
+  <desc>` bullet in `## TASK GRAPH SUMMARY`, with YAML frontmatter
+  (`tip_id`, `title`, `status: PENDING`, `actor: tho-thi-cong`,
+  `depends_on: [...]`, `invariant_refs: [...]`,
+  `contract_sha256_prefix:`) plus four Markdown sections (`## Goal`,
+  `## Acceptance criteria`, `## Dependencies`, `## Completion`).
+* `task-graph.md` — Mermaid `graph TD` diagram of the dependency
+  edges plus an index table cross-linking every TIP with its actor
+  and invariant count.
+
+Dependencies are resolved structurally from a keyword classifier on
+each TIP description:
+
+| Class | Keyword(s) | Depends on |
+|---|---|---|
+| `scaffold` | `scaffold` | _none — root_ |
+| `risk` | `risk guard`, `risk per` | every scaffold TIP |
+| `signal` | `signal` | every risk TIP (fallback: scaffold) |
+| `filter` | `filter` | every signal TIP (fallback chain) |
+| `backtest` | `backtest`, `walk-forward` | every filter + signal TIP |
+| `permission` | `permission`, `gate` | every backtest TIP |
+| `other` | (anything else) | the immediate predecessor |
+
+Invariants from the contract's `## INVARIANTS` block are
+cross-linked into each TIP's frontmatter by greedy ≥ 6-char
+alphabetic token match, so the Builder can trace which BLUEPRINT
+invariant a TIP is implementing. The classifier and matcher are
+deterministic — two invocations on the same contract produce
+byte-identical files. Standard `--json` envelope and `--gate-report
+<path>` are supported.
+
+Add `--force` to overwrite an existing `tasks/TIP-*.md` or
+`task-graph.md` (otherwise the CLI refuses with exit code 2).
+
+#### 3.14.2. `mql5-completion-report` — per-TIP STATUS / Files / Tests / Issues
+
+After the Builder finishes a TIP, they emit a per-TIP Completion
+Report from the TIP file plus a directory of Wave-1 gate-report
+envelopes:
+
+```bash
+mql5-completion-report \
+    --tip tasks/TIP-001.md \
+    --gate-reports reports/TIP-001/ \
+    --file Include/CRiskGuard.mqh \
+    --file TrendEA.mq5 \
+    --test tests/gates/phase-D/test_risk_guard.py \
+    --out completions/completion-001.md
+```
+
+Output (`completion-001.md`):
+
+* `# Completion Report — TIP-001`
+* `**TITLE:**`, `**STATUS:**` (READY / IN_PROGRESS / BLOCKED),
+  `**ACTOR:** tho-thi-cong`, TIP source path + sha256 prefix
+* `## Files Changed` — one bullet per `--file` flag
+* `## Tests Added` — one bullet per `--test` flag
+* `## Issues Encountered` — one bullet per `--issue` flag
+* `## Gate Reports Referenced` — auto-generated table (Tool /
+  Status / Summary / Path) for every Wave-1 envelope under
+  `--gate-reports`
+* `## Invariants Referenced` — verbatim from the TIP frontmatter
+
+Status is derived deterministically:
+
+| Condition | STATUS |
+|---|---|
+| Any envelope `FAIL` or any `--issue` supplied | `BLOCKED` |
+| All envelopes `PASS` or `WARN`, no FAIL, no issues | `IN_PROGRESS` (if any WARN) or `READY` (if all PASS) |
+| No envelopes loaded | `IN_PROGRESS` |
+
+The CLI emits the standard `--json` envelope and `--gate-report
+<path>`. When STATUS is BLOCKED the exit code is 1 so CI / shell
+chains can short-circuit; otherwise the exit code is 0. The CLI
+deliberately does **not** edit the TIP's `status:` frontmatter
+field — that flip is the Builder's manual decision after reading
+the report. The Contractor's `mql5-verify-report` (Wave 6.1) picks
+up the resulting `completion-*.md` files via `--completion-dir`.
+
+#### 3.14.3. End-to-end flow
+
+```
+HOMEOWNER signs blueprint              (APPROVED by <name>)
+        │
+        ▼
+CONTRACTOR runs mql5-contract-gen
+        │
+        ▼
+HOMEOWNER signs contract               (CONFIRM by <name>)
+        │
+        ▼
+CONTRACTOR runs mql5-task-graph-gen   → tasks/TIP-001..N.md + task-graph.md
+        │
+        ▼
+BUILDER picks the next root TIP → implements → emits gate-report-*.json
+        │
+        ▼
+BUILDER runs mql5-completion-report   → completions/completion-NNN.md
+        │
+        ▼
+CONTRACTOR runs mql5-verify-report    → verify-report.md
+        │
+        ▼
+HOMEOWNER chooses REFINE option (Ship / Tighten / Add tests / Reopen VISION)
+```
+
+---
+
 ## 4. End-to-end example
 
 The full worked example lives at
