@@ -1,50 +1,39 @@
-"""mql5-cso — Chief Safety Officer review (risk-auditor lens).
+"""mql5-cso — Wave-3 alias for ``mql5-review --lens cso``.
 
-A single-persona drill on the risk envelope. Bias toward RRI + VERIFY
-steps. Useful for compliance sign-off before live deployment.
+Chief Safety Officer review preset: single-persona drill on the risk
+envelope (``risk-auditor``) biased toward ``rri`` + ``verify`` steps.
+Useful for compliance sign-off before live deployment. Body lives in
+:mod:`vibecodekit_mql5.review.review`.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-from ..rri.personas import filter_for_mode, load_persona
-from ..rri.step_workflow import render_template
+from .review import LENSES, run_lens
 
-PERSONA: str = "risk-auditor"
-DEFAULT_STEPS: tuple[str, ...] = ("rri", "verify")
+
+PERSONA: str = LENSES["cso"].personas[0]
+DEFAULT_STEPS: tuple[str, ...] = LENSES["cso"].steps
 
 
 def render(mode: str, steps: tuple[str, ...] = DEFAULT_STEPS) -> str:
-    persona = load_persona(PERSONA)
-    out: list[str] = ["# Chief Safety Officer review", ""]
-    out.append(f"## Persona: {persona.persona}")
-    out.append(f"_{persona.description}_\n")
-    for q in filter_for_mode(persona, mode):
-        out.append(f"- [ ] **{q.id}** ({q.priority}) — {q.text}")
-    out.append("\n## Step templates\n")
-    for step in steps:
-        out.append(f"### {step}\n")
-        out.append(render_template(step))
-        out.append("")
-    return "\n".join(out)
+    from .review import render_lens
+    return render_lens(LENSES["cso"], mode, steps)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mql5-cso")
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("cso-review.md"))
-    args = ap.parse_args()
-    args.output.write_text(render(args.mode), encoding="utf-8")
-    print(json.dumps({
-        "persona": PERSONA,
-        "mode": args.mode,
-        "output": str(args.output),
-    }, indent=2))
-    return 0
+    ap.add_argument(
+        "--mode", choices=("personal", "team", "enterprise"), default="personal",
+    )
+    ap.add_argument(
+        "--output", type=Path, default=None,
+        help="Output markdown path (default: cso-review.md).",
+    )
+    args = ap.parse_args(argv)
+    return run_lens("cso", args.mode, args.output)
 
 
 if __name__ == "__main__":

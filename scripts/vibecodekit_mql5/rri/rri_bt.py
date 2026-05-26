@@ -15,8 +15,6 @@ artefacts already produced by `mql5-backtest` + `mql5-walkforward`.
 
 from __future__ import annotations
 
-import argparse
-import json
 from pathlib import Path
 
 from .matrix import AXES, DIMS, MatrixReport, render_html
@@ -78,26 +76,22 @@ def question_count(mode: str) -> int:
     return total
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(prog="mql5-rri-bt")
-    ap.add_argument("--metrics", type=Path, required=True,
-                    help="JSON file with backtest metrics")
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("rri-bt.html"))
-    args = ap.parse_args()
+def main(argv: list[str] | None = None) -> int:
+    """Wave-3 alias for ``mql5-rri bt`` — forwards argv to the umbrella.
 
-    metrics = json.loads(args.metrics.read_text(encoding="utf-8"))
-    matrix = review(metrics, args.output)
-    payload = {
-        "personas": list(RRI_BT_PERSONAS),
-        "mode": args.mode,
-        "questions_to_answer": question_count(args.mode),
-        "matrix_counts": matrix.counts(),
-        "output": str(args.output),
-    }
-    print(json.dumps(payload, indent=2))
-    return 0
+    The body that produces the matrix + JSON envelope lives in
+    :func:`vibecodekit_mql5.rri._run_bt`; this entry-point exists so the
+    legacy ``mql5-rri-bt`` console script (and any external scripts that
+    import ``vibecodekit_mql5.rri.rri_bt:main``) keep working unchanged.
+    """
+
+    # Avoid recursive import — only import the umbrella's ``main`` here,
+    # not at module load, so ``from . import rri_bt`` from ``__init__`` stays cheap.
+    from . import main as umbrella_main
+    import sys as _sys
+
+    forwarded = ["bt", *(argv if argv is not None else _sys.argv[1:])]
+    return umbrella_main(forwarded)
 
 
 if __name__ == "__main__":

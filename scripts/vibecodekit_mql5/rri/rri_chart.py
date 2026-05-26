@@ -11,8 +11,6 @@ scaffold (Phase D) and is treated as a sanity check, not a gate.
 
 from __future__ import annotations
 
-import argparse
-import json
 from pathlib import Path
 
 from .matrix import AXES, MatrixReport, render_html
@@ -45,24 +43,14 @@ def question_count(mode: str) -> int:
     )
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(prog="mql5-rri-chart")
-    ap.add_argument("--metrics", type=Path, required=True)
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("rri-chart.html"))
-    args = ap.parse_args()
+def main(argv: list[str] | None = None) -> int:
+    """Wave-3 alias for ``mql5-rri chart`` — forwards argv to the umbrella."""
 
-    metrics = json.loads(args.metrics.read_text(encoding="utf-8"))
-    matrix = review(metrics, args.output)
-    print(json.dumps({
-        "personas": list(RRI_CHART_PERSONAS),
-        "mode": args.mode,
-        "questions_to_answer": question_count(args.mode),
-        "matrix_counts": matrix.counts(),
-        "output": str(args.output),
-    }, indent=2))
-    return 0
+    from . import main as umbrella_main
+    import sys as _sys
+
+    forwarded = ["chart", *(argv if argv is not None else _sys.argv[1:])]
+    return umbrella_main(forwarded)
 
 
 if __name__ == "__main__":

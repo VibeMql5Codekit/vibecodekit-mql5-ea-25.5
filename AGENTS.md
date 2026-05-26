@@ -8,17 +8,20 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.0.1`. 58 CLI commands, 4 MCP servers,
-  23 scaffold archetypes, 26 anti-pattern detectors (25 numbered AP-1…AP-25
-  + 1 build-aware method-hiding), 7-layer permission gate, 1057 tests
-  across Phase 0 / A / B / C / D / E.
+- **Status:** shipped product, `v1.1.0`. 59 CLI commands (49 standalone +
+  10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
+  `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
+  anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
+  method-hiding) pinned by a 20-EA golden dataset under
+  `tests/fixtures/ea-bugs/`, 7-layer permission gate, 1102 tests across
+  Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (58) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (59) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -97,6 +100,28 @@ backtest / walkforward / monte-carlo / multibroker parsers accept
 unchanged. Tests for this loop live under
 `tests/gates/phase-B/test_fixture_generator.py`.
 
+## Agent Contracts (Wave 3)
+
+Wave 3 consolidated the review/RRI CLI surface and added a hermetic
+forge iteration loop:
+
+* **Review umbrella** —
+  `mql5-review --lens {eng,ceo,cso,investigate}` is the new canonical
+  entry-point. `mql5-eng-review`, `mql5-ceo-review`, `mql5-cso`, and
+  `mql5-investigate` keep working as thin aliases. Legacy
+  `--persona/--step` single-persona dispatch is preserved.
+* **RRI umbrella** — `mql5-rri {template,bt,rr,chart}` is the new
+  canonical entry-point. `mql5-rri-bt`, `mql5-rri-rr`, `mql5-rri-chart`
+  keep working as thin aliases. `mql5-rri` with no subcommand still
+  prints the Step-2 template (legacy default).
+* **EA-bug golden dataset** — `tests/fixtures/ea-bugs/ap_NN_*/EA.mq5`
+  + `expected.json` pins the lint detector contract. The driver lives
+  at `tests/gates/phase-A/test_ea_bugs_golden_dataset.py`.
+* **`mql5-forge-loop`** — Wave-3 hermetic CI loop. Chains the Wave-2
+  fixture generator into the Wave-1 backtest parser for N deterministic
+  iterations. Emits a per-iter `forge-loop-report.json` + Wave-1
+  envelope. No Wine, no MetaTester.
+
 ## Agent Contracts (Wave 2)
 
 - `mql5-init` is a 5-question interactive bootstrap wizard that emits
@@ -161,9 +186,11 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.0.1`,
-  58 lệnh CLI, 4 MCP server, 23 scaffold, 26 AP detector (25 đánh số
-  AP-1…AP-25 + 1 method-hiding theo build), 1057 test gate.
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.1.0`,
+  59 lệnh CLI (49 standalone + 10 alias Wave-3 quy về 2 umbrella:
+  `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
+  scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo
+  build) găm bởi 20-EA golden dataset, 1102 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

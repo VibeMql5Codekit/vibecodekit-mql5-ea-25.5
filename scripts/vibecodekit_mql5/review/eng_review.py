@@ -1,52 +1,43 @@
-"""mql5-eng-review — engineering review (broker-engineer + devops personas).
+"""mql5-eng-review — Wave-3 alias for ``mql5-review --lens eng``.
 
-A focused review for build / deploy correctness. Combines broker-engineer
-and devops personas, biased toward the VERIFY and BUILD steps.
+Engineering review preset: ``broker-engineer`` + ``devops`` personas
+biased toward the ``build`` and ``verify`` steps. Kept as a standalone
+console script so existing scripts and CI pipelines keep working.
+The actual rendering lives in :mod:`vibecodekit_mql5.review.review`;
+this file is a 1-line forwarder so help, JSON envelope, and the lens
+definition stay in one place.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-from ..rri.personas import filter_for_mode, load_persona
-from ..rri.step_workflow import render_template
+from .review import LENSES, run_lens
 
-PERSONAS: tuple[str, ...] = ("broker-engineer", "devops")
-DEFAULT_STEPS: tuple[str, ...] = ("build", "verify")
+
+# Public for back-compat with the pre-Wave-3 imports
+# (e.g. ``from vibecodekit_mql5.review.eng_review import PERSONAS``).
+PERSONAS: tuple[str, ...] = LENSES["eng"].personas
+DEFAULT_STEPS: tuple[str, ...] = LENSES["eng"].steps
 
 
 def render(mode: str, steps: tuple[str, ...] = DEFAULT_STEPS) -> str:
-    out: list[str] = ["# Engineering review", ""]
-    for pid in PERSONAS:
-        persona = load_persona(pid)
-        out.append(f"## Persona: {persona.persona}")
-        out.append(f"_{persona.description}_\n")
-        for q in filter_for_mode(persona, mode):
-            out.append(f"- [ ] **{q.id}** ({q.priority}) — {q.text}")
-        out.append("")
-    out.append("## Step templates\n")
-    for step in steps:
-        out.append(f"### {step}\n")
-        out.append(render_template(step))
-        out.append("")
-    return "\n".join(out)
+    from .review import render_lens
+    return render_lens(LENSES["eng"], mode, steps)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mql5-eng-review")
-    ap.add_argument("--mode", choices=("personal", "team", "enterprise"),
-                    default="personal")
-    ap.add_argument("--output", type=Path, default=Path("eng-review.md"))
-    args = ap.parse_args()
-    args.output.write_text(render(args.mode), encoding="utf-8")
-    print(json.dumps({
-        "personas": list(PERSONAS),
-        "mode": args.mode,
-        "output": str(args.output),
-    }, indent=2))
-    return 0
+    ap.add_argument(
+        "--mode", choices=("personal", "team", "enterprise"), default="personal",
+    )
+    ap.add_argument(
+        "--output", type=Path, default=None,
+        help="Output markdown path (default: eng-review.md).",
+    )
+    args = ap.parse_args(argv)
+    return run_lens("eng", args.mode, args.output)
 
 
 if __name__ == "__main__":
