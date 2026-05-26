@@ -40,8 +40,10 @@ without a database. Each record carries::
 
 The module is deterministic: same input → same record byte-for-byte
 (modulo the timestamp the caller controls). IDs are generated
-``ESC-YYYYMMDD-NNN`` where ``NNN`` is a 3-digit counter scoped to the
-date, allocated from a single scan of the existing log so two calls
+``ESC-YYYYMMDD-NNN`` where ``NNN`` is a zero-padded counter (at least
+three digits, but widens to four+ if the per-day count exceeds 999)
+scoped to the date, allocated from a single scan of the existing log
+so two calls
 on the same day never collide.
 """
 
@@ -68,7 +70,7 @@ TOOL = "mql5-escalation"
 ACTORS: tuple[str, ...] = ("chu-nha", "chu-thau", "tho-thi-cong")
 LEVELS: tuple[int, ...] = (1, 2, 3)
 DEFAULT_LOG = Path(".mql5-audit/escalations.jsonl")
-_ID_PATTERN = re.compile(r"^ESC-(\d{8})-(\d{3})$")
+_ID_PATTERN = re.compile(r"^ESC-(\d{8})-(\d{3,})$")
 
 
 @dataclass(frozen=True)
