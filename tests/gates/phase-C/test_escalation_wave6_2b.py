@@ -166,6 +166,102 @@ def test_raise_escalation_assigns_sequential_ids_same_day(
     assert rec3.id == "ESC-20260525-003"
 
 
+def test_next_id_widens_past_999_without_collision(tmp_path: Path) -> None:
+    """Regression: counter > 999 must widen to >=4 digits and stay unique.
+
+    The original ``_ID_PATTERN = r"^ESC-(\\d{8})-(\\d{3})$"`` only matched
+    exactly three digits, so once the counter rolled past 999 the resulting
+    id (``ESC-YYYYMMDD-1000``) silently dropped out of the ``used`` set on
+    the next allocation, looping the counter back to 1000 and minting a
+    duplicate. The pattern was relaxed to ``\\d{3,}`` so this test pins
+    the contract.
+    """
+
+    today = "20260525"
+    pre_existing = [
+        esc.Escalation(
+            id=f"ESC-{today}-{n:03d}",
+            from_actor="chu-thau",
+            to_actor="tho-thi-cong",
+            level=1,
+            reason=f"seed {n}",
+            raised_at="2026-05-25T00:00:00+00:00",
+            raised_by="chu-thau",
+        )
+        for n in range(1, 1000)
+    ]
+    first_overflow = esc._next_id(pre_existing, today=today)
+    assert first_overflow == f"ESC-{today}-1000"
+    assert esc._ID_PATTERN.match(first_overflow), (
+        "regression: 4-digit counter must match the id pattern so the next "
+        "_next_id call does not loop back to the same number"
+    )
+
+    extended = pre_existing + [
+        esc.Escalation(
+            id=first_overflow,
+            from_actor="chu-thau",
+            to_actor="tho-thi-cong",
+            level=1,
+            reason="overflow seed",
+            raised_at="2026-05-25T00:00:00+00:00",
+            raised_by="chu-thau",
+        )
+    ]
+    second_overflow = esc._next_id(extended, today=today)
+    assert second_overflow == f"ESC-{today}-1001"
+    assert second_overflow != first_overflow
+
+
+def test_raise_escalation_widens_id_past_999_via_log(tmp_path: Path) -> None:
+    """End-to-end sibling of ``test_next_id_widens_past_999_without_collision``.
+
+    Goes through ``raise_escalation`` so we also pin that the log read/write
+    round-trip preserves 4+ digit counters.
+    """
+
+    log = tmp_path / "escalations.jsonl"
+    today = "20260525"
+    seeded = [
+        esc.Escalation(
+            id=f"ESC-{today}-{n:03d}",
+            from_actor="chu-thau",
+            to_actor="tho-thi-cong",
+            level=1,
+            reason=f"seed {n}",
+            raised_at="2026-05-25T00:00:00+00:00",
+            raised_by="chu-thau",
+        )
+        for n in range(1, 1000)
+    ]
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("w", encoding="utf-8") as fh:
+        for rec in seeded:
+            fh.write(json.dumps(rec.to_dict()) + "\n")
+
+    now = datetime(2026, 5, 25, 14, 30, 0, tzinfo=timezone.utc)
+    overflow = esc.raise_escalation(
+        from_actor="chu-thau",
+        to_actor="tho-thi-cong",
+        level=1,
+        reason="post-overflow",
+        log_path=log,
+        _now=now,
+    )
+    assert overflow.id == f"ESC-{today}-1000"
+
+    again = esc.raise_escalation(
+        from_actor="chu-thau",
+        to_actor="tho-thi-cong",
+        level=2,
+        reason="post-overflow second",
+        log_path=log,
+        _now=now,
+    )
+    assert again.id == f"ESC-{today}-1001"
+    assert again.id != overflow.id
+
+
 def test_raise_escalation_resets_counter_per_date(tmp_path: Path) -> None:
     log = tmp_path / "escalations.jsonl"
     day1 = datetime(2026, 5, 25, 14, 30, 0, tzinfo=timezone.utc)
