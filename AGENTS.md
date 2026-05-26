@@ -8,7 +8,7 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.6.0`. 68 CLI commands (58 standalone +
+- **Status:** shipped product, `v1.6.1`. 69 CLI commands (59 standalone +
   10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
   `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
   anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
@@ -35,15 +35,20 @@ to read first, what to use, and what NOT to introduce.
   Mermaid DAG + `tasks/TIP-001..N.md` files; `mql5-completion-report`
   emits a per-TIP `STATUS / Files / Tests / Issues / Gate Reports`
   rollup the Contractor's `mql5-verify-report --completion-dir` picks
-  up),
-  7-layer permission gate, 1448 tests across Phase 0 / A / B / C / D / E.
+  up), **Wave-6.2b actor-to-actor escalation audit log**
+  (`mql5-escalation --from <actor> --to <actor> --level {1,2,3}` raises
+  an append-only record in `.mql5-audit/escalations.jsonl`;
+  `mql5-escalation --list` / `--resolve <id>` query and close the log;
+  `mql5-permission-layer5 --enforce-no-open-escalation` blocks TEAM /
+  ENTERPRISE gates while any level-3 escalation is still OPEN),
+  7-layer permission gate, 1491 tests across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (68) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (69) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -253,8 +258,8 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.6.0`,
-  63 lệnh CLI (53 standalone + 10 alias Wave-3 quy về 2 umbrella:
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.6.1`,
+  69 lệnh CLI (59 standalone + 10 alias Wave-3 quy về 2 umbrella:
   `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
   scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo
   build) găm bởi 20-EA golden dataset, AST parser POC (`ast_parser/`,
@@ -264,7 +269,15 @@ mql5-permission --mode personal FirstEA.mq5
   gate-auto + verdict gate-only riêng), **Wave-5.1 bộ sinh step output
   deterministic** (`mql5-vision-gen` / `mql5-blueprint-gen` /
   `mql5-tip-gen`) + **Wave-5.2 sentinel content validator** gắn vào
-  Layer-5 (`mql5-permission-layer5 --enforce-activities`), 1245 test gate.
+  Layer-5 (`mql5-permission-layer5 --enforce-activities`), **Wave-5.3
+  6 prompt persona** + **Wave-6.1 Tam giác quyền lực** (3 actor +
+  `mql5-contract-gen` + `mql5-verify-report` + `--enforce-sign-off`)
+  + **Wave-6.2 Task Graph + Completion Report** (`mql5-task-graph-gen`
+  + `mql5-completion-report`) + **Wave-6.2b log escalation actor-to-actor**
+  (`mql5-escalation --from … --to … --level {1,2,3}` ghi
+  `.mql5-audit/escalations.jsonl`; `mql5-permission-layer5
+  --enforce-no-open-escalation` chặn gate TEAM/ENTERPRISE khi còn L3 OPEN),
+  1491 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

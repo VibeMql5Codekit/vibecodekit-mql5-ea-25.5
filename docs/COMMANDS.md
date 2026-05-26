@@ -25,9 +25,10 @@ The pyproject `[project.scripts]` entry list grew by one in Wave 3.E
 (`mql5-bt-sim`), three in Wave 5.1 (`mql5-vision-gen`,
 `mql5-blueprint-gen`, `mql5-tip-gen`), three in Wave 6.1
 (`mql5-contract-gen`, `mql5-verify-report`, `mql5-permission-layer5`),
-and two in Wave 6.2 (`mql5-task-graph-gen`, `mql5-completion-report`)
-for a current total of 68 entries — every alias still resolves to its
-existing console-script name. Wave-3.A/B/C consolidated
+two in Wave 6.2 (`mql5-task-graph-gen`, `mql5-completion-report`),
+and one in Wave 6.2b (`mql5-escalation`) for a current total of 69
+entries — every alias still resolves to its existing console-script
+name. Wave-3.A/B/C consolidated
 the *implementation* of `mql5-review` / `mql5-rri`, not the surface.
 Wave-3.D adds an opt-in `mql5-lint --use-ast` flag (no new CLI) that
 routes AP-1 / AP-2 / AP-7 through a lightweight MQL5 AST scanner under
@@ -71,7 +72,11 @@ layer-5 sign-off sentinel rather than direct matrix inputs),
 `mql5-task-graph-gen`, `mql5-completion-report` (Wave 6.2 — task-graph
 expands a signed contract into a per-TIP DAG; completion-report
 emits a per-TIP STATUS / Files / Tests / Issues / Gate Reports
-rollup. Both are emitters; both deliberately OMIT `matrix_dim/axis`).
+rollup. Both are emitters; both deliberately OMIT `matrix_dim/axis`),
+`mql5-escalation` (Wave 6.2b — actor-to-actor escalation audit log
+emitter; raise / list / resolve records under `.mql5-audit/escalations.jsonl`;
+intentionally OMITs `matrix_dim/axis` because the layer-5 hook is the
+gate-side consumer).
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -109,7 +114,7 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-audit`    — run 70-test conformance battery
 - `/mql5-init`     — interactive 5-question bootstrap wizard → `ea-spec.yaml` (Wave 2). Use `--non-interactive` / `--from-answers <yaml>` in CI.
 
-## Plan (9)
+## Plan (10)
 - `/mql5-rri`       — open Step 2 RRI template
 - `/mql5-vision`    — open Step 3 VISION template
 - `/mql5-blueprint` — open Step 4 BLUEPRINT template
@@ -127,6 +132,8 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
   — **Wave 6.2**: expand a signed contract into a per-TIP dependency DAG. Emits `tasks/TIP-001..N.md` (YAML frontmatter + `## Goal` / `## Acceptance criteria` / `## Dependencies` / `## Completion` sections) plus `task-graph.md` (Mermaid `graph TD` + index table). Dependencies are resolved structurally via a keyword classifier; cross-links contract invariants into each TIP. Deterministic. Standard `--json` + `--gate-report`.
 - `/mql5-completion-report --tip tasks/TIP-NNN.md [--gate-reports <dir>] [--file <p>]... [--test <p>]... [--issue <text>]... [--out completion-NNN.md]`
   — **Wave 6.2**: per-TIP Completion Report for the Builder. Aggregates Wave-1 gate-report envelopes into a Markdown table, accepts repeated `--file` / `--test` / `--issue` flags, derives `STATUS = READY | IN_PROGRESS | BLOCKED` (BLOCKED on any FAIL or any `--issue`; READY when every envelope is PASS; otherwise IN_PROGRESS), and exits 1 only when BLOCKED. The Contractor's `mql5-verify-report --completion-dir` picks the resulting files up.
+- `/mql5-escalation --from {chu-nha,chu-thau,tho-thi-cong} --to {chu-nha,chu-thau,tho-thi-cong} --level {1,2,3} --reason <text> [--artefact <path>]`
+  — **Wave 6.2b**: actor-to-actor escalation audit log. Appends a record to `.mql5-audit/escalations.jsonl` (override with `--audit-log <path>`) with a deterministic `ESC-YYYYMMDD-NNN` id. Level 1 = note, Level 2 = warning, Level 3 = hard block. `--list [--status {OPEN,RESOLVED,ALL}] [--level <N>]` queries the log; `--resolve <id> --resolved-by <actor> [--note <text>]` closes one. `mql5-permission-layer5 --enforce-no-open-escalation` fails TEAM / ENTERPRISE gates while any level-3 record stays OPEN; personal mode reports the count without failing.
 
 ## Build (15)
 - `/mql5-build`             — render a scaffold

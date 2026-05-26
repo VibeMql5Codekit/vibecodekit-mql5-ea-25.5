@@ -22,6 +22,13 @@ and (in team / enterprise modes) ``contract.md`` for the ``CONFIRM by
 …`` line. This wires the Triangle of Power sign-off ritual into the
 permission gate so a build cannot ship while the human Homeowner has
 not personally approved the architecture and the contract.
+
+Wave 6.2b — when ``enforce_no_open_escalation`` is supplied, the layer
+additionally consults the actor-to-actor escalation audit log
+(``.mql5-audit/escalations.jsonl`` by default) and fails the gate while
+any **level-3** escalation is still OPEN. Personal mode treats this as
+informational (the count is still reported in the envelope), TEAM and
+ENTERPRISE modes treat any OPEN level-3 escalation as a hard block.
 """
 
 from __future__ import annotations
@@ -30,6 +37,7 @@ import argparse
 import json
 from pathlib import Path
 
+from ..rri import escalation as esc
 from ..rri import sign_off as so
 from ..rri import step_sentinel as ss
 from ..rri import step_workflow as sw
@@ -44,6 +52,8 @@ def gate(
     enforce_sign_off: bool = False,
     blueprint_path: Path | None = None,
     contract_path: Path | None = None,
+    enforce_no_open_escalation: bool = False,
+    escalation_log: Path | None = None,
 ) -> dict:
     """Run the methodology gate.
 
@@ -70,10 +80,24 @@ def gate(
         Optional explicit paths used by the sign-off audit. When
         ``None``, the audit falls back to ``DEFAULT_BLUEPRINT_NAMES`` /
         ``DEFAULT_CONTRACT_NAMES`` resolution.
+    enforce_no_open_escalation:
+        Wave 6.2b — when ``True``, consult the escalation audit log
+        and fail TEAM / ENTERPRISE gates while any level-3 escalation
+        remains OPEN. Personal mode reports the count without
+        failing.
+    escalation_log:
+        Override path for the JSONL audit log used by
+        ``enforce_no_open_escalation``. Defaults to
+        ``rri.escalation.DEFAULT_LOG`` (``.mql5-audit/escalations.jsonl``).
     """
     if mode not in sw.MODE_REQUIRED_STEPS:
         raise ValueError(f"unknown mode: {mode!r}")
-    if mode == "personal" and not enforce_activities and not enforce_sign_off:
+    if (
+        mode == "personal"
+        and not enforce_activities
+        and not enforce_sign_off
+        and not enforce_no_open_escalation
+    ):
         return {
             "ok": True,
             "mode": mode,
@@ -113,6 +137,20 @@ def gate(
         result["activity_audits"] = audits
         result["activity_under_threshold"] = under_threshold
         if under_threshold:
+            result["ok"] = False
+
+    if enforce_no_open_escalation:
+        log_path = escalation_log if escalation_log is not None else esc.DEFAULT_LOG
+        records = esc.load_log(log_path)
+        open_level3 = [
+            r.to_dict() for r in records
+            if r.status == "OPEN" and r.level == 3
+        ]
+        result["escalation_log"] = str(log_path)
+        result["escalation_open_level3_count"] = len(open_level3)
+        result["escalation_open_level3"] = open_level3
+        result["escalation_enforced"] = mode != "personal"
+        if open_level3 and mode != "personal":
             result["ok"] = False
 
     if enforce_sign_off:
@@ -163,6 +201,16 @@ def main() -> int:
         help="Path to contract.md (Wave 6.1 sign-off). Auto-resolved "
         "from state-dir / cwd when omitted.",
     )
+    ap.add_argument(
+        "--enforce-no-open-escalation", action="store_true",
+        help="Wave 6.2b — fail TEAM / ENTERPRISE gates while any "
+        "level-3 escalation in .mql5-audit/escalations.jsonl is OPEN.",
+    )
+    ap.add_argument(
+        "--escalation-log", type=Path, default=None,
+        help="Override the JSONL audit log consulted by "
+        "--enforce-no-open-escalation (default: .mql5-audit/escalations.jsonl).",
+    )
     args = ap.parse_args()
     result = gate(
         args.state_dir, args.mode,
@@ -171,6 +219,8 @@ def main() -> int:
         enforce_sign_off=args.enforce_sign_off,
         blueprint_path=args.blueprint,
         contract_path=args.contract,
+        enforce_no_open_escalation=args.enforce_no_open_escalation,
+        escalation_log=args.escalation_log,
     )
     print(json.dumps(result, indent=2))
     return 0 if result["ok"] else 1

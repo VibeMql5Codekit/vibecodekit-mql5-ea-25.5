@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibecodekit-mql5-ea"
-version = "1.6.0"
+version = "1.6.1"
 description = "Vibecode methodology kit for MQL5 Expert Advisor development"
 readme = "README.md"
 license = {text = "MIT"}
@@ -127,6 +127,9 @@ mql5-permission-layer5 = "vibecodekit_mql5.permission.layer5_methodology:main"
 # Wave-6.2 task graph expansion + per-TIP completion report
 mql5-task-graph-gen = "vibecodekit_mql5.step_gen.task_graph_gen:main"
 mql5-completion-report = "vibecodekit_mql5.step_gen.completion_report:main"
+
+# Wave 6.2b — actor-to-actor escalation audit log (raise/list/resolve).
+mql5-escalation = "vibecodekit_mql5.rri.escalation:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

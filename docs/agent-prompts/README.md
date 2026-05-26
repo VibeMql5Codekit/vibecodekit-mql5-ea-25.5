@@ -1,18 +1,20 @@
 # Agent prompts — six personas + three actors, paste-and-run
 
-> **Wave 5.3 + Wave 6.1 + Wave 6.2.** This directory ships **six
-> paste-and-run persona prompts** (Wave 5.3) + **three actor prompts**
-> (Wave 6.1, under `actors/`) that turn a generic LLM chat (Claude
-> Chat, ChatGPT, Cursor, Devin, …) into a focused, single-role
+> **Wave 5.3 + Wave 6.1 + Wave 6.2 + Wave 6.2b.** This directory ships
+> **six paste-and-run persona prompts** (Wave 5.3) + **three actor
+> prompts** (Wave 6.1, under `actors/`) that turn a generic LLM chat
+> (Claude Chat, ChatGPT, Cursor, Devin, …) into a focused, single-role
 > assistant aligned with this kit's 8-step RRI methodology. Pair them
 > with the Wave-5.1 deterministic generators (`mql5-vision-gen`,
 > `mql5-blueprint-gen`, `mql5-tip-gen`), the Wave-5.2 sentinel-content
 > validator, the Wave-6.1 contract/verify emitters
-> (`mql5-contract-gen`, `mql5-verify-report`), and the Wave-6.2
+> (`mql5-contract-gen`, `mql5-verify-report`), the Wave-6.2
 > task-graph / completion emitters (`mql5-task-graph-gen`,
-> `mql5-completion-report`) to get an honest **Homeowner / Contractor
-> / Builder** role split (the Triangle of Power from VIBECODE Master
-> v5.0) without inviting an LLM into the kit's hot path.
+> `mql5-completion-report`), and the Wave-6.2b escalation audit log
+> (`mql5-escalation` + `mql5-permission-layer5 --enforce-no-open-escalation`)
+> to get an honest **Homeowner / Contractor / Builder** role split
+> (the Triangle of Power from VIBECODE Master v5.0) without inviting
+> an LLM into the kit's hot path.
 
 ## Two layers — actors above personas (Wave 6.1)
 
@@ -89,6 +91,15 @@ are LLM seats:
    rollup (Wave 6.2). The Contractor's `mql5-verify-report
    --completion-dir completions/` picks the resulting files up at
    Step 7.
+7. If any actor needs input from another to proceed, they raise an
+   escalation with `mql5-escalation --from <actor> --to <actor>
+   --level {1,2,3} --reason <text> [--artefact <path>]` (Wave 6.2b).
+   Level 3 escalations block TEAM / ENTERPRISE gates while OPEN — the
+   Homeowner enables the hook by adding `--enforce-no-open-escalation`
+   to the layer-5 gate. The receiving actor closes the loop with
+   `mql5-escalation --resolve <id> --resolved-by <actor> [--note <text>]`.
+   The append-only log lives at `.mql5-audit/escalations.jsonl` so the
+   audit trail composes with normal git workflows.
 
 ## How to use a persona prompt (Wave 5.3, still valid)
 

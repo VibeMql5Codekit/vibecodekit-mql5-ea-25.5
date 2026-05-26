@@ -874,6 +874,111 @@ CONTRACTOR runs mql5-verify-report    → verify-report.md
 HOMEOWNER chooses REFINE option (Ship / Tighten / Add tests / Reopen VISION)
 ```
 
+### 3.15. Escalation audit log (Wave 6.2b)
+
+When one Triangle-of-Power actor cannot proceed without input from
+another, they raise an **escalation** instead of guessing. The kit
+stores an append-only JSONL log under `.mql5-audit/escalations.jsonl`
+so the audit trail composes with normal git workflows.
+
+Three levels are recognised:
+
+| Level | Meaning | Blocks `mql5-permission-layer5` (with `--enforce-no-open-escalation`)? |
+|------:|---------|------------------------------------------------------------------------|
+| 1 | Note / observation | No |
+| 2 | Warning / question | No (informational; appears in Verify Report) |
+| 3 | Hard block         | **Yes** — TEAM / ENTERPRISE gate fails while any L3 stays OPEN |
+
+#### 3.15.1. `mql5-escalation` — raise / list / resolve
+
+```bash
+# Raise (Builder asks Contractor for missing CPipNormalizer):
+mql5-escalation \
+    --from tho-thi-cong \
+    --to   chu-thau \
+    --level 3 \
+    --reason "missing CPipNormalizer for XAUUSD; pip math wrong" \
+    --artefact tasks/TIP-002.md
+
+# List (default filters to OPEN; --status RESOLVED|ALL also valid):
+mql5-escalation --list
+mql5-escalation --list --status ALL --level 3
+
+# Resolve (Contractor acknowledges + records resolution):
+mql5-escalation \
+    --resolve ESC-20260525-001 \
+    --resolved-by chu-thau \
+    --note "patched in include/CPipNormalizer.mqh"
+```
+
+Behaviour:
+
+- Each record gets a deterministic `ESC-YYYYMMDD-NNN` id allocated
+  from a single scan of the existing log so two calls on the same day
+  never collide.
+- `--from` and `--to` must differ and must be one of
+  `chu-nha` / `chu-thau` / `tho-thi-cong`.
+- `--reason` is required and must be non-empty after stripping.
+- Custom log path: `--audit-log <path>` (default
+  `.mql5-audit/escalations.jsonl`).
+- Standard Wave-1 envelope flags: `--json` for stdout, `--gate-report
+  <path>` to persist.
+- Idempotency: re-resolving a `RESOLVED` record raises an error
+  rather than silently overwriting the previous note.
+
+#### 3.15.2. Layer-5 hook — `--enforce-no-open-escalation`
+
+```bash
+# TEAM gate fails while any L3 escalation is still OPEN:
+mql5-permission-layer5 \
+    --mode team \
+    --enforce-no-open-escalation
+
+# Personal mode reports the count but does not fail (backward compat):
+mql5-permission-layer5 \
+    --mode personal \
+    --enforce-no-open-escalation
+
+# Custom log path (composes with --enforce-activities + --enforce-sign-off):
+mql5-permission-layer5 \
+    --mode enterprise \
+    --enforce-no-open-escalation \
+    --escalation-log .mql5-audit/escalations.jsonl \
+    --enforce-sign-off \
+    --enforce-activities
+```
+
+The envelope adds three new fields under `data`:
+
+```json
+{
+  "escalation_log": ".mql5-audit/escalations.jsonl",
+  "escalation_open_level3_count": 1,
+  "escalation_open_level3": [
+    {"id": "ESC-20260525-001", "from": "tho-thi-cong",
+     "to": "chu-thau", "level": 3, ...}
+  ],
+  "escalation_enforced": true
+}
+```
+
+`escalation_enforced` is `true` only when `mode != "personal"` so an
+operator looking at a personal-mode report can immediately see the
+count is informational.
+
+#### 3.15.3. When to use which level
+
+- **Level 1 (note):** Builder noticed a pre-existing magic number
+  collision while implementing a TIP. Doesn't block this TIP, but the
+  Contractor should know.
+- **Level 2 (warning):** Builder discovered the TIP's acceptance
+  criteria contradicts an invariant. Needs Contractor decision before
+  the next TIP, but current TIP can ship.
+- **Level 3 (hard block):** Builder cannot finish TIP-002 because the
+  contract assumed `CPipNormalizer` exists but it doesn't.
+  TEAM / ENTERPRISE gate refuses to ship until the Contractor either
+  edits the contract or supplies the missing include.
+
 ---
 
 ## 4. End-to-end example
