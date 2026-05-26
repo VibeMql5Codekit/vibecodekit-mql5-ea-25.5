@@ -63,6 +63,23 @@ def test_normalise_timeframe_strips_suffix():
     assert _normalise_timeframe("mn") == "MN1"
 
 
+def test_normalise_timeframe_preserves_canonical_mn1():
+    """Regression: ``.replace("MN", "MN1")`` used to corrupt ``MN1`` into
+    ``MN11`` by matching the embedded ``MN`` substring. Both lower- and
+    upper-case inputs must round-trip cleanly to ``MN1``."""
+
+    assert _normalise_timeframe("MN1") == "MN1"
+    assert _normalise_timeframe("mn1") == "MN1"
+    assert _normalise_timeframe(" MN1 ") == "MN1"
+
+
+def test_normalise_timeframe_canonical_day_and_week_pass_through():
+    """``D1`` and ``W1`` must survive normalisation untouched."""
+
+    assert _normalise_timeframe("d1") == "D1"
+    assert _normalise_timeframe("W1") == "W1"
+
+
 # --------------------------------------------------------------------------
 # Wizard wiring
 # --------------------------------------------------------------------------
@@ -182,6 +199,31 @@ def test_main_emit_json(tmp_path, capsys):
     assert payload["tool"] == "mql5-init"
     assert payload["ok"] is True
     assert payload["data"]["answers"]["preset"] == "trend"
+
+
+def test_main_emit_json_without_out_is_pure_json(capsys):
+    """Regression: when --json is supplied without --out, stdout MUST
+    contain a single parseable JSON document (and nothing else). The
+    previous implementation also wrote the YAML pretty-print before the
+    envelope, producing output that was unparseable as either YAML or
+    JSON. The spec is still recoverable via ``payload['data']['spec']``.
+    """
+
+    rc = main(["--non-interactive", "--json"])
+    assert rc == 0
+    captured = capsys.readouterr().out
+    # Must parse as a single JSON object end-to-end (no trailing YAML).
+    payload = json.loads(captured)
+    assert payload["schema_version"] == "1"
+    assert payload["tool"] == "mql5-init"
+    assert payload["ok"] is True
+    # The wizard answers + the full spec are embedded in the envelope so
+    # nothing is lost by suppressing the stdout YAML write.
+    assert payload["data"]["answers"]["preset"] == "trend"
+    assert payload["data"]["spec"]["preset"] == "trend"
+    assert payload["data"]["spec"]["risk"]["per_trade_pct"] == 0.5
+    # And the YAML pretty-print MUST NOT leak alongside.
+    assert "preset: trend" not in captured
 
 
 def test_load_answers_file_handles_comments(tmp_path):

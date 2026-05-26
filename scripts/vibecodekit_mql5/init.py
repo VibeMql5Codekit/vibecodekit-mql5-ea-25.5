@@ -123,7 +123,18 @@ def _normalise_symbol(raw: str) -> str:
 
 
 def _normalise_timeframe(raw: str) -> str:
-    return raw.strip().upper().replace("MIN", "M").replace("MN", "MN1")
+    """Canonicalise an MT5 timeframe label.
+
+    Accepts the lower-case shorthand operators tend to type (``h1``,
+    ``m15``, ``mn``) and rewrites it to the MetaTrader 5 form
+    (``H1``, ``M15``, ``MN1``). Bare ``MN`` is upgraded to ``MN1`` so the
+    spec round-trips, but ``MN1``/``MN`` already-canonical must NOT be
+    mangled into ``MN11`` — the previous greedy ``.replace("MN", "MN1")``
+    did exactly that on every monthly-timeframe input.
+    """
+
+    s = raw.strip().upper().replace("MIN", "M")
+    return "MN1" if s == "MN" else s
 
 
 def _ask(prompt: str, default: str, stream_in, stream_out) -> str:
@@ -345,7 +356,13 @@ def main(argv: list[str] | None = None) -> int:
         args.out.write_text(yaml_text, encoding="utf-8")
         wrote_to = str(args.out)
     else:
-        sys.stdout.write(yaml_text)
+        # When --json is set the agent contract requires stdout to be a
+        # pure JSON envelope (see scripts/vibecodekit_mql5/_agent_io.py).
+        # Suppress the YAML pretty-print so callers can `json.loads` the
+        # output without splitting on a sentinel; the spec is still
+        # included verbatim under data.spec in the envelope below.
+        if not args.emit_json:
+            sys.stdout.write(yaml_text)
         wrote_to = "<stdout>"
 
     if args.emit_json:
