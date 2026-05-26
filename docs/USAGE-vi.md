@@ -706,6 +706,44 @@ Pure-Python, không depend, không Wine, không MetaTester. File
 
 ---
 
+### 3.13. Agent prompts — 6 vai trò paste-and-run (Wave 5.3)
+
+Kit **không** gọi LLM nào trong CLI. Khi muốn một LLM chat ngoài
+(Claude, ChatGPT, Cursor, Devin) đóng đúng **một vai** ở **một step**,
+copy file tương ứng dưới `docs/agent-prompts/` rồi paste làm system
+message:
+
+| File | Vai trò | Lens | Step chính |
+|---|---|---|---|
+| `strategy-architect.md` | Quant / chủ giả thuyết giao dịch | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| `broker-engineer.md` | Kỹ sư MQL5 — chủ code | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| `risk-auditor.md` | Compliance / risk officer | `cso` | RRI, BLUEPRINT, VERIFY |
+| `devops.md` | Deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| `perf-analyst.md` | Phân tích backtest + tester | `investigate` | VERIFY, REFINE |
+| `trader.md` | End-user — "chủ nhà" trong ẩn dụ chủ-thầu-thợ | `ceo` | SCAN, VISION, VERIFY |
+
+Mỗi prompt có YAML frontmatter (`persona:`, `role:`, `review_lens:`,
+`owns_steps:`, `contributes_steps:`, `peers:`, `inputs:`,
+`outputs:`, `forbidden:`) + bộ section cố định cho operator
+(`## Operating principles`, `## Step-by-step responsibilities`,
+`## Handoff contracts`, `## What you must refuse to do`,
+`## How to use this prompt`). Schema được găm bởi
+`tests/gates/phase-C/test_agent_prompts_schema.py` để mọi prompt
+luôn đồng nhất và machine-readable.
+
+Bộ prompt này dùng song hành với generator Wave 5.1
+(`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`):
+generator emit skeleton deterministic, LLM dưới vai persona tương
+ứng refine narrative. Cũng song hành với content validator Wave 5.2:
+persona chưa "xong" step cho đến khi `step-N-<name>.md` có đủ
+checkbox `## Activities` được tick để vượt ngưỡng theo mode
+(`personal ≥ 50%`, `team ≥ 80%`, `enterprise = 100%`).
+
+Xem `docs/agent-prompts/README.md` cho playbook operator (English +
+Tiếng Việt).
+
+---
+
 ## 4. Ví dụ hoàn chỉnh: MACD+SAR EURUSD H1
 
 Worked example đầy đủ ở `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/`.

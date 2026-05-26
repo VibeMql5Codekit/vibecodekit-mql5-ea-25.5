@@ -614,6 +614,45 @@ unchanged for downstream robustness analysis.
 
 ---
 
+### 3.12. Agent prompts — six paste-and-run persona roles (Wave 5.3)
+
+The kit deliberately does **not** call an LLM internally. When you do
+want an external LLM chat (Claude, ChatGPT, Cursor, Devin) to act as
+a *single* role on a *single* step, paste the matching prompt from
+`docs/agent-prompts/`:
+
+| File | Persona | Lens | Owns steps |
+|---|---|---|---|
+| `strategy-architect.md` | Quant / strategy author | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| `broker-engineer.md` | Senior MQL5 implementer (the code owner) | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| `risk-auditor.md` | Compliance / risk officer | `cso` | RRI, BLUEPRINT, VERIFY |
+| `devops.md` | Deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| `perf-analyst.md` | Backtest + tester analyst | `investigate` | VERIFY, REFINE |
+| `trader.md` | End-user (the "owner") | `ceo` | SCAN, VISION, VERIFY |
+
+Each prompt has YAML frontmatter (`persona:`, `role:`,
+`review_lens:`, `owns_steps:`, `contributes_steps:`, `peers:`,
+`inputs:`, `outputs:`, `forbidden:`) plus a fixed set of operator
+sections (`## Operating principles`, `## Step-by-step
+responsibilities`, `## Handoff contracts`, `## What you must refuse
+to do`, `## How to use this prompt`). The schema is pinned by
+`tests/gates/phase-C/test_agent_prompts_schema.py`, so every prompt
+stays uniform and machine-readable.
+
+These prompts pair cleanly with the Wave-5.1 generators
+(`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`) — the
+generator emits a deterministic skeleton, the LLM running under the
+matching persona then refines it. They also pair with the Wave-5.2
+content validator: the persona is not "done" with a step until the
+matching `step-N-<name>.md` has enough ticked `## Activities`
+checkboxes to pass the per-mode threshold (`personal ≥ 50%`, `team
+≥ 80%`, `enterprise = 100%`).
+
+See `docs/agent-prompts/README.md` for the operator playbook
+(English + Tiếng Việt).
+
+---
+
 ## 4. End-to-end example
 
 The full worked example lives at

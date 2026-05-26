@@ -38,6 +38,11 @@ to read first, what to use, and what NOT to introduce.
 8. `docs/phase-{0,A,B,C,D,E}-spec.md` — phase-by-phase delivery contract.
 9. `docs/references/50-survey.md … 80-input-syntax.md` — 29 cheatsheets.
 10. `docs/rri-personas/` + `docs/rri-templates/` — RRI methodology.
+11. `docs/agent-prompts/` — six paste-and-run persona prompts (Wave 5.3,
+    `strategy-architect.md`, `broker-engineer.md`, `risk-auditor.md`,
+    `devops.md`, `perf-analyst.md`, `trader.md`). Use these to make an
+    external LLM chat adopt exactly one role per step. Schema pinned
+    by `tests/gates/phase-C/test_agent_prompts_schema.py`.
 
 ## What you may change directly
 

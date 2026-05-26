@@ -179,3 +179,28 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-manifest`     — emit (or validate) a machine-readable catalogue of every CLI: `--emit [--output manifest.json]`, `--validate manifest.json`
 - `/mql5-fixture`      — generate hermetic MT5 Strategy Tester fixtures so the BT/WF/MC/MB pipeline runs on Linux without Wine: `--type {backtest,walkforward,monte-carlo,multibroker} --strategy {random,trend,mean-rev} --seed N --out <dir>`
 - `/mql5-forge-loop`   — **Wave 3**: closed forge iteration loop. Chains `mql5-fixture --type backtest` into `mql5-backtest` parsing for `N` deterministic iterations (`--iterations 3 --strategy trend --base-seed 100 [--pf-floor F] [--sharpe-floor F] [--max-dd-ceiling F]`). No Wine, no MetaTester. Emits a per-iter `forge-loop-report.json` + Wave-1 `--json` envelope so the matrix collector consumes it unchanged.
+
+## Agent prompts (Wave 5.3 — paste-and-run persona roles, no CLI)
+
+Six markdown prompts under [`docs/agent-prompts/`](./agent-prompts/)
+turn an external LLM chat into a focused single-role assistant aligned
+with the 8-step RRI methodology. They are documentation artefacts, not
+CLIs — every prompt declares a YAML frontmatter (`persona`, `role`,
+`review_lens`, `owns_steps`, `contributes_steps`, `peers`, `inputs`,
+`outputs`, `forbidden`) pinned by
+`tests/gates/phase-C/test_agent_prompts_schema.py`.
+
+| File | Persona | Lens | Owns steps |
+|---|---|---|---|
+| [`strategy-architect.md`](./agent-prompts/strategy-architect.md) | Quant / strategy author | `ceo`, `investigate` | SCAN, RRI, VISION, REFINE |
+| [`broker-engineer.md`](./agent-prompts/broker-engineer.md) | Senior MQL5 implementer | `eng` | BLUEPRINT, TIP, BUILD, VERIFY |
+| [`risk-auditor.md`](./agent-prompts/risk-auditor.md) | Compliance / risk officer | `cso` | RRI, BLUEPRINT, VERIFY |
+| [`devops.md`](./agent-prompts/devops.md) | Deploy / VPS / observability | `eng` | BUILD, VERIFY, REFINE |
+| [`perf-analyst.md`](./agent-prompts/perf-analyst.md) | Backtest + tester analyst | `investigate` | VERIFY, REFINE |
+| [`trader.md`](./agent-prompts/trader.md) | End-user ("owner") | `ceo` | SCAN, VISION, VERIFY |
+
+These prompts pair with the Wave-5.1 generators (`mql5-vision-gen` /
+`mql5-blueprint-gen` / `mql5-tip-gen`) and the Wave-5.2
+sentinel-content validator (`mql5-permission --layer5-enforce-activities`).
+See [`docs/agent-prompts/README.md`](./agent-prompts/README.md) for the
+operator playbook.
