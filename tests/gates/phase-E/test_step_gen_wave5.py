@@ -86,6 +86,23 @@ def test_vision_gen_active_personas_sorted(rri_file: Path) -> None:
     )
 
 
+def test_vision_gen_accepts_uppercase_checkbox(tmp_path: Path) -> None:
+    """Markdown task-list syntax is case-insensitive; `- [X]` must work."""
+    rri = tmp_path / "step-2-rri.md"
+    rri.write_text(
+        "# Step 2 / 8 — RRI\n\n"
+        "## Constraints\n- C1\n\n"
+        "## Questions\n"
+        "- [X] strategy-architect::strat-01 — uppercase X\n"
+        "- [x] risk-auditor::risk-01 — lowercase x\n"
+        "- [ ] devops::dev-01 — unchecked\n",
+        encoding="utf-8",
+    )
+    parsed = vision_gen.parse_rri(rri.read_text())
+    assert parsed.active_personas == ("risk-auditor", "strategy-architect")
+    assert parsed.checked_questions == 2
+
+
 def test_vision_gen_render_contains_constraints_and_personas(rri_file: Path) -> None:
     parsed = vision_gen.parse_rri(rri_file.read_text())
     out = vision_gen.render_vision(parsed, source=rri_file)

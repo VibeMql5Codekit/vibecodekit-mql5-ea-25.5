@@ -34,9 +34,10 @@ from ..rri.personas import PERSONA_IDS
 
 TOOL = "mql5-vision-gen"
 
-# Match `- [x] persona-id::q-id` and capture both halves.
+# Match `- [x] persona-id::q-id` (or `[X]` — Markdown task-list syntax is
+# case-insensitive in every major renderer) and capture both halves.
 _CHECKED_Q = re.compile(
-    r"^\s*-\s*\[x\]\s+([A-Za-z][A-Za-z0-9_\-]+)\s*::\s*([A-Za-z0-9_\-]+)\s*(?:[—–\-:]\s*(.*))?$",
+    r"^\s*-\s*\[[xX]\]\s+([A-Za-z][A-Za-z0-9_\-]+)\s*::\s*([A-Za-z0-9_\-]+)\s*(?:[—–\-:]\s*(.*))?$",
 )
 
 
