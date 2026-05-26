@@ -96,8 +96,12 @@ def compute_stats(rows: list[dict[str, str]]) -> MfeMaeStats:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-mfe-mae", description=__doc__.splitlines()[0])
     p.add_argument("csv_path")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     path = Path(args.csv_path)
@@ -109,7 +113,28 @@ def main(argv: list[str] | None = None) -> int:
     except MfeMaeCsvError as exc:
         print(json.dumps({"ok": False, "error": str(exc)}), file=sys.stderr)
         return 2
-    print(json.dumps(stats.to_dict(), indent=2))
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-mfe-mae",
+        ok=True,
+        exit_code=0,
+        summary=(f"mfe/mae: n={stats.n_trades} "
+                 f"mfe_corr={stats.mfe_profit_corr:.3f} "
+                 f"mae_corr={stats.mae_profit_corr:.3f}"),
+        data=stats.to_dict(),
+        evidence=[str(path)],
+        matrix_dim="d_robustness",
+        matrix_axis="backtest",
+        matrix_status="PASS",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(stats.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
     return 0
 
 

@@ -135,13 +135,103 @@ def check_method_hiding(mq5_path: Path, target_build: int = 5260) -> CheckReport
     )
 
 
+def report_to_sarif(rep: CheckReport) -> dict:
+    """Render a method-hiding check report as SARIF 2.1.0."""
+
+    rule = {
+        "id": "mql5-method-hiding",
+        "name": "method-hiding-no-using",
+        "shortDescription": {"text": "Derived MQL5 class hides base method without `using`"},
+        "fullDescription": {
+            "text": "MetaEditor build 5260+ treats unqualified method redefinition in "
+                    "a derived class as ERROR. Add `using Base::method;` or annotate "
+                    "`// vck-mql5: hiding-ok`.",
+        },
+        "defaultConfiguration": {
+            "level": "error" if rep.target_build >= BUILD_STRICT_THRESHOLD else "warning",
+        },
+        "properties": {"target_build": rep.target_build},
+    }
+
+    results = []
+    for iss in rep.issues:
+        results.append({
+            "ruleId": rule["id"],
+            "level": "error" if iss.severity == "ERROR" else "warning",
+            "message": {
+                "text": (f"{iss.derived_class} hides {iss.base_class}::{iss.method}. "
+                         f"{iss.fix_hint}"),
+            },
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": iss.file},
+                    "region": {"startLine": iss.line, "startColumn": 1},
+                },
+            }],
+            "properties": {
+                "derived_class": iss.derived_class,
+                "base_class": iss.base_class,
+                "method": iss.method,
+            },
+        })
+
+    return {
+        "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "mql5-method-hiding-check",
+                    "informationUri": "https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea",
+                    "rules": [rule],
+                },
+            },
+            "results": results,
+        }],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     parser = argparse.ArgumentParser(prog="mql5-method-hiding-check")
     parser.add_argument("mq5", help="Path to .mq5 / .mqh source")
     parser.add_argument("--build", type=int, default=BUILD_STRICT_THRESHOLD)
+    parser.add_argument("--format", choices=("text", "sarif"), default="text",
+                        help="Output format. `sarif` emits SARIF 2.1.0; "
+                             "`text` (default) emits the legacy JSON report.")
+    _agent_io.add_json_flag(parser)
+    _agent_io.add_gate_report_flag(parser)
     args = parser.parse_args(argv)
+
     rep = check_method_hiding(Path(args.mq5), target_build=args.build)
-    print(rep.as_json())
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-method-hiding-check",
+        ok=rep.ok,
+        exit_code=0 if rep.ok else 1,
+        summary=(f"{len(rep.issues)} hiding issue(s) at build {rep.target_build}"
+                 if rep.issues else f"clean at build {rep.target_build}"),
+        data={
+            "target_build": rep.target_build,
+            "issues": [iss.__dict__ for iss in rep.issues],
+        },
+        evidence=[rep.path],
+        matrix_dim="d_correctness",
+        matrix_axis="implement",
+        matrix_status="PASS" if rep.ok else "FAIL",
+    )
+
+    if args.format == "sarif":
+        print(json.dumps(report_to_sarif(rep), indent=2))
+    elif args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(rep.as_json())
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
     return 0 if rep.ok else 1
 
 

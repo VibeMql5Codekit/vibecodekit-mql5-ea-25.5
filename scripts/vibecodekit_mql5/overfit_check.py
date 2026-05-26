@@ -67,9 +67,13 @@ def evaluate(is_sharpe: float, oos_sharpe: float) -> OverfitResult:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-overfit-check", description=__doc__.splitlines()[0])
     p.add_argument("is_xml")
     p.add_argument("oos_xml")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     try:
@@ -80,8 +84,29 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     result = evaluate(is_r.sharpe, oos_r.sharpe)
-    print(json.dumps(result.to_dict(), indent=2))
-    return 0 if result.verdict in ("PASS", "WARN") else 1
+    ok = result.verdict in ("PASS", "WARN")
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-overfit-check",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=f"overfit verdict: {result.verdict} (ratio={result.ratio:.3f})",
+        data=result.to_dict(),
+        evidence=[args.is_xml, args.oos_xml],
+        matrix_dim="d_robustness",
+        matrix_axis="walk_forward",
+        matrix_status=result.verdict if result.verdict in ("PASS", "WARN", "FAIL") else "N/A",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(result.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

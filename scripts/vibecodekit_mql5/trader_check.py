@@ -157,9 +157,13 @@ def verdict(result: dict[str, str], *, mode: str = "personal") -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-trader-check", description=__doc__.splitlines()[0])
     p.add_argument("ea")
     p.add_argument("--mode", choices=["personal", "enterprise"], default="personal")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     from .mq5_io import read_mq5_text
@@ -167,7 +171,28 @@ def main(argv: list[str] | None = None) -> int:
     text = read_mq5_text(args.ea, errors="replace")
     result = evaluate(text)
     ok = verdict(result, mode=args.mode)
-    print(json.dumps(result, indent=2))
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-trader-check",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=result.get("_summary", "trader-17 evaluated"),
+        data={"mode": args.mode, "result": result},
+        evidence=[args.ea],
+        matrix_dim="d_risk",
+        matrix_axis="design",
+        matrix_status="PASS" if ok else "FAIL",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        # Legacy behaviour: pretty-print the 17-key dict directly.
+        print(json.dumps(result, indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
     return 0 if ok else 1
 
 

@@ -113,6 +113,47 @@ def populate_from_inputs(inputs: dict) -> MatrixReport:
     return matrix
 
 
+def populate_from_gate_reports(report_dir: Path) -> tuple[MatrixReport, list[str]]:
+    """Build a matrix by scanning ``--gate-report`` envelopes in a directory.
+
+    Every file matching ``gate-report-*.json`` is read and its top-level
+    ``matrix`` block (``{dim, axis, status}``) determines which cell to
+    fill. The optional ``summary`` from the envelope becomes the cell
+    ``note`` so reviewers can hover-trace the verdict.
+
+    Returns ``(matrix, evidence_paths)`` where ``evidence_paths`` is the
+    sorted list of report files that contributed at least one cell.
+
+    Files lacking a ``matrix`` block are silently ignored — they're
+    typically tools whose output doesn't map to one of the 8 dimensions
+    (e.g. ``mql5-doctor``).
+    """
+
+    matrix = MatrixReport()
+    evidence: list[str] = []
+    for path in sorted(report_dir.rglob("gate-report-*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        cell = payload.get("matrix")
+        if not isinstance(cell, dict):
+            continue
+        dim = cell.get("dim")
+        axis = cell.get("axis")
+        status = cell.get("status", "N/A")
+        if not dim or not axis:
+            continue
+        if dim not in DIMS or axis not in AXES:
+            continue
+        if status not in STATUSES:
+            continue
+        note = str(payload.get("summary", "")).strip()
+        matrix.set(dim, axis, status, note)
+        evidence.append(str(path))
+    return matrix, evidence
+
+
 def render_html(matrix: MatrixReport) -> str:
     head_cells = "".join(f"<th>{escape(a)}</th>" for a in AXES)
     body_rows = []
@@ -147,14 +188,22 @@ def main() -> int:
     import argparse
 
     ap = argparse.ArgumentParser(prog="mql5-rri-matrix")
-    ap.add_argument("--inputs", type=Path, default=None,
-                    help="JSON file mapping 'dim/axis' to {status, note}")
+    src = ap.add_mutually_exclusive_group()
+    src.add_argument("--inputs", type=Path, default=None,
+                     help="JSON file mapping 'dim/axis' to {status, note}")
+    src.add_argument("--collect", type=Path, default=None,
+                     help="Directory of gate-report-*.json envelopes; "
+                          "each envelope's `matrix` block fills one cell.")
     ap.add_argument("--output", type=Path, default=Path("quality-matrix.html"))
     args = ap.parse_args()
 
+    evidence: list[str] = []
     if args.inputs and args.inputs.exists():
         payload = json.loads(args.inputs.read_text(encoding="utf-8"))
         matrix = populate_from_inputs(payload)
+        evidence.append(str(args.inputs))
+    elif args.collect and args.collect.exists():
+        matrix, evidence = populate_from_gate_reports(args.collect)
     else:
         matrix = MatrixReport()  # all N/A
     args.output.write_text(render_html(matrix), encoding="utf-8")
@@ -165,6 +214,7 @@ def main() -> int:
         "counts": counts,
         "passes_personal": matrix.passes_personal(),
         "passes_enterprise": matrix.passes_enterprise(),
+        "evidence": evidence,
     }, indent=2))
     return 0
 

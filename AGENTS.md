@@ -8,9 +8,9 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.0.1`. 55 CLI commands, 4 MCP servers,
+- **Status:** shipped product, `v1.0.1`. 57 CLI commands, 4 MCP servers,
   23 scaffold archetypes, 26 anti-pattern detectors (25 numbered AP-1…AP-25
-  + 1 build-aware method-hiding), 7-layer permission gate, 946 tests
+  + 1 build-aware method-hiding), 7-layer permission gate, 1021 tests
   across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
@@ -75,6 +75,27 @@ failure modes the kit was forked from `vibecodekit-handwritten` to fix:
 - An LLM API client inside the kit. `mql5-docs-bundle` emits a prompt
   and the operator's external agent (Devin / Claude / Cursor) does the
   authoring step. The kit never calls a model directly.
+
+## Agent Contracts (Wave 1)
+
+Twelve gates ship a stable `--json` envelope (`schema_version=1`) on
+stdout — schema and helpers live in `scripts/vibecodekit_mql5/_agent_io.py`.
+The same gates support `--gate-report <path>` to also persist the
+envelope to disk; `mql5-rri-matrix --collect <dir>` then auto-fills the
+8×8 quality matrix from those artefacts. `mql5-lint` and
+`mql5-method-hiding-check` additionally accept `--format sarif` (SARIF
+2.1.0). For machine-readable discovery of the full CLI surface, run
+`mql5-manifest --emit > manifest.json`. The repo's checked-in
+`manifest.json` is regenerated from `pyproject.toml` and pinned by
+`tests/gates/phase-A/test_manifest_generation.py`.
+
+For hermetic Phase-B testing on Linux without Wine, use
+`mql5-fixture --type {backtest,walkforward,monte-carlo,multibroker}
+--strategy {random,trend,mean-rev} --seed N --out <dir>` to generate
+synthetic MT5 Strategy Tester XML / CSV / journal artefacts that the
+backtest / walkforward / monte-carlo / multibroker parsers accept
+unchanged. Tests for this loop live under
+`tests/gates/phase-B/test_fixture_generator.py`.
 
 ## Task Loop
 

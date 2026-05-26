@@ -106,6 +106,9 @@ mql5-install = "vibecodekit_mql5.install:main"
 mql5-second-opinion = "vibecodekit_mql5.second_opinion:main"
 # Permission orchestrator
 mql5-permission = "vibecodekit_mql5.permission.orchestrator:main"
+# Wave-1 agent contracts: catalogue + hermetic CI fixture generator
+mql5-manifest = "vibecodekit_mql5.manifest:main"
+mql5-fixture = "vibecodekit_mql5.fixture:main"
 
 [tool.setuptools.packages.find]
 where = ["scripts"]

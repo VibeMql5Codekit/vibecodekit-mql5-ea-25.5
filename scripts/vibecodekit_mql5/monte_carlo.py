@@ -126,6 +126,7 @@ def _read_returns_csv(path: Path) -> list[float]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
     from .console import ensure_utf8_stdio
 
     ensure_utf8_stdio()
@@ -136,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="Backtest's reported MaxDD in percent")
     p.add_argument("--n-sims", type=int, default=1000)
     p.add_argument("--seed", type=int, default=42)
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     returns = _read_returns_csv(Path(args.returns_csv))
@@ -144,8 +147,29 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     result = evaluate(returns, args.reported_dd, n_sims=args.n_sims, seed=args.seed)
-    print(json.dumps(result.to_dict(), indent=2))
-    return 0 if result.verdict == "PASS" else 1
+    ok = result.verdict == "PASS"
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-monte-carlo",
+        ok=ok,
+        exit_code=0 if ok else 1,
+        summary=f"monte-carlo verdict: {result.verdict} (n_sims={args.n_sims})",
+        data=result.to_dict(),
+        evidence=[args.returns_csv],
+        matrix_dim="d_robustness",
+        matrix_axis="backtest",
+        matrix_status=result.verdict if result.verdict in ("PASS", "WARN", "FAIL") else "N/A",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(result.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

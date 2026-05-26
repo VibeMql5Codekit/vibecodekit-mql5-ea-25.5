@@ -110,9 +110,13 @@ def evaluate(ea_text: str, symbol_info: dict) -> BrokerSafetyResult:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import _agent_io
+
     p = argparse.ArgumentParser(prog="mql5-broker-safety", description=__doc__.splitlines()[0])
     p.add_argument("ea")
     p.add_argument("symbol_json")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     from .mq5_io import read_mq5_text
@@ -120,7 +124,28 @@ def main(argv: list[str] | None = None) -> int:
     ea_text = read_mq5_text(args.ea, errors="replace")
     sym = json.loads(Path(args.symbol_json).read_text(encoding="utf-8"))
     result = evaluate(ea_text, sym)
-    print(json.dumps(result.to_dict(), indent=2))
+
+    envelope = _agent_io.Envelope(
+        tool="mql5-broker-safety",
+        ok=result.all_pass,
+        exit_code=0 if result.all_pass else 1,
+        summary=("4/4 broker-safety checks PASS" if result.all_pass
+                 else f"broker-safety FAIL ({len(result.notes)} note(s))"),
+        data=result.to_dict(),
+        evidence=[args.ea, args.symbol_json],
+        matrix_dim="d_broker_safety",
+        matrix_axis="multi_broker",
+        matrix_status="PASS" if result.all_pass else "FAIL",
+    )
+
+    if args.emit_json:
+        _agent_io.emit(envelope)
+    else:
+        print(json.dumps(result.to_dict(), indent=2))
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
     return 0 if result.all_pass else 1
 
 

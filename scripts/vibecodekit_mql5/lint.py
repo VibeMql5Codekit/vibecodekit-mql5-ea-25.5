@@ -10,16 +10,23 @@ Detects (per Plan v5 §7 critical AP table):
     AP-20 Hardcoded-pip               `* 0.0001`, `* _Point`, `* Point()`
     AP-21 JPY-XAU-digits-broken       `digits-tested:` meta with < 2 classes
 
-Output: one line per finding, `<path>:<line>:<col>: <severity> <AP>: <msg>`.
+Output formats:
+    text  (default) one line per finding, `<path>:<line>:<col>: <severity> <AP>: <msg>`.
+    json  agent-friendly envelope (see :mod:`vibecodekit_mql5._agent_io`).
+    sarif SARIF 2.1.0 log (plugs into Cursor / VS Code / GitHub code-scanning).
+
 Exit code: 0 = clean, 1 = at least one ERROR finding, 2 = invocation error.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from . import _agent_io
 
 
 @dataclass(frozen=True)
@@ -219,22 +226,176 @@ def lint_file(path: Path) -> list[Finding]:
     return lint_source(str(path), read_mq5_text(path, errors="replace"))
 
 
+# ----------------------------------------------------------------------------
+# Output formatters
+# ----------------------------------------------------------------------------
+
+# Mapping AP code -> SARIF rule id + short description for the run.tool block.
+# Critical (ERROR) detectors come from this module; WARN-only detectors come
+# from lint_best_practice. SARIF needs a stable rule id per AP-code so the
+# run.tool.driver.rules array advertises every rule that could fire.
+_RULE_META: dict[str, tuple[str, str]] = {
+    # ERROR-severity (Plan v5 §7 critical AP table)
+    "AP-1":  ("no-sl",                    "OrderSend / CTrade.Buy without stop-loss"),
+    "AP-3":  ("lot-hardcoded",            "Hardcoded fixed lot size"),
+    "AP-5":  ("optimizer-overfit",        ">6 optimization input params"),
+    "AP-15": ("raw-ordersend",            "Raw OrderSend bypasses CTrade"),
+    "AP-17": ("webrequest-in-ontick",     "WebRequest inside OnTick / OnTimer"),
+    "AP-18": ("ordersend-async-unhandled", "OrderSendAsync without OnTradeTransaction"),
+    "AP-20": ("hardcoded-pip",            "Hardcoded pip math, not CPipNormalizer"),
+    "AP-21": ("digits-class-untested",    "`digits-tested:` meta covers <2 digit classes"),
+    # WARN-severity (best-practice detectors)
+    "AP-2":  ("magic-static",             "Static magic number, not CMagicRegistry"),
+    "AP-4":  ("trailing-stop-missing",    "No trailing-stop / break-even logic"),
+    "AP-6":  ("spread-unchecked",         "No spread guard before OrderSend"),
+    "AP-7":  ("news-session-unguarded",   "No news / session guard"),
+    "AP-8":  ("daily-loss-uncapped",      "No daily-loss CRiskGuard wiring"),
+    "AP-9":  ("multibroker-untested",     "No multi-broker stability evidence"),
+    "AP-10": ("walkforward-missing",      "No walkforward OOS test"),
+    "AP-11": ("montecarlo-missing",       "No monte-carlo stress run"),
+    "AP-12": ("overfit-unchecked",        "No overfit check / IS-OOS split"),
+    "AP-13": ("mfemae-unlogged",          "No MFE / MAE journal logging"),
+    "AP-14": ("journal-unobservable",     "No Print/PrintFormat journal lines"),
+    "AP-16": ("external-fallback-missing", "External dependency without fallback"),
+    "AP-19": ("vps-undeployed",           "Missing VPS deployment evidence"),
+    "AP-22": ("ontick-no-orderplace",     "OnTick reaches no order-placing call"),
+    "AP-23": ("ontick-leaks-resources",   "OnTick creates/leaks heap resources"),
+    "AP-24": ("ontick-mq5-state-leak",    "OnTick mutates global state outside guards"),
+    "AP-25": ("llm-fallback-missing",     "LLM bridge without deterministic fallback"),
+}
+
+
+def findings_to_sarif(findings: list[Finding]) -> dict:
+    """Render findings as a SARIF 2.1.0 log document.
+
+    Returns a Python dict ready for ``json.dumps``. Conforms to
+    https://docs.oasis-open.org/sarif/sarif/v2.1.0/.
+    """
+
+    # Always emit the full rule catalogue so consumers see every AP, even
+    # when the current run produced no finding for it. The Plan v5 §7
+    # critical-AP set defaults to SARIF `level=error`; everything else
+    # defaults to `warning`.
+    _ERROR_APS = {"AP-1", "AP-3", "AP-5", "AP-15", "AP-17", "AP-18", "AP-20", "AP-21"}
+    rules = []
+    for code, (rule_id, short) in _RULE_META.items():
+        rules.append({
+            "id": rule_id,
+            "name": code,
+            "shortDescription": {"text": short},
+            "fullDescription": {"text": short},
+            "defaultConfiguration": {
+                "level": "error" if code in _ERROR_APS else "warning",
+            },
+            "properties": {"ap_code": code},
+        })
+
+    results = []
+    for f in findings:
+        rule_id, _ = _RULE_META.get(f.code, (f.code.lower(), f.message))
+        results.append({
+            "ruleId": rule_id,
+            "level": "error" if f.severity == "ERROR" else "warning",
+            "message": {"text": f"{f.code}: {f.message}"},
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": f.path},
+                    "region": {"startLine": f.line, "startColumn": f.col},
+                },
+            }],
+            "properties": {"ap_code": f.code, "severity": f.severity},
+        })
+
+    return {
+        "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "mql5-lint",
+                    "informationUri": "https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea",
+                    "rules": rules,
+                },
+            },
+            "results": results,
+        }],
+    }
+
+
+def findings_to_envelope_data(findings: list[Finding]) -> dict:
+    return {
+        "finding_count": len(findings),
+        "error_count": sum(1 for f in findings if f.severity == "ERROR"),
+        "warn_count": sum(1 for f in findings if f.severity == "WARN"),
+        "findings": [
+            {
+                "path": f.path,
+                "line": f.line,
+                "column": f.col,
+                "severity": f.severity,
+                "code": f.code,
+                "message": f.message,
+            }
+            for f in findings
+        ],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="mql5-lint", description=__doc__.splitlines()[0])
     p.add_argument("files", nargs="+", help=".mq5 file(s) to lint")
+    p.add_argument("--format",
+                   choices=("text", "sarif"),
+                   default="text",
+                   help="Output format. `sarif` emits a SARIF 2.1.0 log "
+                        "that plugs into Cursor / GitHub code-scanning.")
+    _agent_io.add_json_flag(p)
+    _agent_io.add_gate_report_flag(p)
     args = p.parse_args(argv)
 
     any_error = False
+    all_findings: list[Finding] = []
+    evidence: list[str] = []
     for f in args.files:
         path = Path(f)
         if not path.is_file():
             print(f"{f}: not a file", file=sys.stderr)
             return 2
+        evidence.append(str(path))
         for finding in lint_file(path):
-            print(finding.format())
+            all_findings.append(finding)
             if finding.severity == "ERROR":
                 any_error = True
-    return 1 if any_error else 0
+
+    exit_code = 1 if any_error else 0
+    envelope = _agent_io.Envelope(
+        tool="mql5-lint",
+        ok=not any_error,
+        exit_code=exit_code,
+        summary=(f"{len(all_findings)} finding(s): "
+                 f"{sum(1 for x in all_findings if x.severity == 'ERROR')} ERROR, "
+                 f"{sum(1 for x in all_findings if x.severity == 'WARN')} WARN"),
+        data=findings_to_envelope_data(all_findings),
+        evidence=evidence,
+        matrix_dim="d_correctness",
+        matrix_axis="implement",
+        matrix_status="PASS" if not any_error else "FAIL",
+    )
+
+    if args.format == "sarif":
+        # SARIF is the structured output; suppress the per-finding text lines.
+        print(json.dumps(findings_to_sarif(all_findings), indent=2))
+    elif args.emit_json:
+        # JSON envelope is the structured output; emit it via the helper.
+        _agent_io.emit(envelope)
+    else:
+        for finding in all_findings:
+            print(finding.format())
+
+    if args.gate_report is not None:
+        _agent_io.write_gate_report(envelope, args.gate_report)
+
+    return exit_code
 
 
 if __name__ == "__main__":
