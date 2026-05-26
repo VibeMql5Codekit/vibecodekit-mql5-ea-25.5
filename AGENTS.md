@@ -8,7 +8,7 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.2.0`. 60 CLI commands (50 standalone +
+- **Status:** shipped product, `v1.3.0`. 60 CLI commands (50 standalone +
   10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
   `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
   anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
@@ -17,7 +17,10 @@ to read first, what to use, and what NOT to introduce.
   `scripts/vibecodekit_mql5/ast_parser/` retrofitting AP-1/2/7 behind
   `mql5-lint --use-ast`, in-process Python tick-bar simulator
   `mql5-bt-sim` emitting MT5-compatible XML for hermetic backtests,
-  7-layer permission gate, 1190 tests across Phase 0 / A / B / C / D / E.
+  Wave-4.3 cell-coverage audit on the 8×8 RRI matrix
+  (`python -m vibecodekit_mql5.rri.matrix --audit`) with gate-only
+  verdicts, 7-layer permission gate, 1205 tests across
+  Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
@@ -87,8 +90,10 @@ failure modes the kit was forked from `vibecodekit-handwritten` to fix:
 Twelve gates ship a stable `--json` envelope (`schema_version=1`) on
 stdout — schema and helpers live in `scripts/vibecodekit_mql5/_agent_io.py`.
 The same gates support `--gate-report <path>` to also persist the
-envelope to disk; `mql5-rri-matrix --collect <dir>` then auto-fills the
-8×8 quality matrix from those artefacts. `mql5-lint` and
+envelope to disk; `python -m vibecodekit_mql5.rri.matrix --collect <dir>`
+then auto-fills the 8×8 quality matrix from those artefacts. Of the 64
+cells, only **6** are discriminatively auto-fillable from gate reports
+— see Wave 4.3 below. `mql5-lint` and
 `mql5-method-hiding-check` additionally accept `--format sarif` (SARIF
 2.1.0). For machine-readable discovery of the full CLI surface, run
 `mql5-manifest --emit > manifest.json`. The repo's checked-in
@@ -189,13 +194,15 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.2.0`,
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.3.0`,
   60 lệnh CLI (50 standalone + 10 alias Wave-3 quy về 2 umbrella:
   `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
   scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo
   build) găm bởi 20-EA golden dataset, AST parser POC (`ast_parser/`,
   bật bằng `mql5-lint --use-ast`) + Python tick-bar simulator
-  (`mql5-bt-sim`), 1190 test gate.
+  (`mql5-bt-sim`), audit cell-coverage cho ma trận RRI 8×8
+  (`python -m vibecodekit_mql5.rri.matrix --audit`, Wave 4.3 — 6 cell
+  gate-auto + verdict gate-only riêng), 1205 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

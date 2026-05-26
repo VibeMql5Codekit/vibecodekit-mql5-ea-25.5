@@ -313,6 +313,57 @@ python -m vibecodekit_mql5.rri.rri_rr    --trader-check tc.json --walkforward wf
 python -m vibecodekit_mql5.rri.rri_chart --metrics chart.json --mode personal --output rri-chart.html
 ```
 
+#### Matrix cell-coverage audit (Wave 4.3)
+
+The 8×8 RRI quality matrix has 64 cells but only **6** of them are
+filled discriminatively by a Wave-1 `--gate-report` artefact (one cell
+per (dim, axis) pair). The remaining 58 cells either come from an RRI
+HTML review that broadcasts the same dim status across all 8 axes
+(`rri_broadcast`, 50 cells) or have no automation at all (`manual`,
+8 cells — the entire `d_inference` row).
+
+The legacy `passes_personal()` / `passes_enterprise()` thresholds
+assume **all** 64 cells are populated and therefore always fail in
+practice when the matrix is built solely from W1.4 gate-report
+collection. Use the **gate-only** verdicts instead — they recompute
+the personal / enterprise verdict against the 6 cells the collector
+can actually fill.
+
+```bash
+# Standalone audit — no inputs / no reports needed:
+python -m vibecodekit_mql5.rri.matrix --audit
+# Prints:
+# {
+#   "schema_version": "1",
+#   "total_cells": 64,
+#   "counts": {"gate_auto": 6, "rri_broadcast": 50, "manual": 8},
+#   "cells": { … per-cell map with the gate-report tool per gate_auto cell … }
+# }
+
+# Collect → matrix → HTML, gate-only verdicts also in the envelope:
+python -m vibecodekit_mql5.rri.matrix --collect ./reports/ --output matrix.html
+# Envelope adds (Wave 4.3):
+#   counts_by_coverage:      per-class status counts
+#   passes_personal_gate_only:   PASS verdict over the 6 gate_auto cells
+#   passes_enterprise_gate_only: strict PASS (zero WARN) over the same cells
+```
+
+The HTML report now visually distinguishes the three coverage classes
+(solid blue border = `gate_auto`, dashed purple = `rri_broadcast`,
+dim dotted grey = `manual`) so reviewers can tell at a glance which
+cells carry real per-(dim, axis) signal and which are fillers.
+
+| Cell                                | Coverage class    | Discriminative tool(s)                                                 |
+|-------------------------------------|-------------------|------------------------------------------------------------------------|
+| `d_correctness × implement`         | `gate_auto`       | `mql5-lint`, `mql5-method-hiding-check`, `mql5-bt-sim`                 |
+| `d_correctness × integration`       | `gate_auto`       | `mql5-permission`                                                      |
+| `d_risk × design`                   | `gate_auto`       | `mql5-trader-check`                                                    |
+| `d_robustness × backtest`           | `gate_auto`       | `mql5-backtest`, `mql5-monte-carlo`, `mql5-mfe-mae`, `mql5-forge-loop` |
+| `d_robustness × walk_forward`       | `gate_auto`       | `mql5-walkforward`, `mql5-overfit-check`                               |
+| `d_broker_safety × multi_broker`    | `gate_auto`       | `mql5-broker-safety`, `mql5-multibroker`                               |
+| `d_inference × *`  (whole row)      | `manual`          | none — fill via `--inputs` JSON                                        |
+| _(all other 50 cells)_              | `rri_broadcast`   | `mql5-rri bt|rr|chart` (uniform dim status across all 8 axes)          |
+
 ### 3.6. Review openers (6 — 1 umbrella + 4 Wave-3 aliases + 1 standalone)
 
 Wave 3 consolidated four review-persona CLIs (`mql5-eng-review`,
