@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "kit": "vibecodekit-mql5-ea",
-  "kit_version": "1.3.0",
+  "kit_version": "1.4.0",
   "generated_by": "mql5-manifest",
   "tools": [
     {
@@ -57,6 +57,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-blueprint-gen",
+      "module": "vibecodekit_mql5.step_gen.blueprint_gen",
+      "entry_point": "vibecodekit_mql5.step_gen.blueprint_gen:main",
+      "description": "mql5-blueprint-gen \u2014 auto-emit ``step-4-blueprint.md`` from ``ea-spec.yaml``.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-broker-safety",
@@ -509,6 +518,15 @@
       "supports_gate_report": false
     },
     {
+      "name": "mql5-tip-gen",
+      "module": "vibecodekit_mql5.step_gen.tip_gen",
+      "entry_point": "vibecodekit_mql5.step_gen.tip_gen:main",
+      "description": "mql5-tip-gen \u2014 auto-emit ``step-5-tip.md`` from ``step-4-blueprint.md``.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
+    },
+    {
       "name": "mql5-trader-check",
       "module": "vibecodekit_mql5.trader_check",
       "entry_point": "vibecodekit_mql5.trader_check:main",
@@ -525,6 +543,15 @@
       "supports_json": false,
       "supports_sarif": false,
       "supports_gate_report": false
+    },
+    {
+      "name": "mql5-vision-gen",
+      "module": "vibecodekit_mql5.step_gen.vision_gen",
+      "entry_point": "vibecodekit_mql5.step_gen.vision_gen:main",
+      "description": "mql5-vision-gen \u2014 auto-emit ``step-3-vision.md`` from ``step-2-rri.md``.",
+      "supports_json": true,
+      "supports_sarif": false,
+      "supports_gate_report": true
     },
     {
       "name": "mql5-walkforward",

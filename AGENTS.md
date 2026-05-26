@@ -8,7 +8,7 @@ to read first, what to use, and what NOT to introduce.
 
 - **What it is:** a methodology kit for building production-grade MQL5
   Expert Advisors on MetaTrader 5. Router-free, fail-fast, deterministic.
-- **Status:** shipped product, `v1.3.0`. 60 CLI commands (50 standalone +
+- **Status:** shipped product, `v1.4.0`. 63 CLI commands (53 standalone +
   10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens` and
   `mql5-rri <subcommand>`), 4 MCP servers, 23 scaffold archetypes, 26
   anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
@@ -19,15 +19,18 @@ to read first, what to use, and what NOT to introduce.
   `mql5-bt-sim` emitting MT5-compatible XML for hermetic backtests,
   Wave-4.3 cell-coverage audit on the 8×8 RRI matrix
   (`python -m vibecodekit_mql5.rri.matrix --audit`) with gate-only
-  verdicts, 7-layer permission gate, 1205 tests across
-  Phase 0 / A / B / C / D / E.
+  verdicts, **Wave-5.1 deterministic step-output generators**
+  (`mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`) +
+  **Wave-5.2 sentinel-content validator** hooked into Layer-5 via
+  `mql5-permission-layer5 --enforce-activities`, 7-layer permission
+  gate, 1245 tests across Phase 0 / A / B / C / D / E.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
 
 1. `README.md` — feature inventory + quickstart.
 2. `docs/QUICKSTART.md` — 10-minute clone-to-compile.
-3. `docs/COMMANDS.md` — every CLI command (60) grouped by lifecycle stage.
+3. `docs/COMMANDS.md` — every CLI command (63) grouped by lifecycle stage.
 4. `docs/USAGE-en.md` / `docs/USAGE-vi.md` — full per-command reference.
 5. `docs/USER-GUIDE-en.md` / `docs/USER-GUIDE-vi.md` — step-by-step walkthroughs.
 6. `docs/anti-patterns-AVOID.md` — architectural anti-patterns the kit avoids; technical detectors (25 numbered AP-1…AP-25 + 1 build-aware method-hiding = 26 total) live in `scripts/vibecodekit_mql5/lint.py` + `lint_best_practice.py` + `method_hiding_check.py`.
@@ -145,6 +148,38 @@ forge iteration loop:
   inspect what would have failed. Distinct from `mql5-doctor --soft`
   (which only relaxes *environment* probes). The two flags compose.
 
+## Agent Contracts (Wave 5)
+
+Wave 5 expands the role-based pipeline by giving step 3 / 4 / 5 of the
+8-step RRI methodology proper generator tools (previously
+template-renderers only) and by making layer-5 of the permission gate
+content-aware:
+
+* **`mql5-vision-gen <step-2-rri.md>`** — parses the Step-2 RRI artefact
+  for `## Constraints` + `- [x] persona::q-id` lines and emits a
+  ``step-3-vision.md`` skeleton with Scope / Active personas filled and
+  Timeline / Risk register left as TODO. No LLM call.
+* **`mql5-blueprint-gen <ea-spec.yaml>`** — emits a
+  ``step-4-blueprint.md`` (module diagram + state machine + per-preset
+  invariants table) deterministically keyed by the preset/stack pair.
+  ``--vision <step-3-vision.md>`` fuses scope from the prior step.
+* **`mql5-tip-gen <step-4-blueprint.md>`** — parses the Step-4 Invariants
+  + Module-diagram blocks and emits a ``step-5-tip.md`` with a
+  per-module table + invariant → module × test coverage matrix. Test
+  names are pytest-compatible snake_case identifiers.
+* **Sentinel-content validator** — ``mql5-permission-layer5
+  --enforce-activities`` (or ``layer5_methodology.gate(...,
+  enforce_activities=True)``) audits each step output for ticked
+  ``## Activities`` checkboxes and fails the gate when the ratio is
+  below the per-mode threshold (`personal` ≥ 50% / `team` ≥ 80% /
+  `enterprise` 100%). Closes the "touch the sentinel without filling
+  the template" loophole.
+
+The Wave-5 generators emit the Wave-1 `--json` envelope and accept
+`--gate-report <path>` like any other tool, BUT they intentionally OMIT
+`matrix_dim/axis` so the W1.4 matrix collector does not bind them to a
+non-`gate_auto` cell. They are emitters, not gates.
+
 ## Task Loop
 
 For every coding task:
@@ -194,15 +229,18 @@ mql5-permission --mode personal FirstEA.mq5
 
 ## Tiếng Việt — tóm tắt cho agent
 
-- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.3.0`,
-  60 lệnh CLI (50 standalone + 10 alias Wave-3 quy về 2 umbrella:
+- `vibecodekit-mql5-ea` là kit xây EA MQL5 production-grade, `v1.4.0`,
+  63 lệnh CLI (53 standalone + 10 alias Wave-3 quy về 2 umbrella:
   `mql5-review --lens` và `mql5-rri <subcommand>`), 4 MCP server, 23
   scaffold, 26 AP detector (25 đánh số AP-1…AP-25 + 1 method-hiding theo
   build) găm bởi 20-EA golden dataset, AST parser POC (`ast_parser/`,
   bật bằng `mql5-lint --use-ast`) + Python tick-bar simulator
   (`mql5-bt-sim`), audit cell-coverage cho ma trận RRI 8×8
   (`python -m vibecodekit_mql5.rri.matrix --audit`, Wave 4.3 — 6 cell
-  gate-auto + verdict gate-only riêng), 1205 test gate.
+  gate-auto + verdict gate-only riêng), **Wave-5.1 bộ sinh step output
+  deterministic** (`mql5-vision-gen` / `mql5-blueprint-gen` /
+  `mql5-tip-gen`) + **Wave-5.2 sentinel content validator** gắn vào
+  Layer-5 (`mql5-permission-layer5 --enforce-activities`), 1245 test gate.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

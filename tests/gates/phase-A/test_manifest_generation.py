@@ -157,3 +157,11 @@ def test_root_manifest_committed_is_in_sync():
     # Compare just the tool *names* (descriptions can drift on minor docstring edits
     # without breaking the agent contract).
     assert {t["name"] for t in on_disk["tools"]} == {t["name"] for t in live["tools"]}
+    # Wave 5.1 follow-up: pin kit_version so a forgotten `mql5-manifest --emit`
+    # cannot ship a stale 1.x.y while VERSION / __version__ / pyproject have
+    # moved on.
+    assert on_disk["kit_version"] == live["kit_version"], (
+        f"manifest.json kit_version={on_disk['kit_version']!r} is stale; "
+        f"VERSION says {live['kit_version']!r}. Regenerate with "
+        "`python -m vibecodekit_mql5.manifest --emit --output manifest.json`."
+    )

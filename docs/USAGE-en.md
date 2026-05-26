@@ -117,14 +117,43 @@ python -m vibecodekit_mql5.doctor
 python -m vibecodekit_mql5.audit
 ```
 
-### 3.2. Plan — template openers (4)
+### 3.2. Plan — template openers + Wave-5.1 generators (7)
 
 ```bash
+# Template renderers (open the markdown skeleton)
 python -m vibecodekit_mql5.rri --mode team
 python -m vibecodekit_mql5.vision
 python -m vibecodekit_mql5.blueprint
 python -m vibecodekit_mql5.tip
+
+# Wave 5.1 — deterministic step-output generators (no LLM call)
+mql5-vision-gen step-2-rri.md --out step-3-vision.md
+mql5-blueprint-gen ea-spec.yaml --vision step-3-vision.md --out step-4-blueprint.md
+mql5-tip-gen step-4-blueprint.md --out step-5-tip.md
 ```
+
+`mql5-vision-gen` parses the Step-2 RRI for `## Constraints` +
+`- [x] persona::q-id` lines and fills the Scope / Active personas
+sections of `step-3-vision.md`. Timeline + Risk register stay as
+`TODO` for the operator (or downstream LLM persona) to refine.
+
+`mql5-blueprint-gen` loads `ea-spec.yaml`, validates via `spec_schema`,
+and seeds the Step-4 invariants table from 18 preset-keyed templates
+(`PRESET_INVARIANTS` in `step_gen/blueprint_gen.py`). The module
+diagram + state machine are derived from the spec's signals / filters
+/ stack / preset (sync vs async vs indicator-only branches). Pass
+`--vision <step-3-vision.md>` to fuse the prior step's Scope items.
+
+`mql5-tip-gen` parses the Step-4 BLUEPRINT for `## Invariants`
+checkboxes and the first fenced block under `## Module diagram`. For
+each invariant it emits a row with the most relevant module(s) (naive
+keyword heuristic over `CPipNormalizer.mqh` / `CMagicRegistry.mqh` /
+`CRiskGuard.mqh` / signal block / filter block) and a pytest-compatible
+`test_<snake>` name. Test ownership + interface signatures are left as
+`TODO` for the operator to refine.
+
+All three generators support the standard Wave-1 `--json` envelope +
+`--gate-report <path>` for downstream agent consumption.
 
 ### 3.3. Build (13)
 
@@ -483,6 +512,27 @@ enterprise` so layer 2 doesn't block.
 The state dir (`--state-dir`, default `.rri-state`) caches per-layer
 payloads so subsequent CLI runs can re-use them without re-executing
 each tool.
+
+**Wave 5.2 — sentinel-content validator on layer 5.** The methodology
+layer (Layer 5) previously trusted ``.rri-state/<step>.done`` sentinels
+without inspecting the step output's content, so an operator (or LLM
+agent) could ``touch`` the sentinel without filling in any ``##
+Activities`` checkbox in ``step-N-<name>.md``. Enable the audit with
+``--enforce-activities``:
+
+```bash
+python -m vibecodekit_mql5.permission.layer5_methodology \
+    --state-dir .rri-state --mode team --enforce-activities
+```
+
+The validator reads each step's companion ``step-N-<name>.md`` (next to
+the sentinel) and computes the ratio of ``- [x]`` to ``- [ ]`` items
+under ``## Activities``. The gate fails when the ratio is below the
+per-mode default threshold (`personal ≥ 50%`, `team ≥ 80%`,
+`enterprise = 100%`); override with ``--activity-threshold 0.7``.
+Companion files with zero activities (or missing) pass trivially — the
+validator is *additive*, not a replacement for the legacy sentinel-
+existence check.
 
 ### 3.10. Forge closed loop (1, Wave 3)
 

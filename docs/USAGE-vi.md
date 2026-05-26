@@ -131,14 +131,42 @@ python -m vibecodekit_mql5.doctor
 python -m vibecodekit_mql5.audit
 ```
 
-### 3.2. Plan — mở template (4 lệnh)
+### 3.2. Plan — template + Wave-5.1 generators (7 lệnh)
 
 ```bash
+# Template renderer (mở skeleton)
 python -m vibecodekit_mql5.rri --mode team    # mở rri-template + chấm điểm
 python -m vibecodekit_mql5.vision             # mở step-3-vision template
 python -m vibecodekit_mql5.blueprint          # mở step-4-blueprint
-python -m vibecodekit_mql5.tip                # mở step-5-tip (8 TIP)
+python -m vibecodekit_mql5.tip                # mở step-5-tip
+
+# Wave 5.1 — bộ sinh step-output deterministic (KHÔNG gọi LLM)
+mql5-vision-gen step-2-rri.md --out step-3-vision.md
+mql5-blueprint-gen ea-spec.yaml --vision step-3-vision.md --out step-4-blueprint.md
+mql5-tip-gen step-4-blueprint.md --out step-5-tip.md
 ```
+
+`mql5-vision-gen` parse Step-2 RRI cho `## Constraints` + dòng
+`- [x] persona::q-id`, điền Scope / Active personas vào
+`step-3-vision.md`. Timeline + Risk register giữ là `TODO` cho operator
+(hoặc LLM persona phía sau) refine.
+
+`mql5-blueprint-gen` load `ea-spec.yaml`, validate qua `spec_schema`,
+seed bảng invariants Step-4 từ 18 template preset-keyed
+(`PRESET_INVARIANTS` trong `step_gen/blueprint_gen.py`). Module diagram
++ state machine được suy ra từ signals / filters / stack / preset
+(nhánh sync vs async vs indicator-only). Truyền
+`--vision <step-3-vision.md>` để fuse Scope từ step trước.
+
+`mql5-tip-gen` parse `## Invariants` checkbox + fenced block đầu tiên
+dưới `## Module diagram` trong BLUEPRINT. Mỗi invariant emit row với
+module liên quan nhất (heuristic theo keyword: `CPipNormalizer.mqh` /
+`CMagicRegistry.mqh` / `CRiskGuard.mqh` / signal block / filter block)
++ tên test snake_case pytest-compatible `test_<slug>`. Owner test +
+interface để TODO cho operator refine.
+
+Cả 3 generator support envelope Wave-1 `--json` + `--gate-report <path>`
+chuẩn.
 
 ### 3.3. Build (13 lệnh)
 
@@ -581,6 +609,25 @@ CI chỉ chạy docs / lint thì bỏ `--mode enterprise` để không bị chen
 
 State dir (`--state-dir`, default `.rri-state`) cache payload từng
 layer để lần chạy sau tái sử dụng.
+
+**Wave 5.2 — sentinel content validator trên layer 5.** Layer
+methodology (Layer 5) trước đây chỉ tin sentinel
+``.rri-state/<step>.done`` mà không inspect nội dung step output, nên
+operator (hoặc LLM agent) có thể ``touch`` sentinel mà không tick
+checkbox nào trong ``## Activities`` của ``step-N-<name>.md``. Bật audit
+bằng ``--enforce-activities``:
+
+```bash
+python -m vibecodekit_mql5.permission.layer5_methodology \
+    --state-dir .rri-state --mode team --enforce-activities
+```
+
+Validator đọc companion ``step-N-<name>.md`` (cùng folder sentinel) và
+tính tỉ lệ ``- [x]`` / ``- [ ]`` dưới ``## Activities``. Gate fail nếu
+ratio dưới ngưỡng mặc định theo mode (`personal ≥ 50%`, `team ≥ 80%`,
+`enterprise = 100%`); override bằng ``--activity-threshold 0.7``.
+Companion thiếu / không có activities pass mặc định — validator
+*additive*, không thay sentinel check cũ.
 
 ### 3.11. Forge closed loop (1 lệnh, Wave 3)
 
