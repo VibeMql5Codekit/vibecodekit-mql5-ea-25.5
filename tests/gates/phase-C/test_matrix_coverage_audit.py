@@ -280,4 +280,173 @@ def test_html_render_carries_coverage_metadata():
     # Legend block must mention all three classes + their counts.
     assert "gate_auto=6" in html
     assert "manual=8" in html
-    assert "rri_broadcast=" in html
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Audit follow-up: multi-emitter merge precedence
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _write_gate_report(
+    path: Path,
+    *,
+    tool: str,
+    dim: str,
+    axis: str,
+    status: str,
+    summary: str = "",
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "tool": tool,
+                "ok": status == "PASS",
+                "exit_code": 0,
+                "summary": summary,
+                "data": {},
+                "evidence": [],
+                "matrix": {"dim": dim, "axis": axis, "status": status},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_merge_status_precedence_ladder():
+    """``merge_status`` keeps the worst of any two statuses."""
+    assert mtx.merge_status("FAIL", "PASS") == "FAIL"
+    assert mtx.merge_status("PASS", "FAIL") == "FAIL"
+    assert mtx.merge_status("WARN", "PASS") == "WARN"
+    assert mtx.merge_status("PASS", "WARN") == "WARN"
+    assert mtx.merge_status("WARN", "FAIL") == "FAIL"
+    assert mtx.merge_status("N/A", "PASS") == "PASS"
+    assert mtx.merge_status("PASS", "N/A") == "PASS"
+    assert mtx.merge_status("PASS", "PASS") == "PASS"
+    assert mtx.merge_status("N/A", "N/A") == "N/A"
+    with pytest.raises(ValueError):
+        mtx.merge_status("PASS", "BOGUS")
+
+
+def test_collect_aggregates_multi_emitter_cells_by_worst_status(tmp_path: Path):
+    """When 3 gate-report emitters hit the same cell, FAIL must win.
+
+    Pre-fix: ``sorted(rglob)`` made alphabetical filename order decide.
+    Post-fix: the worst status (FAIL > WARN > PASS > N/A) wins and
+    every emitter's note is preserved.
+    """
+    cell = ("d_correctness", "implement")
+    _write_gate_report(
+        tmp_path / "gate-report-bt-sim.json",
+        tool="mql5-bt-sim", dim=cell[0], axis=cell[1],
+        status="PASS",
+    )
+    _write_gate_report(
+        tmp_path / "gate-report-lint.json",
+        tool="mql5-lint", dim=cell[0], axis=cell[1],
+        status="FAIL", summary="missing SL",
+    )
+    _write_gate_report(
+        tmp_path / "gate-report-method-hiding-check.json",
+        tool="mql5-method-hiding-check", dim=cell[0], axis=cell[1],
+        status="WARN", summary="name shadow",
+    )
+
+    matrix, evidence = mtx.populate_from_gate_reports(tmp_path)
+    result = matrix.get(*cell)
+    assert result.status == "FAIL", (
+        "FAIL must beat WARN and PASS regardless of filename order"
+    )
+    # Every contributing tool name must appear in the cell note so
+    # reviewers can trace the verdict.
+    assert "mql5-lint" in result.note
+    assert "mql5-bt-sim" in result.note
+    assert "mql5-method-hiding-check" in result.note
+    # Notes from emitters that provided a summary must survive too.
+    assert "missing SL" in result.note
+    assert "name shadow" in result.note
+    # Evidence path list still contains every contributing report.
+    assert len(evidence) == 3
+
+
+def test_collect_pass_only_when_every_emitter_agrees(tmp_path: Path):
+    """If every emitter reports PASS, the cell is PASS."""
+    cell = ("d_robustness", "backtest")
+    for tool in ("mql5-backtest", "mql5-monte-carlo", "mql5-mfe-mae"):
+        _write_gate_report(
+            tmp_path / f"gate-report-{tool}.json",
+            tool=tool, dim=cell[0], axis=cell[1], status="PASS",
+        )
+    matrix, _ = mtx.populate_from_gate_reports(tmp_path)
+    assert matrix.get(*cell).status == "PASS"
+
+
+def test_collect_single_warn_among_many_passes_demotes_cell(tmp_path: Path):
+    """A single WARN among many PASSes must demote the cell to WARN."""
+    cell = ("d_robustness", "backtest")
+    for i, tool in enumerate(["mql5-backtest", "mql5-monte-carlo", "mql5-mfe-mae", "mql5-forge-loop"]):
+        _write_gate_report(
+            tmp_path / f"gate-report-{tool}.json",
+            tool=tool, dim=cell[0], axis=cell[1],
+            status="WARN" if i == 0 else "PASS",
+        )
+    matrix, _ = mtx.populate_from_gate_reports(tmp_path)
+    assert matrix.get(*cell).status == "WARN"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Audit follow-up: --audit + --output silent no-op warning
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_audit_with_output_emits_warning(tmp_path: Path):
+    """``--audit --output <path>`` must warn that --output is ignored.
+
+    Previously the CLI silently dropped --output because --audit
+    returns early; users could end up with no file and no message.
+    """
+    proc = subprocess.run(
+        [
+            sys.executable, "-m", "vibecodekit_mql5.rri.matrix",
+            "--audit", "--output", str(tmp_path / "nope.html"),
+        ],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    # JSON still printed on stdout.
+    payload = json.loads(proc.stdout)
+    assert payload["total_cells"] == 64
+    # And a warning on stderr.
+    assert "warning" in proc.stderr.lower()
+    assert "--output" in proc.stderr
+    assert "--audit" in proc.stderr
+    # No HTML file written.
+    assert not (tmp_path / "nope.html").exists()
+
+
+def test_audit_without_output_writes_no_warning():
+    """When --output is left at its default, no warning is emitted."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "vibecodekit_mql5.rri.matrix", "--audit"],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr.strip() == ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Audit follow-up: COVERAGE_COUNTS module constant
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_coverage_counts_module_constant_matches_cell_coverage():
+    """``COVERAGE_COUNTS`` is the cached per-class count over CELL_COVERAGE."""
+    assert mtx.COVERAGE_COUNTS == {
+        "gate_auto": 6,
+        "rri_broadcast": 50,
+        "manual": 8,
+    }
+    for cls in mtx.COVERAGE_CLASSES:
+        assert mtx.COVERAGE_COUNTS[cls] == sum(
+            1 for v in mtx.CELL_COVERAGE.values() if v == cls
+        )

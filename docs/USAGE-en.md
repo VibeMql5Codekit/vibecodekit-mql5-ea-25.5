@@ -353,6 +353,18 @@ The HTML report now visually distinguishes the three coverage classes
 dim dotted grey = `manual`) so reviewers can tell at a glance which
 cells carry real per-(dim, axis) signal and which are fillers.
 
+Four of the six `gate_auto` cells are populated by **more than one**
+Wave-1 emitter (e.g. `d_correctness × implement` is targeted by
+`mql5-lint`, `mql5-method-hiding-check`, and `mql5-bt-sim`). When
+multiple gate reports land on the same cell, `--collect` keeps the
+**worst** status (`FAIL > WARN > PASS > N/A`) and concatenates every
+contributing tool's summary into the cell note so reviewers can trace
+the verdict. A single `FAIL` from any emitter is never silently
+hidden by a later-alphabetically-named `PASS` report.
+
+`--audit` ignores `--output` and prints to stdout. If both flags are
+supplied, the CLI emits a stderr warning and exits 0.
+
 | Cell                                | Coverage class    | Discriminative tool(s)                                                 |
 |-------------------------------------|-------------------|------------------------------------------------------------------------|
 | `d_correctness × implement`         | `gate_auto`       | `mql5-lint`, `mql5-method-hiding-check`, `mql5-bt-sim`                 |
