@@ -1,12 +1,12 @@
 # vibecodekit-mql5-ea
 
-[![version](https://img.shields.io/badge/version-v1.3.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.3.0)
-[![tests](https://img.shields.io/badge/tests-1205%20passing-success)]()
+[![version](https://img.shields.io/badge/version-v1.4.0-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.4.0)
+[![tests](https://img.shields.io/badge/tests-1245%20passing-success)]()
 [![lint](https://img.shields.io/badge/ruff-clean-success)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 > **Vibecode methodology kit** for building production-grade MQL5 Expert
-> Advisors on MetaTrader 5. **Sixty CLI commands** — 50 standalone
+> Advisors on MetaTrader 5. **Sixty-three CLI commands** — 53 standalone
 > plus 10 Wave-3 aliases delegating to the new `mql5-review --lens` and
 > `mql5-rri <subcommand>` umbrellas — including the interactive
 > `mql5-init` 5-question bootstrap, a single-shot `mql5-auto-build`
@@ -51,11 +51,11 @@ stdlib.
 
 ## English
 
-### What you get in v1.3.0
+### What you get in v1.4.0
 
 | Layer | Shipped |
 |-------|---------|
-| **Commands** | 60 (50 standalone + 10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens {eng,ceo,cso,investigate}` and `mql5-rri {template,bt,rr,chart}`). Every CLI is router-free and stands alone via `python -m vibecodekit_mql5.<name>` — see [`docs/COMMANDS.md`](docs/COMMANDS.md) for the full alphabetical catalogue + capability flags (`--json`, `--format sarif`, `--gate-report`, `--draft`). |
+| **Commands** | 63 (53 standalone + 10 Wave-3 aliases delegating to 2 umbrellas: `mql5-review --lens {eng,ceo,cso,investigate}` and `mql5-rri {template,bt,rr,chart}`). Every CLI is router-free and stands alone via `python -m vibecodekit_mql5.<name>` — see [`docs/COMMANDS.md`](docs/COMMANDS.md) for the full alphabetical catalogue + capability flags (`--json`, `--format sarif`, `--gate-report`, `--draft`). Wave 5.1 adds three deterministic step-output generators: `mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen`. |
 | **Wave 3 additions** | `mql5-review --lens` + `mql5-rri <subcommand>` umbrella consolidation (10 legacy console scripts kept as aliases). A 20-EA golden dataset under `tests/fixtures/ea-bugs/ap_NN_*/EA.mq5` + `expected.json` pins the lint detector contract. `mql5-forge-loop` chains the hermetic fixture generator into the backtest XML parser for N deterministic iterations — no Wine. |
 | **MCP servers** | 4 (`metaeditor-bridge`, `mt5-bridge` READ-ONLY[^1], `algo-forge-bridge`, `vibecodekit-bridge`) |
 | **Reference docs** | 29 (`docs/references/50-survey.md` → `80-input-syntax.md`) |
@@ -68,7 +68,7 @@ stdlib.
 | **Worked example** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — 4-hour enterprise turnaround |
 | **Auto-build pipeline** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — single command, idempotent JSON report, optional publish-to-public-URL |
 | **Reproducible env** | `requirements.lock` (pip-compile pinned) + `Dockerfile.devin` (3-stage: base / wine / ci) |
-| **Test gate** | 1205 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit). |
+| **Test gate** | 1245 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator). |
 
 [^1]: `mt5-bridge` requires the `MetaTrader5` Python package, which only
     installs on Windows or Wine MT5 desktop. On a Linux Devin VM without
@@ -126,6 +126,7 @@ Detailed walk-throughs:
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **CLI consolidation + golden dataset + hermetic forge loop** | **`mql5-review --lens {eng,ceo,cso,investigate}` consolidates the 5 review CLIs; `mql5-rri {template,bt,rr,chart}` consolidates the 4 RRI CLIs (all 10 legacy console scripts kept as aliases). 20-EA golden dataset under `tests/fixtures/ea-bugs/` pins the lint detector contract. `mql5-forge-loop` chains the hermetic fixture generator into the backtest parser for N deterministic iterations — no Wine.** |
 | **Wave 3 (D/E)** | `v1.2.0` | AST parser POC + in-process backtest engine | Lightweight MQL5 AST scanner under `scripts/vibecodekit_mql5/ast_parser/` retrofits AP-1 (no SL) / AP-2 (SL too tight) / AP-7 (hardcoded magic) detectors behind opt-in `mql5-lint --use-ast`. Byte-identical findings vs the regex pipeline on the 20-EA + 23-scaffold golden corpus. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` runs a deterministic synthetic-OHLC backtest in pure Python and emits XML the existing `mql5-backtest` parser accepts unchanged — no Wine, no fake returns. |
 | **Wave 4.3** | **`v1.3.0`** | **RRI matrix cell-coverage audit** | **`python -m vibecodekit_mql5.rri.matrix --audit` exposes the schema-level coverage map: 6 of 64 cells are auto-fillable from W1.4 `--gate-report` artefacts (discriminative per (dim, axis)), 50 cells come from RRI HTML reviews that broadcast a dim status across all 8 axes, and the 8 `d_inference` cells stay manual-only. New envelope fields `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` give an honest verdict over the 6 discriminative cells (the legacy 56/64 threshold is unattainable when the matrix is built solely from the W1.4 collector). HTML report visually distinguishes the three coverage classes.** |
+| **Wave 5.1 + 5.2** | **`v1.4.0`** | **Role-split step-output generators + sentinel-content validator** | **Three deterministic emitters auto-render `step-3-vision.md`, `step-4-blueprint.md`, `step-5-tip.md` from the prior step's artefact (`mql5-vision-gen <rri.md>`, `mql5-blueprint-gen <ea-spec.yaml> [--vision]`, `mql5-tip-gen <blueprint.md>`). 18 preset-keyed invariants seed Step-4, and Step-5 emits a pytest-compatible invariant→module×test coverage matrix. Wave 5.2 hooks layer-5 of the permission gate: `mql5-permission-layer5 --enforce-activities` audits each rendered step output for ticked `## Activities` checkboxes and fails the gate when the ratio is below `personal ≥ 50%` / `team ≥ 80%` / `enterprise = 100%`. Closes the "touch the sentinel without filling the template" loophole.** |
 
 ### Anti-patterns this kit refuses to ship
 
@@ -152,11 +153,11 @@ hot-spots:
 
 ## Tiếng Việt
 
-### v1.3.0 có gì
+### v1.4.0 có gì
 
 | Thành phần | Đã giao |
 |-----------|---------|
-| **Lệnh CLI** | 60 lệnh (Wave 3 cứng 10 lệnh review/RRI về 2 umbrella: `mql5-review --lens {eng,ceo,cso,investigate}` và `mql5-rri {template,bt,rr,chart}`; 10 console-script cũ vẫn chạy như alias) — đầy đủ chu trình `scan → plan → build → verify → review → deploy → ship`, cộng `mql5-init` wizard, `mql5-auto-build --draft`, `mql5-auto-fix`, `mql5-spec-from-prompt`, `mql5-fixture` (hermetic XML, không cần Wine), `mql5-forge-loop` (Wave-3.A/B/C), `mql5-bt-sim` (Wave-3.E: backtest tick-bar in-process bằng Python thuần, emit XML đúng schema MT5), `mql5-manifest`, `mql5-dashboard`. |
+| **Lệnh CLI** | 63 lệnh (Wave 3 cứng 10 lệnh review/RRI về 2 umbrella: `mql5-review --lens {eng,ceo,cso,investigate}` và `mql5-rri {template,bt,rr,chart}`; 10 console-script cũ vẫn chạy như alias) — đầy đủ chu trình `scan → plan → build → verify → review → deploy → ship`, cộng `mql5-init` wizard, `mql5-auto-build --draft`, `mql5-auto-fix`, `mql5-spec-from-prompt`, `mql5-fixture` (hermetic XML, không cần Wine), `mql5-forge-loop` (Wave-3.A/B/C), `mql5-bt-sim` (Wave-3.E: backtest tick-bar in-process bằng Python thuần, emit XML đúng schema MT5), bộ sinh step-output Wave 5.1 (`mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`), `mql5-manifest`, `mql5-dashboard`. |
 | **MCP server** | 4 (`metaeditor-bridge`, `mt5-bridge` chỉ-đọc[^2], `algo-forge-bridge`, `vibecodekit-bridge`) — chuẩn MCP JSON-RPC 2.0 over stdio |
 | **Tài liệu tham khảo** | 29 cheatsheet (`docs/references/50-survey.md` → `80-input-syntax.md`) |
 | **Scaffold** | 23 archetype × biến thể tài khoản (`trend/netting`, `scalping/hedging`, `hft-async/netting`, 3 biến thể LLM bridge, ml-onnx, `wizard-composable/netting`, `service/standalone`, …) |
@@ -168,7 +169,7 @@ hot-spots:
 | **Ví dụ hoàn chỉnh** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — turnaround 4 tiếng ở chế độ enterprise |
 | **Pipeline auto-build** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — 1 lệnh, JSON report idempotent, hook publish public URL tuỳ chọn |
 | **Môi trường reproducible** | `requirements.lock` (pip-compile pin chặt) + `Dockerfile.devin` (3 stage: base / wine / ci) |
-| **Test gate** | 1205 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage cho ma trận RRI 8×8, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
+| **Test gate** | 1245 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
 
 [^2]: `mt5-bridge` cần package `MetaTrader5` Python — chỉ cài được trên
     Windows hoặc Wine MT5 desktop. Trên Linux Devin VM, import fail và
@@ -225,6 +226,7 @@ Hướng dẫn chi tiết:
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **Gộp CLI + golden dataset + forge loop hermetic** | **`mql5-review --lens {eng,ceo,cso,investigate}` gộp 5 CLI review; `mql5-rri {template,bt,rr,chart}` gộp 4 CLI RRI (10 console-script cũ vẫn chạy như alias). Golden dataset 20 EA ở `tests/fixtures/ea-bugs/` ghăm hợp đồng detector lint. `mql5-forge-loop` nối fixture hermetic vào backtest parser N iter — không cần Wine.** |
 | **Wave 3 (D/E)** | `v1.2.0` | POC AST parser + backtest engine in-process | AST scanner MQL5 nhẹ dưới `scripts/vibecodekit_mql5/ast_parser/` retrofit AP-1 (thiếu SL) / AP-2 (SL quá chặt) / AP-7 (magic hardcode) sau cờ opt-in `mql5-lint --use-ast`. Finding byte-identical so với pipeline regex trên toàn bộ 20 EA + 23 scaffold golden. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` chạy backtest tick-bar deterministic bằng Python thuần và emit XML đúng schema MT5 để `mql5-backtest` parser ăn thẳng — không cần Wine, không emit return giả. |
 | **Wave 4.3** | **`v1.3.0`** | **Audit cell-coverage cho ma trận RRI** | **`python -m vibecodekit_mql5.rri.matrix --audit` phơi bày coverage ở schema level: 6/64 cell auto-fill discriminative từ artefact `--gate-report` (W1.4), 50 cell đến từ RRI HTML review (broadcast cùng dim status cho cả 8 axes), 8 cell `d_inference` chỉ fill manual qua `--inputs`. Envelope thêm field `counts_by_coverage`, `passes_personal_gate_only`, `passes_enterprise_gate_only` cho verdict trung thực trên 6 cell discriminative (threshold legacy 56/64 luôn fail khi matrix build chỉ từ collector W1.4). HTML report phân biệt 3 coverage class bằng border.** |
+| **Wave 5.1 + 5.2** | **`v1.4.0`** | **Chia vai trò kiến trúc sư/thợ + sentinel content validator** | **Ba bộ sinh deterministic tự động emit `step-3-vision.md`, `step-4-blueprint.md`, `step-5-tip.md` từ artefact của step trước (`mql5-vision-gen <rri.md>`, `mql5-blueprint-gen <ea-spec.yaml> [--vision]`, `mql5-tip-gen <blueprint.md>`). 18 preset được seed sẵn invariants cho Step-4, và Step-5 emit bảng coverage invariant→module×test theo tên test snake_case pytest-compatible. Wave 5.2 gắn vào layer-5 của permission gate: `mql5-permission-layer5 --enforce-activities` audit từng step output cho checkbox `## Activities` và fail gate khi tỷ lệ dưới `personal ≥ 50%` / `team ≥ 80%` / `enterprise = 100%`. Đóng lỗ hổng "touch sentinel mà không điền template".** |
 
 ### Anti-pattern kit từ chối ship
 

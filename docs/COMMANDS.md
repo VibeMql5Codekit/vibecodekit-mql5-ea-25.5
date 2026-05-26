@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (60 commands — 50 standalone + 10 Wave-3 aliases)
+title: Command catalog (63 commands — 53 standalone + 10 Wave-3 aliases)
 applicable_phase: E
 ---
 
@@ -22,8 +22,9 @@ No master `/mql5` router — every command stands alone.
   matrix-named console scripts remain as 1-line aliases.
 
 The pyproject `[project.scripts]` entry list grew by one in Wave 3.E
-(`mql5-bt-sim`) for a current total of 60 entries — every alias still
-resolves to its existing console-script name. Wave-3.A/B/C consolidated
+(`mql5-bt-sim`) and three in Wave 5.1 (`mql5-vision-gen`,
+`mql5-blueprint-gen`, `mql5-tip-gen`) for a current total of 63 entries
+— every alias still resolves to its existing console-script name. Wave-3.A/B/C consolidated
 the *implementation* of `mql5-review` / `mql5-rri`, not the surface.
 Wave-3.D adds an opt-in `mql5-lint --use-ast` flag (no new CLI) that
 routes AP-1 / AP-2 / AP-7 through a lightweight MQL5 AST scanner under
@@ -57,7 +58,10 @@ full coverage table and the new `passes_personal_gate_only` /
 Tools with `--json`: `mql5-lint`, `mql5-trader-check`, `mql5-broker-safety`,
 `mql5-permission`, `mql5-backtest`, `mql5-walkforward`, `mql5-monte-carlo`,
 `mql5-multibroker`, `mql5-overfit-check`, `mql5-mfe-mae`, `mql5-doctor`,
-`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`, `mql5-bt-sim`.
+`mql5-audit`, `mql5-fixture`, `mql5-init`, `mql5-forge-loop`, `mql5-bt-sim`,
+`mql5-vision-gen`, `mql5-blueprint-gen`, `mql5-tip-gen` (Wave 5.1 generators
+emit the envelope but intentionally OMIT `matrix_dim/axis` — they are
+emitters, not gate-report tools).
 
 Tools with `--format sarif`: `mql5-lint`, `mql5-method-hiding-check`.
 
@@ -95,11 +99,14 @@ blocked in non-draft mode. Draft is distinct from `--soft` (used by
 - `/mql5-audit`    — run 70-test conformance battery
 - `/mql5-init`     — interactive 5-question bootstrap wizard → `ea-spec.yaml` (Wave 2). Use `--non-interactive` / `--from-answers <yaml>` in CI.
 
-## Plan (4)
+## Plan (7)
 - `/mql5-rri`       — open Step 2 RRI template
 - `/mql5-vision`    — open Step 3 VISION template
 - `/mql5-blueprint` — open Step 4 BLUEPRINT template
 - `/mql5-tip`       — open Step 5 TIP template
+- `/mql5-vision-gen <step-2-rri.md>`     — **Wave 5.1**: auto-emit `step-3-vision.md` from a filled RRI artefact. Parses `## Constraints` + `- [x] persona::q-id` lines, fills Scope / Active personas, leaves Timeline + Risk register as `TODO`. Supports `--json` + `--gate-report`.
+- `/mql5-blueprint-gen <ea-spec.yaml>`   — **Wave 5.1**: auto-emit `step-4-blueprint.md` from `ea-spec.yaml` (preset-keyed invariants + module diagram + state machine). Optional `--vision <step-3-vision.md>` fuses scope.
+- `/mql5-tip-gen <step-4-blueprint.md>`  — **Wave 5.1**: auto-emit `step-5-tip.md` (module table + invariant → module × test coverage). Test names are pytest-compatible snake_case identifiers.
 
 ## Build (15)
 - `/mql5-build`             — render a scaffold
