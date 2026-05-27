@@ -1,5 +1,7 @@
 # Phase E Spec — Polish & Ship v1.0.0
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** 26 references full + 3 MCP servers + worked example + canary + final commands.
 **Duration:** 2-3 weeks.
 **Tag on completion:** v1.0.0.

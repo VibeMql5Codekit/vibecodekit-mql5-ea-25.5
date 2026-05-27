@@ -4,6 +4,13 @@ This file is the entrypoint for AI coding agents (Devin, Claude Code,
 Codex, Cursor) working inside `vibecodekit-mql5-ea`. It tells you what
 to read first, what to use, and what NOT to introduce.
 
+> **Honest disclaimer.** `Trader-17`, the `8×8 quality matrix`, the
+> `AP-1…AP-25` anti-pattern IDs, the 7-layer permission pipeline, the
+> Wave-5.3 personas, and the Wave-6.1 Triangle-of-Power actors are
+> **project-defined heuristics** designed by this kit. They are
+> opinionated guardrails — not industry standards, not certifications,
+> and not substitutes for live-account validation. Treat them as such.
+
 ## Project Snapshot
 
 - **What it is:** a methodology kit for building production-grade MQL5
@@ -41,7 +48,7 @@ to read first, what to use, and what NOT to introduce.
   `mql5-escalation --list` / `--resolve <id>` query and close the log;
   `mql5-permission-layer5 --enforce-no-open-escalation` blocks TEAM /
   ENTERPRISE gates while any level-3 escalation is still OPEN),
-  7-layer permission gate, 1491 tests across Phase 0 / A / B / C / D / E.
+  7-layer permission gate, 1490+ gate tests.
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
@@ -245,6 +252,90 @@ mql5-trader-check FirstEA.mq5
 mql5-permission --mode personal FirstEA.mq5
 ```
 
+## Rule ID → documentation table
+
+### Anti-patterns (AP-1…AP-25) — emitted by `mql5-lint`
+
+The 8 critical detectors live in `scripts/vibecodekit_mql5/lint.py`; the
+17 best-practice WARN detectors live in
+`scripts/vibecodekit_mql5/lint_best_practice.py`; the build-aware
+method-hiding detector lives in
+`scripts/vibecodekit_mql5/method_hiding_check.py`.
+
+| Rule | Severity | Description | See |
+|---|---|---|---|
+| AP-1 | ERROR | Trade opened without stop-loss | `docs/anti-patterns-AVOID.md`, `docs/references/79-pip-norm.md` |
+| AP-3 | ERROR | Hardcoded `lot = 0.01` literal | `docs/anti-patterns-AVOID.md` |
+| AP-5 | ERROR | More than 6 `input` declarations | `docs/anti-patterns-AVOID.md` |
+| AP-15 | ERROR | Raw `OrderSend(` instead of `CTrade` | `docs/anti-patterns-AVOID.md` |
+| AP-17 | ERROR | `WebRequest()` inside `OnTick` / `OnTimer` | `docs/anti-patterns-AVOID.md` |
+| AP-18 | ERROR | `OrderSendAsync` without `OnTradeTransaction` | `docs/anti-patterns-AVOID.md` |
+| AP-20 | ERROR | Hardcoded pip (`* 0.0001`, `* _Point`, `* Point()`) | `docs/references/79-pip-norm.md` |
+| AP-21 | WARN  | `// digits-tested:` meta with only one broker class | `docs/references/79-pip-norm.md` |
+| AP-2 | WARN | SL too tight (< spread + commission) | `docs/anti-patterns-AVOID.md` |
+| AP-4 | WARN | Martingale without `max_orders` cap | `docs/anti-patterns-AVOID.md` |
+| AP-6 | WARN | Optimizer-curve-fitted code smell | `docs/anti-patterns-AVOID.md` |
+| AP-7 | WARN | Hardcoded magic number (use `CMagicRegistry`) | `docs/anti-patterns-AVOID.md` |
+| AP-8 | WARN | No spread guard | `docs/anti-patterns-AVOID.md` |
+| AP-9 | WARN | Multi-entry on same bar | `docs/anti-patterns-AVOID.md` |
+| AP-10 | WARN | `OrderSend` without retcode / retry | `docs/anti-patterns-AVOID.md` |
+| AP-11 | WARN | Mode-blind (no netting/hedging branch) | `docs/anti-patterns-AVOID.md` |
+| AP-12 | WARN | Indicator-handle leak (no `IndicatorRelease`) | `docs/anti-patterns-AVOID.md` |
+| AP-13 | WARN | Broker-coupled (hardcoded broker name string) | `docs/anti-patterns-AVOID.md` |
+| AP-14 | WARN | No MFE / MAE logging | `docs/references/59-trader-checklist.md` |
+| AP-16 | WARN | Reinventing stdlib include (`CTrade`, `CSymbolInfo`, …) | `docs/anti-patterns-AVOID.md` |
+| AP-19 | WARN | ONNX usage without Strategy-Tester validation | `docs/anti-patterns-AVOID.md` |
+| AP-22 | WARN | Signal placeholder — `OnTick` reaches no order call | `docs/anti-patterns-AVOID.md` |
+| AP-23 | WARN | `CTrade` call without retcode check | `docs/anti-patterns-AVOID.md` |
+| AP-24 | WARN | History not synchronized before read | `docs/anti-patterns-AVOID.md` |
+| AP-25 | WARN | Raw `delete` without nullity guard | `docs/anti-patterns-AVOID.md` |
+
+> **Honest note.** AP-5's "> 6 inputs = overfit" rule is a project
+> default, not an industry threshold. Grid / portfolio / DCA EAs
+> legitimately need more parameters. To override, edit the threshold in
+> `scripts/vibecodekit_mql5/lint.py` via PR (the kit deliberately ships
+> no per-file disable mechanism).
+
+### Trader-17 checklist (T01–T17) — emitted by `mql5-trader-check`
+
+See `docs/references/59-trader-checklist.md` for the full list. The
+gate requires ≥ 15 / 17 PASS. Items that need external evidence
+(walk-forward XML, Monte-Carlo report, multi-broker comparison, overfit
+report, VPS deployment, news-session policy) report `N/A` on a fresh
+scaffold and are not counted toward PASS until you supply that
+evidence.
+
+### Permission pipeline layers — emitted by `mql5-permission`
+
+Layer order is L1 source-lint → L2 compile → L3 AP-lint → L4 checklist
+(Trader-17) → L5 methodology (Wave-5.x activities + Wave-6.x sign-off)
+→ L6 quality-matrix (8×8) → L7 broker-safety. `personal` runs `1, 2,
+3, 4, 7`; `team` adds `5`; `enterprise` runs all `1–7`. See section
+[Agent Contracts (Wave 1)](#agent-contracts-wave-1) for the JSON
+envelope shape every layer emits.
+
+## Reference numbers — honest empirical snapshot
+
+When this kit's gates run against a **freshly scaffolded EA** (no
+strategy written yet — `mql5-build stdlib --name SampleEA --symbol
+EURUSD --tf H1`), the kit reports:
+
+| Gate | Result on bare scaffold |
+|---|---|
+| `mql5-lint` | `0 ERROR, 1 WARN` (AP-22 placeholder OnTick) |
+| `mql5-trader-check` | `6 / 17 PASS, 3 WARN, 8 N/A, 0 FAIL` → **FAIL** (gate ≥ 15) |
+| `mql5-permission --mode personal` | **FAIL** at layer 2 (compile, when no Wine) |
+| `mql5-permission --mode team` | **FAIL** at layer 2 (fail-fast: L3–L7 not run) |
+| `mql5-permission --mode enterprise` | **FAIL** at layer 2 (fail-fast: L3–L7 not run) |
+| `mql5-matrix` (no `--collect`) | `0 / 64 PASS` — CLI floor, not a measurement |
+| `python -m vibecodekit_mql5.rri.matrix --audit` | `6 gate-auto + 50 rri-broadcast + 8 manual = 64` |
+
+A bare scaffold is **expected to fail** the permission gate — the gate
+has teeth and demands real evidence (working strategy + walk-forward +
+multi-broker + Monte Carlo + overfit check) before passing. See
+[`docs/reference-ea/REPORT.md`](docs/reference-ea/REPORT.md) for the
+raw outputs and the regenerator script.
+
 ## Environment
 
 - Python ≥ 3.10, `pip install -e .` (now pulls `pyyaml` by default; install
@@ -277,7 +368,7 @@ mql5-permission --mode personal FirstEA.mq5
   (`mql5-escalation --from … --to … --level {1,2,3}` ghi
   `.mql5-audit/escalations.jsonl`; `mql5-permission-layer5
   --enforce-no-open-escalation` chặn gate TEAM/ENTERPRISE khi còn L3 OPEN),
-  1491 test gate.
+  1490+ gate test.
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

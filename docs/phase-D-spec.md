@@ -1,5 +1,7 @@
 # Phase D Spec — Tech 2024-2025
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** ONNX + HFT async + Algo Forge + LLM bridge + Cloud Network + Method-hiding linter.
 **Duration:** 3-4 weeks.
 **Tag on completion:** v0.5.0.

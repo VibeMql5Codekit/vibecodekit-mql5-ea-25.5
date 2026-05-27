@@ -1,5 +1,7 @@
 # Phase 0 Spec — Bootstrap
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** Set up infrastructure (Wine + MetaEditor + CI) before any feature work.
 **Duration:** 1 week.
 **Tag on completion:** v0.0.1.

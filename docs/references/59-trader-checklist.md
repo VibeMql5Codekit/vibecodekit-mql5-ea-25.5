@@ -7,6 +7,12 @@ applicable_phase: B
 
 # Trader-17 checklist deep dive
 
+> **Honest disclaimer.** The Trader-17 checklist below is a
+> **project-defined heuristic** designed by this kit. It is an
+> opinionated guardrail for retail EA hygiene — not an industry
+> standard, not a certification, and not a substitute for live-account
+> validation. The 15/17 threshold is also a project choice.
+
 The 17 trader-discipline checks live in
 `scripts/vibecodekit_mql5/trader_check.py`.  Layer 4 of the permission
 pipeline requires ≥ 15/17 to pass.  The 17 are:

@@ -1,5 +1,14 @@
 # Anti-patterns to AVOID
 
+> **Honest disclaimer.** The architectural anti-patterns below (and the
+> `AP-1…AP-25` regex/AST detectors that operationalise them) are
+> **project-defined heuristics** designed by this kit. They are
+> opinionated guardrails — not industry standards, not certifications,
+> and not substitutes for code review or live-account validation. The
+> `> 6 inputs` threshold (AP-5), the `15/17` Trader-17 gate, and the
+> `48/64` matrix threshold (TEAM mode) are project choices, not
+> universal truths.
+
 This document lists 5 anti-patterns identified in the parent `vibecodekit-hybrid-ultra`
 (VCK-HU) repository that vibecodekit-mql5-ea **MUST NOT** inherit. These were
 identified via self-audit before finalizing Plan v5.

@@ -1,5 +1,10 @@
 # Vibecodekit-MQL5-EA — Plan v5 (FULL)
 
+> ⚠️ **Internal / contributor document.** This is an internal sprint
+> planning doc that records the kit's own development phases. End users
+> do **not** need to read it — see [`README.md`](../README.md) and
+> [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 > **v5 = v4 lean structure + restored breadth (per user request).**
 >
 > **History:**

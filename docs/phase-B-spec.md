@@ -1,5 +1,7 @@
 # Phase B Spec — Test & Validation
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** Strategy Tester wrapper + walk-forward + multi-broker stability + Trader-17 + VPS deploy.
 **Duration:** 3 weeks.
 **Tag on completion:** v0.2.0.

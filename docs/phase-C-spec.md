@@ -1,5 +1,7 @@
 # Phase C Spec — Methodology
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** RRI 6 personas + 8-step + 8x8 matrix + 7-layer permission + 13 best-practice AP.
 **Duration:** 3 weeks.
 **Tag on completion:** v0.3.0.

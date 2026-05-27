@@ -1,3 +1,5 @@
+# Honest disclaimer: this persona and its question set are project-defined
+# heuristics designed by vibecodekit-mql5-ea, not industry standards.
 # RRI persona — strategy-architect (quant / strategy author).
 persona: strategy-architect
 description: Quant or strategy author owning signal & expectancy design.
