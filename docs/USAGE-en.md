@@ -41,8 +41,8 @@ Suitable for both new users and dev teams.
 ### 1.2. Linux (Ubuntu 22.04+)
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 
 ./scripts/setup-wine-metaeditor.sh        # ~3 min
 python -m venv .venv && source .venv/bin/activate
@@ -66,8 +66,8 @@ brew install --cask wine-stable
 MetaEditor is native, no Wine needed. PowerShell:
 
 ```powershell
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e .
@@ -1296,4 +1296,4 @@ export ALGO_FORGE_API_KEY=your_key_here
 - [`examples/ea-wizard-macd-sar-eurusd-h1-portfolio/`](../examples/ea-wizard-macd-sar-eurusd-h1-portfolio/) — 4-hour worked example
 
 Questions / bugs → open an issue at
-https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/issues
+https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/issues

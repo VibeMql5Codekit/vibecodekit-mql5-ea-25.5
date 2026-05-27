@@ -36,7 +36,7 @@ methodology — xem `docs/USAGE-vi.md` §3.13 hoặc
 ## 1. Devin (new session)
 
 Devin tự kế thừa repo + blueprint. Tạo session mới với link repo
-`https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea` và prompt
+`https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5` và prompt
 khởi đầu mẫu (một lệnh gọn nếu muốn dùng pipeline auto-build):
 
 ```
@@ -182,7 +182,7 @@ args = ["/path/to/vibecodekit-mql5-ea/mcp/vibecodekit-bridge/server.py"]
 ### 2.3. Chạy
 
 ```bash
-cd vibecodekit-mql5-ea
+cd vibecodekit-mql5-ea-25.5
 codex "Build EA wizard-composable cho EURUSD H1, lint, compile và walk-forward 12 cửa sổ"
 ```
 
@@ -269,7 +269,7 @@ claude mcp list
 ### 3.4. Chạy
 
 ```bash
-cd vibecodekit-mql5-ea
+cd vibecodekit-mql5-ea-25.5
 claude "Build EA wizard-composable cho EURUSD H1, lint, compile và walk-forward"
 ```
 
@@ -547,4 +547,4 @@ Workflow điển hình cho 1 step:
 
 Nếu có IDE/CLI khác (Zed, Aider, Helix, ...) cần config — mở issue
 hoặc PR vào file này:
-https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/issues
+https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/issues

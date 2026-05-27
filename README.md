@@ -1,6 +1,6 @@
 # vibecodekit-mql5-ea
 
-[![version](https://img.shields.io/badge/version-v1.6.1-blue)](https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/releases/tag/v1.6.1)
+[![version](https://img.shields.io/badge/version-v1.6.1-blue)](https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/releases/tag/v1.6.1)
 [![tests](https://img.shields.io/badge/tests-1491%20passing-success)]()
 [![lint](https://img.shields.io/badge/ruff-clean-success)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -37,8 +37,8 @@
 ## 30-second quickstart
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 python -m venv .venv && source .venv/bin/activate && pip install -e .
 
 mql5-init --non-interactive --out ea-spec.yaml      # 5-question wizard (or run interactively)
@@ -90,8 +90,8 @@ stdlib.
 ### Quick start (5 minutes)
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 ./scripts/setup-wine-metaeditor.sh        # Linux only; ~3 min
 python -m venv .venv && source .venv/bin/activate
 pip install -e .
@@ -194,8 +194,8 @@ hot-spots:
 ### Bắt đầu nhanh (5 phút)
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 ./scripts/setup-wine-metaeditor.sh        # chỉ Linux, ~3 phút
 python -m venv .venv && source .venv/bin/activate
 pip install -e .

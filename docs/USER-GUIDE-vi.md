@@ -106,8 +106,8 @@ prefix riêng, Docker), xem [ENV-SETUP-vi.md](ENV-SETUP-vi.md).
 ### 1.2. Linux (Ubuntu 22.04+) — script 1 phát
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 
 # Cài Wine + MetaEditor headless qua wineboot (~3 phút, idempotent)
 ./scripts/setup-wine-metaeditor.sh
@@ -1081,5 +1081,5 @@ Tổng: **49 CLI standalone** + 1 router meta + 10 Wave-3 umbrella/alias
   audit post-phase-E pass.
 
 Khi gặp blocker không có trong mục [7. Troubleshooting](#7-troubleshooting--faq), mở issue ở
-<https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/issues> kèm
+<https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/issues> kèm
 output của `python -m vibecodekit_mql5.doctor`.
