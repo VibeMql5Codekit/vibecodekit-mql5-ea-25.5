@@ -8,6 +8,36 @@ on:
 
 jobs:
   # ──────────────────────────────────────────────────────────
+  # Lint — fast pre-flight check (no Wine, no MetaEditor)
+  # Mirrors the local task-loop in AGENTS.md §"Task Loop":
+  #   `ruff check scripts mcp`
+  # ──────────────────────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ruff (from [dev] extra)
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --quiet --upgrade pip
+          pip install --quiet -e ".[dev]"
+
+      - name: Run ruff on scripts/ and mcp/
+        run: |
+          source .venv/bin/activate
+          ruff check scripts mcp
+
+  # ──────────────────────────────────────────────────────────
   # Linux runner — Wine + MetaEditor (faster dev loop)
   # ──────────────────────────────────────────────────────────
   linux-tests:
