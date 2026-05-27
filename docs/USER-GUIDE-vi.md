@@ -10,13 +10,14 @@ audience: end_user, dev_team, ai_agent_operator
 > Tài liệu này đi từ **zero → file `.ex5` đã compile + dashboard public +
 > docs Neo-Retro Dev Deck tiếng Việt** qua đúng từng bước, kèm câu lệnh
 > thật và snippet output kỳ vọng. Mọi con số trong tài liệu đều khớp với
-> baseline `v1.4.0`: **63 CLI command** (50 standalone + 10 alias
-> Wave-3 quy về 2 umbrella `mql5-review --lens` / `mql5-rri <sub>` + 3
-> generator Wave-5.1 `mql5-vision-gen` / `mql5-blueprint-gen` /
-> `mql5-tip-gen`), **4 MCP server (30 tool trên `vibecodekit-bridge`)**,
+> baseline `v1.6.1`: **69 CLI command** (59 standalone + 10 alias
+> Wave-3 quy về 2 umbrella `mql5-review --lens` / `mql5-rri <sub>`;
+> bao gồm 3 generator Wave-5.1 `mql5-vision-gen` / `mql5-blueprint-gen` /
+> `mql5-tip-gen` và các emitter Wave-6.1 / 6.2 / 6.2b), **4 MCP server**,
 > **26 anti-pattern detector** (25 đánh số AP-1…AP-25 + 1 method-hiding
-> theo build), **8 schema block optional** trên `ea-spec.yaml`,
-> **1490 test passing** (gate qua mọi mode personal/team/enterprise).
+> theo build), **8 schema block optional** trên `ea-spec.yaml`.
+> Số test live được ghi trong <code>README.md</code> và verify bởi CI
+> mỗi lần push (xem <code>pytest tests/gates -q</code>).
 
 > 🇬🇧 Bản tiếng Anh: [USER-GUIDE-en.md](USER-GUIDE-en.md)
 > 📖 Reference manual đầy đủ: [USAGE-vi.md](USAGE-vi.md)
@@ -48,7 +49,7 @@ audience: end_user, dev_team, ai_agent_operator
   - [5.4. Re-render docs qua `docs.ea_render`](#54-re-render-docs-qua-docsea_render)
 - [6. Schema `ea-spec.yaml` — 8 block optional](#6-schema-ea-specyaml--8-block-optional)
 - [7. Troubleshooting & FAQ](#7-troubleshooting--faq)
-- [8. Phụ lục — 63 CLI command theo nhóm](#8-phụ-lục--63-cli-command-theo-nhóm)
+- [8. Phụ lục — 69 CLI command theo nhóm](#8-phụ-lục--69-cli-command-theo-nhóm)
 
 ---
 
@@ -193,7 +194,7 @@ Kit cố tình hỗ trợ song song **2 con đường**:
 |---|---|---|
 | Đối tượng | Dev tự tay gõ lệnh, đọc output | Codex CLI / Claude Code / Cursor / Devin / Claude Desktop |
 | Transport | Shell / venv | JSON-RPC 2.0 over stdio |
-| Tool surface | 63 CLI command (50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1) | 30 MCP tool wrap các lệnh chính + 4 helper |
+| Tool surface | 69 CLI command (59 standalone + 10 alias Wave-3) | 30 MCP tool wrap các lệnh chính + 4 helper |
 | Khi nào dùng | Học kit, debug, dạy lớp, demo cho khách | Build EA hàng loạt, fix-loop tự động, dùng trong IDE coding agent |
 | Pipeline | **Y hệt nhau** — cùng `auto_build`, lint, permission gate, dashboard | |
 
@@ -1006,7 +1007,7 @@ Tách phần code thừa sang module helper (xem
 
 ---
 
-## 8. Phụ lục — 63 CLI command theo nhóm
+## 8. Phụ lục — 69 CLI command theo nhóm
 
 Tham khảo nhanh. Reference đầy đủ ở [USAGE-vi.md](USAGE-vi.md).
 

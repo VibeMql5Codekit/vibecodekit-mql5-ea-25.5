@@ -1,6 +1,6 @@
 ---
 id: commands
-title: Command catalog (63 commands — 53 standalone + 10 Wave-3 aliases)
+title: Command catalog (69 commands — 59 standalone + 10 Wave-3 aliases)
 applicable_phase: E
 ---
 

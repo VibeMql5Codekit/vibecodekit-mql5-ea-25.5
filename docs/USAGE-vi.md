@@ -7,10 +7,11 @@ audience: end_user, dev_team
 
 # Hướng dẫn sử dụng `vibecodekit-mql5-ea` v1.4.0
 
-Tài liệu này hướng dẫn từng bước cách dùng toàn bộ **63 lệnh CLI**
-(50 lệnh độc lập + 10 alias Wave-3 quy về 2 umbrella `mql5-review --lens`
-và `mql5-rri <subcommand>` + 3 generator Wave-5.1 `mql5-vision-gen` /
-`mql5-blueprint-gen` / `mql5-tip-gen`) để build một Expert Advisor MQL5
+Tài liệu này hướng dẫn từng bước cách dùng toàn bộ **69 lệnh CLI**
+(59 lệnh độc lập + 10 alias Wave-3 quy về 2 umbrella `mql5-review --lens`
+và `mql5-rri <subcommand>`; bao gồm 3 generator Wave-5.1 `mql5-vision-gen` /
+`mql5-blueprint-gen` / `mql5-tip-gen` và các emitter Wave-6.1 / 6.2 / 6.2b)
+để build một Expert Advisor MQL5
 hoàn chỉnh, từ ý tưởng đến ship live. Phù hợp cho cả người mới, dev team
 và LLM agent (Devin, Claude Code, Cursor, ChatGPT).
 
@@ -1404,7 +1405,7 @@ pip install MetaTrader5  # chỉ chạy được trên Windows hoặc Wine với
 
 ## Tài nguyên bổ sung
 
-- [`docs/COMMANDS.md`](COMMANDS.md) — Bảng tra cứu 63 lệnh CLI (50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1)
+- [`docs/COMMANDS.md`](COMMANDS.md) — Bảng tra cứu 69 lệnh CLI (59 standalone + 10 alias Wave-3)
 - [`docs/agent-prompts/`](agent-prompts/) — 6 persona prompt paste-and-run (Wave 5.3) + README operator playbook
 - [`docs/references/`](references/) — 29 cheatsheet kỹ thuật (50-survey → 80-input-syntax)
 - [`docs/PLAN-v5.md`](PLAN-v5.md) — Spec gốc 1089 dòng
