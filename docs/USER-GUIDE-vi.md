@@ -1077,7 +1077,7 @@ Tổng: **49 CLI standalone** + 1 router meta + 10 Wave-3 umbrella/alias
 - Schema `ea-spec.yaml` đã mở rộng đủ 8 block optional (3 PR-2 +
   5 PR-8) cho EA prop firm / trailing / partial close / correlation
   / swap filter / logs.
-- Baseline mới nhất (v1.4.0): **1303 test passed / 6 skipped**, ruff clean,
+- Baseline mới nhất (v1.6.1): **1494 test passed / 4 skipped** (1499 collected; 1 probe MetaEditor compile cần Wine), ruff clean,
   audit post-phase-E pass.
 
 Khi gặp blocker không có trong mục [7. Troubleshooting](#7-troubleshooting--faq), mở issue ở
