@@ -1,11 +1,11 @@
 ---
 id: usage-vi
-title: Hướng dẫn sử dụng vibecodekit-mql5-ea v1.4.0 (Tiếng Việt)
+title: Hướng dẫn sử dụng vibecodekit-mql5-ea v1.6.1 (Tiếng Việt)
 applicable_phase: E
 audience: end_user, dev_team
 ---
 
-# Hướng dẫn sử dụng `vibecodekit-mql5-ea` v1.4.0
+# Hướng dẫn sử dụng `vibecodekit-mql5-ea` v1.6.1
 
 Tài liệu này hướng dẫn từng bước cách dùng toàn bộ **69 lệnh CLI**
 (59 lệnh độc lập + 10 alias Wave-3 quy về 2 umbrella `mql5-review --lens`

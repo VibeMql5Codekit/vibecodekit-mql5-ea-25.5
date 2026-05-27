@@ -1,11 +1,11 @@
 ---
 id: usage-en
-title: vibecodekit-mql5-ea v1.0.1 Usage Guide (English)
+title: vibecodekit-mql5-ea v1.6.1 Usage Guide (English)
 applicable_phase: E
 audience: end_user, dev_team
 ---
 
-# `vibecodekit-mql5-ea` v1.0.1 Usage Guide
+# `vibecodekit-mql5-ea` v1.6.1 Usage Guide
 
 End-to-end walkthrough of all 69 commands, from idea to live shipping.
 Suitable for both new users and dev teams.
