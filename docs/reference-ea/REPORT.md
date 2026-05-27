@@ -117,23 +117,39 @@ defect.
 
 ---
 
-## 4. `mql5-matrix` — 8×8 quality matrix CLI (standalone, no inputs)
+## 4. 8×8 RRI matrix — bare-scaffold baseline
 
+```bash
+python -m vibecodekit_mql5.rri.matrix --output <html>
 ```
-Matrix: 0/64 PASS (threshold: 48, gate: FAIL)
-HTML report: <tmp>/matrix.html
-```
 
-- **Passed cells:** 0 / 64
-- **Threshold for TEAM:** 48
-- **Gate verdict:** FAIL
+(This kit does not register a `mql5-matrix` CLI in `pyproject.toml`; the
+matrix module is reached via `python -m vibecodekit_mql5.rri.matrix`.)
 
-The 0/64 number is the **CLI floor**, not a measurement.
-`mql5-matrix` with no `--collect` argument has no evidence to look at, so
-every cell defaults to N/A and therefore zero are PASS. To get a real
-measurement, run the gates first with `--gate-report <file>`, then point
-`python -m vibecodekit_mql5.rri.matrix --collect <dir>` at the artefact
-directory.
+With no `--inputs/--collect` source, every cell starts at `N/A`:
+
+- **PASS:** 0 / 64
+- **WARN:** 0
+- **FAIL:** 0
+- **N/A:**  64
+
+Verdicts:
+
+| Threshold (source: `matrix.py:MatrixReport`) | Verdict |
+|---|---|
+| `passes_personal`              (legacy: PASS≥56 ∧ FAIL=0 ∧ WARN≤8 over 64 cells)        | FAIL |
+| `passes_enterprise`            (legacy: PASS≥60 ∧ FAIL=0 ∧ WARN≤4 over 64 cells)        | FAIL |
+| `passes_personal_gate_only`    (Wave 4.3: FAIL=0 ∧ WARN≤1 ∧ all 6 gate-auto cells PASS/WARN) | FAIL |
+| `passes_enterprise_gate_only`  (Wave 4.3: every gate-auto cell PASS)                    | FAIL |
+
+The `0/64` number is the **CLI floor**,
+not a measurement. Without `--collect <dir>` pointed at a directory of
+`gate-report-*.json` envelopes (produced by `--gate-report` on the lint /
+trader-check / backtest / walk-forward / multibroker / broker-safety gates),
+the matrix has no evidence to look at and every cell defaults to `N/A`.
+To get a real measurement, run the gates first with `--gate-report <file>`,
+then point `python -m vibecodekit_mql5.rri.matrix --collect <dir>` at the
+artefact directory.
 
 ### Honest cell-coverage audit (Wave 4.3)
 
@@ -171,4 +187,4 @@ python -m vibecodekit_mql5.rri.matrix --audit
   CLI floor when no evidence is provided. Real measurements only come from
   feeding real backtest / walk-forward / multibroker reports through the gate.
 
-Generated on 2026-05-26 (UTC).
+Generated on 2026-05-27 (UTC).

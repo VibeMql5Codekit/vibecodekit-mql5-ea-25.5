@@ -30,9 +30,14 @@ mql5-trader-check      "$REF_EA"                  --json      >"$TMP/trader17.js
 mql5-permission --mode personal    "$REF_EA"      --json      >"$TMP/perm-personal.json" 2>&1 || true
 mql5-permission --mode team        "$REF_EA"      --json      >"$TMP/perm-team.json"     2>&1 || true
 mql5-permission --mode enterprise  "$REF_EA"      --json      >"$TMP/perm-enterprise.json" 2>&1 || true
-mql5-matrix --mode TEAM --html "$TMP/matrix.html"             2>&1 \
-    | sed "s|$TMP|<tmp>|g" >"$TMP/matrix.txt" || true
-python -m vibecodekit_mql5.rri.matrix --audit                 >"$TMP/matrix-audit.json"  2>&1 || true
+# Note: this kit (-25.5) does not register a `mql5-matrix` CLI in pyproject.toml.
+# The matrix module is reached via `python -m vibecodekit_mql5.rri.matrix`. We
+# call it with no `--inputs/--collect` so it returns the bare-scaffold baseline
+# (all 64 cells N/A) and emits structured JSON on stdout that the extractor
+# below parses directly. See `scripts/vibecodekit_mql5/rri/matrix.py` for the
+# argparser definition.
+python -m vibecodekit_mql5.rri.matrix --output "$TMP/matrix.html"  >"$TMP/matrix.json"       2>&1 || true
+python -m vibecodekit_mql5.rri.matrix --audit                      >"$TMP/matrix-audit.json" 2>&1 || true
 
 # 3. Extract structured numbers
 python3 - "$TMP" >"$TMP/numbers.json" <<'PY'
@@ -55,6 +60,7 @@ perm_personal = load("perm-personal.json")
 perm_team = load("perm-team.json")
 perm_ent = load("perm-enterprise.json")
 matrix_audit = load("matrix-audit.json")
+matrix_cli = load("matrix.json")
 
 trader_summary = trader_env.get("summary", "")
 m = re.search(r"(\d+)/(\d+)\s+PASS,\s*(\d+)\s+WARN,\s*(\d+)\s+N/A,\s*(\d+)\s+FAIL", trader_summary)
@@ -78,16 +84,21 @@ p_layer, p_err = first_fail_layer(perm_personal)
 t_layer, t_err = first_fail_layer(perm_team)
 e_layer, e_err = first_fail_layer(perm_ent)
 
-matrix_txt = read("matrix.txt").strip()
-mm = re.search(r"(\d+)/(\d+)\s+PASS\s*\(threshold:\s*(\d+),\s*gate:\s*(\w+)\)", matrix_txt)
-if mm:
-    mat_pass = int(mm.group(1))
-    mat_total = int(mm.group(2))
-    mat_threshold = int(mm.group(3))
-    mat_gate = mm.group(4)
-else:
-    mat_pass = mat_total = mat_threshold = 0
-    mat_gate = "?"
+# Matrix CLI (-25.5 layout): no `--inputs/--collect` => bare baseline. Counts come
+# straight from `matrix.json`. The legacy 56/64 "personal" threshold and stricter
+# 60/64 "enterprise" threshold are documented in matrix.py:MatrixReport.passes_*
+# (Plan v5 §10). The gate-only variants apply only over the 6 gate-auto cells
+# (Wave 4.3).
+mat_counts = matrix_cli.get("counts", {}) if isinstance(matrix_cli, dict) else {}
+mat_pass = int(mat_counts.get("PASS", 0))
+mat_warn = int(mat_counts.get("WARN", 0))
+mat_fail = int(mat_counts.get("FAIL", 0))
+mat_na   = int(mat_counts.get("N/A", 0))
+mat_total = mat_pass + mat_warn + mat_fail + mat_na
+mat_personal_ok = bool(matrix_cli.get("passes_personal", False))
+mat_enterprise_ok = bool(matrix_cli.get("passes_enterprise", False))
+mat_personal_gate_ok = bool(matrix_cli.get("passes_personal_gate_only", False))
+mat_enterprise_gate_ok = bool(matrix_cli.get("passes_enterprise_gate_only", False))
 
 counts = matrix_audit.get("counts", {}) if isinstance(matrix_audit, dict) else {}
 mat_gate_auto = counts.get("gate_auto", "?")
@@ -118,10 +129,14 @@ out = {
     },
     "matrix_cli": {
         "pass": mat_pass,
+        "warn": mat_warn,
+        "fail": mat_fail,
+        "na": mat_na,
         "total": mat_total,
-        "threshold": mat_threshold,
-        "gate": mat_gate,
-        "raw": matrix_txt,
+        "passes_personal":          mat_personal_ok,
+        "passes_enterprise":        mat_enterprise_ok,
+        "passes_personal_gate_only":   mat_personal_gate_ok,
+        "passes_enterprise_gate_only": mat_enterprise_gate_ok,
     },
     "matrix_audit": {
         "gate_auto": mat_gate_auto,
@@ -260,22 +275,39 @@ defect.
 
 ---
 
-## 4. `mql5-matrix` — 8×8 quality matrix CLI (standalone, no inputs)
+## 4. 8×8 RRI matrix — bare-scaffold baseline
 
+```bash
+python -m vibecodekit_mql5.rri.matrix --output <html>
 ```
-{matrix_cli['raw']}
-```
 
-- **Passed cells:** {matrix_cli['pass']} / {matrix_cli['total']}
-- **Threshold for TEAM:** {matrix_cli['threshold']}
-- **Gate verdict:** {matrix_cli['gate']}
+(This kit does not register a `mql5-matrix` CLI in `pyproject.toml`; the
+matrix module is reached via `python -m vibecodekit_mql5.rri.matrix`.)
 
-The 0/{matrix_cli['total']} number is the **CLI floor**, not a measurement.
-`mql5-matrix` with no `--collect` argument has no evidence to look at, so
-every cell defaults to N/A and therefore zero are PASS. To get a real
-measurement, run the gates first with `--gate-report <file>`, then point
-`python -m vibecodekit_mql5.rri.matrix --collect <dir>` at the artefact
-directory.
+With no `--inputs/--collect` source, every cell starts at `N/A`:
+
+- **PASS:** {matrix_cli['pass']} / {matrix_cli['total']}
+- **WARN:** {matrix_cli['warn']}
+- **FAIL:** {matrix_cli['fail']}
+- **N/A:**  {matrix_cli['na']}
+
+Verdicts:
+
+| Threshold (source: `matrix.py:MatrixReport`) | Verdict |
+|---|---|
+| `passes_personal`              (legacy: PASS≥56 ∧ FAIL=0 ∧ WARN≤8 over 64 cells)        | {'PASS' if matrix_cli['passes_personal']            else 'FAIL'} |
+| `passes_enterprise`            (legacy: PASS≥60 ∧ FAIL=0 ∧ WARN≤4 over 64 cells)        | {'PASS' if matrix_cli['passes_enterprise']          else 'FAIL'} |
+| `passes_personal_gate_only`    (Wave 4.3: FAIL=0 ∧ WARN≤1 ∧ all 6 gate-auto cells PASS/WARN) | {'PASS' if matrix_cli['passes_personal_gate_only']    else 'FAIL'} |
+| `passes_enterprise_gate_only`  (Wave 4.3: every gate-auto cell PASS)                    | {'PASS' if matrix_cli['passes_enterprise_gate_only']  else 'FAIL'} |
+
+The `{matrix_cli['pass']}/{matrix_cli['total']}` number is the **CLI floor**,
+not a measurement. Without `--collect <dir>` pointed at a directory of
+`gate-report-*.json` envelopes (produced by `--gate-report` on the lint /
+trader-check / backtest / walk-forward / multibroker / broker-safety gates),
+the matrix has no evidence to look at and every cell defaults to `N/A`.
+To get a real measurement, run the gates first with `--gate-report <file>`,
+then point `python -m vibecodekit_mql5.rri.matrix --collect <dir>` at the
+artefact directory.
 
 ### Honest cell-coverage audit (Wave 4.3)
 
