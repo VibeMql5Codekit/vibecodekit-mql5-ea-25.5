@@ -7,9 +7,10 @@ audience: dev_team
 
 # Tích hợp `vibecodekit-mql5-ea` với 6 môi trường dev / agent
 
-Hướng dẫn này áp dụng `v1.4.0+`. Mỗi section hoàn chỉnh và độc lập:
-chọn section IDE/CLI bạn dùng, paste config, sẵn sàng chạy **63 lệnh CLI**
-(50 standalone + 10 alias Wave-3 + 3 generator Wave-5.1) + **4 MCP server**.
+Hướng dẫn này áp dụng `v1.6.1+`. Mỗi section hoàn chỉnh và độc lập:
+chọn section IDE/CLI bạn dùng, paste config, sẵn sàng chạy **69 lệnh CLI**
+(59 standalone + 10 alias Wave-3 quy về 2 umbrella `mql5-review --lens` /
+`mql5-rri <sub>`) + **4 MCP server**.
 
 Sau Wave 5, ngoài CLI + MCP, kit còn cung cấp **6 persona prompt
 paste-and-run** dưới `docs/agent-prompts/` để bind LLM chat ngoài
@@ -129,7 +130,7 @@ Codex tự đọc `AGENTS.md` khi ở trong repo. Tạo file này:
 ## Setup
 - Wine 8.0.2 đã được cài qua `./scripts/setup-wine-metaeditor.sh`.
 - Python venv ở `.venv/`. Activate: `source .venv/bin/activate`.
-- 63 lệnh `python -m vibecodekit_mql5.<name>` (xem `docs/COMMANDS.md`).
+- 69 lệnh `python -m vibecodekit_mql5.<name>` (xem `docs/COMMANDS.md`).
 - Đọc `docs/USAGE-vi.md` để biết workflow đầy đủ.
 - Shortcut 1-lệnh:
   `mql5-spec-from-prompt "<prompt>" --out ea-spec.yaml && mql5-auto-build --spec ea-spec.yaml`.
@@ -424,7 +425,7 @@ python -m vibecodekit_mql5.audit
 ruff check scripts/ mcp/
 ```
 
-## 63 lệnh
+## 69 lệnh
 Xem `docs/COMMANDS.md` (50 standalone + 10 alias Wave-3 quy về umbrella
 `mql5-review --lens` / `mql5-rri <subcommand>` + 3 generator Wave-5.1
 `mql5-vision-gen` / `mql5-blueprint-gen` / `mql5-tip-gen`). Gọi:

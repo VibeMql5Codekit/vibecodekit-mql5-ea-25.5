@@ -9,10 +9,12 @@ audience: end_user, dev_team, ai_agent_operator
 
 > Walks you from **zero → compiled `.ex5` + published dashboard +
 > Neo-Retro Dev Deck docs** with the exact commands and expected output
-> for each step. All counts in this document match the post-PR-19
-> baseline: **50 CLI commands**, **4 MCP servers (30 tools on
-> `vibecodekit-bridge`)**, **23 anti-pattern detectors**, **8 optional
-> schema blocks** on `ea-spec.yaml`, **799 tests passing / 2 skipped**.
+> for each step. Counts in this document are kept in sync with the
+> current `v1.6.1` baseline: **69 CLI commands**, **4 MCP servers**,
+> **26 anti-pattern detectors (25 numbered AP-1…AP-25 + 1 build-aware
+> method-hiding)**, **8 optional schema blocks** on `ea-spec.yaml`.
+> Live test count is recorded in <code>README.md</code> and verified
+> by CI on each push (see <code>pytest tests/gates -q</code>).
 >
 > Note: docs default to **Vietnamese** (project default). Pass
 > `--docs-lang en` to opt back to English.
@@ -46,7 +48,7 @@ audience: end_user, dev_team, ai_agent_operator
   - [5.4. Re-render docs over `docs.ea_render`](#54-re-render-docs-over-docsea_render)
 - [6. `ea-spec.yaml` — 8 optional blocks](#6-ea-specyaml--8-optional-blocks)
 - [7. Troubleshooting & FAQ](#7-troubleshooting--faq)
-- [8. Appendix — 50 CLI commands by group](#8-appendix--50-cli-commands-by-group)
+- [8. Appendix — 69 CLI commands by group](#8-appendix--69-cli-commands-by-group)
 
 ---
 
@@ -191,7 +193,7 @@ The kit deliberately supports **two parallel paths**:
 |---|---|---|
 | Audience | Devs typing commands & reading output | Codex CLI / Claude Code / Cursor / Devin / Claude Desktop |
 | Transport | Shell / venv | JSON-RPC 2.0 over stdio |
-| Tool surface | 50 CLI commands | 29 MCP tools wrapping 25/50 commands + 4 helpers |
+| Tool surface | 69 CLI commands | 30 MCP tools wrapping the main commands + 4 helpers |
 | Best for | Learning, debugging, teaching, client demos | Batch builds, automatic fix-loops, in-IDE coding agents |
 | Pipeline | **Identical** — same `auto_build`, lint, permission gate, dashboard | |
 
@@ -900,7 +902,7 @@ ceiling. Split overflow into a helper module (see
 
 ---
 
-## 8. Appendix — 50 CLI commands by group
+## 8. Appendix — 69 CLI commands by group
 
 Quick reference; full docs in [USAGE-en.md](USAGE-en.md).
 
