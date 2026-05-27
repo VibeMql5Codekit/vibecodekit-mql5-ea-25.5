@@ -48,7 +48,8 @@ to read first, what to use, and what NOT to introduce.
   `mql5-escalation --list` / `--resolve <id>` query and close the log;
   `mql5-permission-layer5 --enforce-no-open-escalation` blocks TEAM /
   ENTERPRISE gates while any level-3 escalation is still OPEN),
-  7-layer permission gate, 1490+ gate tests.
+  7-layer permission gate, 1494+ gate tests (1499 collected; 1 Wine-only
+  MetaEditor compile probe and 4 platform-specific skips).
 - **License:** MIT.
 
 ## Source Of Truth (read in this order)
@@ -368,7 +369,8 @@ raw outputs and the regenerator script.
   (`mql5-escalation --from … --to … --level {1,2,3}` ghi
   `.mql5-audit/escalations.jsonl`; `mql5-permission-layer5
   --enforce-no-open-escalation` chặn gate TEAM/ENTERPRISE khi còn L3 OPEN),
-  1490+ gate test.
+  1494+ gate test (1499 collected; 1 probe MetaEditor compile cần Wine
+  và 4 skip phụ thuộc nền tảng).
 - Bắt đầu từ `README.md` → `docs/QUICKSTART.md` → `docs/COMMANDS.md`.
   Tham khảo song ngữ ở `docs/USAGE-vi.md` + `docs/USER-GUIDE-vi.md`.
 - Mọi lệnh đứng độc lập (`python -m vibecodekit_mql5.<name>`). **Không**

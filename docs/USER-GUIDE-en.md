@@ -955,7 +955,7 @@ Total: **49 CLI** + 1 meta router = **50 entries**.
 - The `ea-spec.yaml` schema now covers 8 optional blocks (3 PR-2 +
   5 PR-8) for prop-firm, trailing, partial close, correlation,
   swap filter, and logs configuration.
-- Latest baseline: **799 tests passed / 2 skipped**, ruff clean,
+- Latest baseline (v1.6.1): **1494 tests passed / 4 skipped** (1499 collected; 1 MetaEditor compile probe runs only on Wine/Windows CI), ruff clean,
   post-phase-E audit passes.
 
 For issues not in [section 7](#7-troubleshooting--faq), open one at

@@ -15,7 +15,7 @@ và `mql5-rri <subcommand>`; bao gồm 3 generator Wave-5.1 `mql5-vision-gen` /
 hoàn chỉnh, từ ý tưởng đến ship live. Phù hợp cho cả người mới, dev team
 và LLM agent (Devin, Claude Code, Cursor, ChatGPT).
 
-Baseline hiện tại: **`v1.6.1`**, **1490 test passing**, **26 anti-pattern
+Baseline hiện tại: **`v1.6.1`**, **1494 test passing / 4 skipped** (1499 collected; 1 probe MetaEditor compile cần Wine), **26 anti-pattern
 detector** (25 đánh số AP-1…AP-25 + 1 method-hiding theo build), **4 MCP
 server**, **23 scaffold archetype**,
 **8 schema block optional** trên `ea-spec.yaml`.
