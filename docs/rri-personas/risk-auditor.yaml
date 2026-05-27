@@ -1,3 +1,5 @@
+# Honest disclaimer: this persona and its question set are project-defined
+# heuristics designed by vibecodekit-mql5-ea, not industry standards.
 # RRI persona — risk-auditor (compliance / risk-officer perspective).
 persona: risk-auditor
 description: Risk officer signing off on the EA's exposure envelope.

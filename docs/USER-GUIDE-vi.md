@@ -16,7 +16,7 @@ audience: end_user, dev_team, ai_agent_operator
 > `mql5-tip-gen`), **4 MCP server (30 tool trên `vibecodekit-bridge`)**,
 > **26 anti-pattern detector** (25 đánh số AP-1…AP-25 + 1 method-hiding
 > theo build), **8 schema block optional** trên `ea-spec.yaml`,
-> **1303 test passing / 6 skipped** trên Phase 0/A/B/C/D/E.
+> **1490 test passing** (gate qua mọi mode personal/team/enterprise).
 
 > 🇬🇧 Bản tiếng Anh: [USER-GUIDE-en.md](USER-GUIDE-en.md)
 > 📖 Reference manual đầy đủ: [USAGE-vi.md](USAGE-vi.md)

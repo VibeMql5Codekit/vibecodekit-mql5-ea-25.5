@@ -1,5 +1,7 @@
 # Phase A Spec — Core Foundation
 
+> ⚠️ **Internal / contributor document.** Sprint spec for this kit's own development — not user-facing. See [`README.md`](../README.md) and [`docs/QUICKSTART.md`](QUICKSTART.md) instead.
+
 **Goal:** CPipNormalizer flagship + 4 commands + 4 scaffolds + 8 critical AP linter.
 **Duration:** 3 weeks.
 **Tag on completion:** v0.1.0.

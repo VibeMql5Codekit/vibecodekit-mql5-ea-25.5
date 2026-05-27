@@ -9,4 +9,4 @@ python -m vibecodekit_mql5.build trend \
     --name MyEA --symbol EURUSD --tf H1 --stack netting
 ```
 
-See [Phase D spec](../../../docs/phase-D-spec.md) for context.
+See the [archetype catalogue](../../../docs/COMMANDS.md) and the [quickstart](../../../docs/QUICKSTART.md) for context.

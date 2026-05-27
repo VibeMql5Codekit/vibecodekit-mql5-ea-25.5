@@ -14,9 +14,9 @@ và `mql5-rri <subcommand>` + 3 generator Wave-5.1 `mql5-vision-gen` /
 hoàn chỉnh, từ ý tưởng đến ship live. Phù hợp cho cả người mới, dev team
 và LLM agent (Devin, Claude Code, Cursor, ChatGPT).
 
-Baseline hiện tại: **`v1.4.0`**, **1303 test passing / 6 skipped** trên
-Phase 0/A/B/C/D/E, **26 anti-pattern detector** (25 đánh số AP-1…AP-25
-+ 1 method-hiding theo build), **4 MCP server**, **23 scaffold archetype**,
+Baseline hiện tại: **`v1.6.1`**, **1490 test passing**, **26 anti-pattern
+detector** (25 đánh số AP-1…AP-25 + 1 method-hiding theo build), **4 MCP
+server**, **23 scaffold archetype**,
 **8 schema block optional** trên `ea-spec.yaml`.
 
 > 📚 Phiên bản tiếng Anh: [USAGE-en.md](USAGE-en.md)
@@ -44,7 +44,7 @@ Phase 0/A/B/C/D/E, **26 anti-pattern detector** (25 đánh số AP-1…AP-25
 | Python | ≥ 3.10 |
 | Wine | 8.0.2 (Linux/macOS) — MetaEditor là native trên Windows |
 | MetaEditor | build ≥ 5260 (để method-hiding linter ở mức ERROR thay vì WARN) |
-| ONNX runtime | 1.14 (Phase D ONNX e2e) |
+| ONNX runtime | 1.14 (ONNX e2e cho ml-onnx scaffold + `mql5-onnx-export` / `mql5-onnx-embed`) |
 | Xvfb | tuỳ — cần nếu chạy headless trên CI Linux |
 
 ### 1.2. Linux (Ubuntu 22.04+)

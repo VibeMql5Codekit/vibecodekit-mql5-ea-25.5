@@ -1,5 +1,11 @@
 # Agent prompts — six personas + three actors, paste-and-run
 
+> **Honest disclaimer.** The six personas, three actors, RRI step
+> structure, and `super_actor`/`sub_personas`/`escalates_to` graph
+> edges below are **project-defined heuristics** designed by this kit.
+> They are opinionated workflow guardrails — not industry standards,
+> not certifications, and not substitutes for trader judgement.
+
 > **Wave 5.3 + Wave 6.1 + Wave 6.2 + Wave 6.2b.** This directory ships
 > **six paste-and-run persona prompts** (Wave 5.3) + **three actor
 > prompts** (Wave 6.1, under `actors/`) that turn a generic LLM chat

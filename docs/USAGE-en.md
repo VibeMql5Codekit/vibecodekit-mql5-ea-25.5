@@ -35,7 +35,7 @@ Suitable for both new users and dev teams.
 | Python | ≥ 3.10 |
 | Wine | 8.0.2 (Linux/macOS) — MetaEditor is native on Windows |
 | MetaEditor | build ≥ 5260 (so method-hiding lint stays at ERROR) |
-| ONNX runtime | 1.14 (Phase D ONNX e2e) |
+| ONNX runtime | 1.14 (ONNX e2e for ml-onnx scaffold + `mql5-onnx-export` / `mql5-onnx-embed`) |
 | Xvfb | optional — needed only on headless Linux CI |
 
 ### 1.2. Linux (Ubuntu 22.04+)

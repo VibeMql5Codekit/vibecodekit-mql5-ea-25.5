@@ -13,7 +13,7 @@
 > pipeline with `--draft` mode, an auto-fix loop for the eight critical
 > anti-patterns, a natural-language `mql5-spec-from-prompt` parser, a
 > hermetic `mql5-fixture` generator + `mql5-forge-loop` closed
-> iteration loop for Phase-B CI without Wine, the new
+> iteration loop for hermetic CI without Wine, the new
 > `mql5-bt-sim` in-process tick-bar simulator (Wave-3.E: pure-Python
 > backtest engine emitting MT5-compatible XML), and a publishable
 > quality-matrix dashboard. Plus four MCP servers, twenty-nine
@@ -22,7 +22,15 @@
 > portfolio EA — all delivered as a flat, router-free, fail-fast
 > toolkit.
 
-📘 **Docs:** [Quickstart](docs/QUICKSTART.md) · [Step-by-step user guide (EN)](docs/USER-GUIDE-en.md) · [Hướng dẫn step-by-step (VN)](docs/USER-GUIDE-vi.md) · [Full usage reference (EN)](docs/USAGE-en.md) · [Reference đầy đủ (VN)](docs/USAGE-vi.md) · [Per-IDE setup](docs/ENV-SETUP-vi.md) · [Command catalog](docs/COMMANDS.md) · [Chat-driven build](docs/devin-chat-driven-build.md) · [Plan v5](docs/PLAN-v5.md)
+📘 **Docs:** [Quickstart (EN)](docs/QUICKSTART.md) · [Quickstart (VN)](docs/QUICKSTART.vi.md) · [Agent contract](AGENTS.md) · [Honest reference report](docs/reference-ea/REPORT.md) · [Step-by-step user guide (EN)](docs/USER-GUIDE-en.md) · [Hướng dẫn step-by-step (VN)](docs/USER-GUIDE-vi.md) · [Full usage reference (EN)](docs/USAGE-en.md) · [Reference đầy đủ (VN)](docs/USAGE-vi.md) · [Per-IDE setup](docs/ENV-SETUP-vi.md) · [Command catalog](docs/COMMANDS.md) · [Chat-driven build](docs/devin-chat-driven-build.md) · [Plan v5](docs/PLAN-v5.md)
+
+> **Honest disclaimer.** `Trader-17`, the `8×8 quality matrix`, the `AP-1…AP-25`
+> anti-pattern IDs, the 7-layer permission pipeline, the RRI personas, and the
+> Triangle-of-Power actors are **project-defined heuristics** designed by this
+> kit. They are opinionated guardrails — not industry standards, not
+> certifications, and not substitutes for live-account validation. See
+> [`docs/reference-ea/REPORT.md`](docs/reference-ea/REPORT.md) for the honest
+> empirical numbers each gate reports on a freshly scaffolded EA.
 
 ---
 
@@ -68,7 +76,7 @@ stdlib.
 | **Worked example** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — 4-hour enterprise turnaround |
 | **Auto-build pipeline** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — single command, idempotent JSON report, optional publish-to-public-URL |
 | **Reproducible env** | `requirements.lock` (pip-compile pinned) + `Dockerfile.devin` (3-stage: base / wine / ci) |
-| **Test gate** | 1491 tests passing across Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit + Wave 6.2 task-graph-gen + completion-report + Wave 6.2b escalation audit log + layer-5 no-open-escalation enforcement). |
+| **Test gate** | 1490 tests passing (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 matrix coverage audit + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit + Wave 6.2 task-graph-gen + completion-report + Wave 6.2b escalation audit log + layer-5 no-open-escalation enforcement). |
 
 [^1]: `mt5-bridge` requires the `MetaTrader5` Python package, which only
     installs on Windows or Wine MT5 desktop. On a Linux Devin VM without
@@ -112,16 +120,16 @@ Detailed walk-throughs:
 - Dev teams + worked example — [examples/ea-wizard-macd-sar-eurusd-h1-portfolio/README.md](examples/ea-wizard-macd-sar-eurusd-h1-portfolio/README.md)
 - IDE / CLI integration — [docs/ENV-SETUP-vi.md](docs/ENV-SETUP-vi.md)
 
-### Phase history
+### Release history
 
-| Phase | Tag | Theme | Highlights |
-|-------|-----|-------|-----------|
-| 0 | `v0.0.1` | Bootstrap | Wine 8.0.2 + headless MetaEditor + Xvfb + CI |
-| A | `v0.1.0` | Core foundation | `CPipNormalizer`, `CRiskGuard`, `CMagicRegistry`, 8 critical AP detectors, 3 stdlib scaffolds |
-| B | `v0.2.0` | Test & validation | Strategy Tester driver, walk-forward, Monte-Carlo, multi-broker, Trader-17 checklist |
-| C | `v0.3.0` | Methodology | 6 RRI personas × 25 q × 3 modes, 8-step workflow, 64-cell quality matrix, 7-layer permission orchestrator |
-| D | `v0.5.0` | Tech 2024-2025 | ONNX runtime 1.14 export/embed, HFT async (`OrderSendAsync` + `OnTradeTransaction`), Algo Forge, LLM bridge (3 patterns), Cloud Network optimize, method-hiding linter |
-| **E** | **`v1.0.1`** | **Polish & ship** | **29 reference docs, 4 MCP servers, `/mql5-canary` + `/mql5-tester-run`, 4-hour worked example, full `[project.scripts]` entry-point coverage** |
+| Tag | Theme | Highlights |
+|-----|-------|-----------|
+| `v0.0.1` | Bootstrap | Wine 8.0.2 + headless MetaEditor + Xvfb + CI |
+| `v0.1.0` | Core foundation | `CPipNormalizer`, `CRiskGuard`, `CMagicRegistry`, 8 critical AP detectors, 3 stdlib scaffolds |
+| `v0.2.0` | Test & validation | Strategy Tester driver, walk-forward, Monte-Carlo, multi-broker, Trader-17 checklist |
+| `v0.3.0` | Methodology | 6 RRI personas × 25 q × 3 modes, 8-step workflow, 64-cell quality matrix, 7-layer permission orchestrator |
+| `v0.5.0` | Tech 2024-2025 | ONNX runtime 1.14 export/embed, HFT async (`OrderSendAsync` + `OnTradeTransaction`), Algo Forge, LLM bridge (3 patterns), Cloud Network optimize, method-hiding linter |
+| **`v1.0.1`** | **Polish & ship** | **29 reference docs, 4 MCP servers, `/mql5-canary` + `/mql5-tester-run`, 4-hour worked example, full `[project.scripts]` entry-point coverage** |
 | **E+** | _(post-v1.0.1)_ | Auto-build pipeline | `mql5-auto-build` single-shot orchestrator, `mql5-auto-fix` AP-1/3/5/15/17/18/20/21 transformer, `mql5-spec-from-prompt` natural-language → `ea-spec.yaml`, `mql5-dashboard` quality-matrix publisher with public-URL hook, schema-driven `ea-spec.yaml` (risk / signals / filters / hooks), `requirements.lock` + `Dockerfile.devin`, expanded Devin Wine setup with `terminal64.exe` |
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **CLI consolidation + golden dataset + hermetic forge loop** | **`mql5-review --lens {eng,ceo,cso,investigate}` consolidates the 5 review CLIs; `mql5-rri {template,bt,rr,chart}` consolidates the 4 RRI CLIs (all 10 legacy console scripts kept as aliases). 20-EA golden dataset under `tests/fixtures/ea-bugs/` pins the lint detector contract. `mql5-forge-loop` chains the hermetic fixture generator into the backtest parser for N deterministic iterations — no Wine.** |
 | **Wave 3 (D/E)** | `v1.2.0` | AST parser POC + in-process backtest engine | Lightweight MQL5 AST scanner under `scripts/vibecodekit_mql5/ast_parser/` retrofits AP-1 (no SL) / AP-2 (SL too tight) / AP-7 (hardcoded magic) detectors behind opt-in `mql5-lint --use-ast`. Byte-identical findings vs the regex pipeline on the 20-EA + 23-scaffold golden corpus. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` runs a deterministic synthetic-OHLC backtest in pure Python and emits XML the existing `mql5-backtest` parser accepts unchanged — no Wine, no fake returns. |
@@ -173,7 +181,7 @@ hot-spots:
 | **Ví dụ hoàn chỉnh** | `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/` — turnaround 4 tiếng ở chế độ enterprise |
 | **Pipeline auto-build** | `mql5-spec-from-prompt` → `ea-spec.yaml` → `mql5-auto-build` (scan → build → lint → compile → permission-gate → dashboard) — 1 lệnh, JSON report idempotent, hook publish public URL tuỳ chọn |
 | **Môi trường reproducible** | `requirements.lock` (pip-compile pin chặt) + `Dockerfile.devin` (3 stage: base / wine / ci) |
-| **Test gate** | 1491 test pass qua Phase 0/A/B/C/D/E (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit + Wave 6.2 task-graph-gen + completion-report + Wave 6.2b log escalation actor-to-actor + chặn gate `--enforce-no-open-escalation`, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
+| **Test gate** | 1490 test pass (Wave 1 + Wave 2 + Wave 3 + Wave 4.3 audit cell-coverage + Wave 5.1 step-output generators + Wave 5.2 sentinel-content validator + Wave 5.3 persona prompts + Wave 6.1 actor prompts + contract-gen + verify-report + sign-off audit + Wave 6.2 task-graph-gen + completion-report + Wave 6.2b log escalation actor-to-actor + chặn gate `--enforce-no-open-escalation`, kèm golden dataset 20 EA ở `tests/fixtures/ea-bugs/`). |
 
 [^2]: `mt5-bridge` cần package `MetaTrader5` Python — chỉ cài được trên
     Windows hoặc Wine MT5 desktop. Trên Linux Devin VM, import fail và
@@ -216,16 +224,16 @@ Hướng dẫn chi tiết:
 - Team dev + worked example — [examples/ea-wizard-macd-sar-eurusd-h1-portfolio/README.md](examples/ea-wizard-macd-sar-eurusd-h1-portfolio/README.md)
 - Tích hợp IDE / CLI — [docs/ENV-SETUP-vi.md](docs/ENV-SETUP-vi.md)
 
-### Lịch sử các phase
+### Lịch sử bản phát hành
 
-| Phase | Tag | Chủ đề | Điểm nhấn |
-|-------|-----|--------|----------|
-| 0 | `v0.0.1` | Bootstrap | Wine 8.0.2 + MetaEditor headless + Xvfb + CI |
-| A | `v0.1.0` | Nền tảng | `CPipNormalizer`, `CRiskGuard`, `CMagicRegistry`, 8 AP nghiêm trọng, 3 scaffold stdlib |
-| B | `v0.2.0` | Test & validation | Driver Strategy Tester, walk-forward, Monte-Carlo, multi-broker, Trader-17 |
-| C | `v0.3.0` | Phương pháp luận | 6 RRI persona × 25 câu × 3 mode, workflow 8 bước, ma trận 64 ô, orchestrator 7 lớp |
-| D | `v0.5.0` | Công nghệ 2024-2025 | ONNX runtime 1.14, HFT async, Algo Forge, LLM bridge (3 pattern), Cloud Network optimize, method-hiding linter |
-| **E** | **`v1.0.1`** | **Polish & ship** | **29 tài liệu tham khảo, 4 MCP server, `/mql5-canary` + `/mql5-tester-run`, worked example 4 tiếng, đầy đủ entry-point `[project.scripts]`** |
+| Tag | Chủ đề | Điểm nhấn |
+|-----|--------|----------|
+| `v0.0.1` | Bootstrap | Wine 8.0.2 + MetaEditor headless + Xvfb + CI |
+| `v0.1.0` | Nền tảng | `CPipNormalizer`, `CRiskGuard`, `CMagicRegistry`, 8 AP nghiêm trọng, 3 scaffold stdlib |
+| `v0.2.0` | Test & validation | Driver Strategy Tester, walk-forward, Monte-Carlo, multi-broker, Trader-17 |
+| `v0.3.0` | Phương pháp luận | 6 RRI persona × 25 câu × 3 mode, workflow 8 bước, ma trận 64 ô, orchestrator 7 lớp |
+| `v0.5.0` | Công nghệ 2024-2025 | ONNX runtime 1.14, HFT async, Algo Forge, LLM bridge (3 pattern), Cloud Network optimize, method-hiding linter |
+| **`v1.0.1`** | **Polish & ship** | **29 tài liệu tham khảo, 4 MCP server, `/mql5-canary` + `/mql5-tester-run`, worked example 4 tiếng, đầy đủ entry-point `[project.scripts]`** |
 | **E+** | _(post-v1.0.1)_ | Pipeline auto-build | `mql5-auto-build` orchestrator 1 lệnh, `mql5-auto-fix` transform AP-1/3/5/15/17/18/20/21, `mql5-spec-from-prompt` free-text → `ea-spec.yaml`, `mql5-dashboard` publisher ma trận chất lượng có hook URL public, `ea-spec.yaml` schema-driven (risk / signals / filters / hooks), `requirements.lock` + `Dockerfile.devin`, mở rộng setup Devin Wine kèm `terminal64.exe` |
 | **Wave 3 (A/B/C)** | **`v1.1.0`** | **Gộp CLI + golden dataset + forge loop hermetic** | **`mql5-review --lens {eng,ceo,cso,investigate}` gộp 5 CLI review; `mql5-rri {template,bt,rr,chart}` gộp 4 CLI RRI (10 console-script cũ vẫn chạy như alias). Golden dataset 20 EA ở `tests/fixtures/ea-bugs/` ghăm hợp đồng detector lint. `mql5-forge-loop` nối fixture hermetic vào backtest parser N iter — không cần Wine.** |
 | **Wave 3 (D/E)** | `v1.2.0` | POC AST parser + backtest engine in-process | AST scanner MQL5 nhẹ dưới `scripts/vibecodekit_mql5/ast_parser/` retrofit AP-1 (thiếu SL) / AP-2 (SL quá chặt) / AP-7 (magic hardcode) sau cờ opt-in `mql5-lint --use-ast`. Finding byte-identical so với pipeline regex trên toàn bộ 20 EA + 23 scaffold golden. `mql5-bt-sim --strategy {sma-cross,mean-rev,breakout,random}` chạy backtest tick-bar deterministic bằng Python thuần và emit XML đúng schema MT5 để `mql5-backtest` parser ăn thẳng — không cần Wine, không emit return giả. |

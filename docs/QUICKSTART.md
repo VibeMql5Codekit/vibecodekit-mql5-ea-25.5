@@ -1,91 +1,175 @@
 ---
 id: quickstart
-title: Quickstart — 10 minutes to first compile
-applicable_phase: E
+title: Quickstart — 15 minutes to first compile
+audience: end-user
 ---
 
-# Quickstart
+# Quickstart — 15 minutes
 
-10 minutes from a fresh clone to your first compiled scaffold.
+> **Honest disclaimer.** `Trader-17`, the `8×8 quality matrix`, the
+> `AP-1…AP-25` anti-pattern IDs, the 7-layer permission pipeline, and the
+> RRI personas are **project-defined heuristics** designed by this kit.
+> They are opinionated guardrails — not industry standards, not
+> certifications, and not substitutes for live-account validation.
 
-## 1. Setup
+15 minutes from a fresh clone to your first lint-clean scaffold, with
+the kit's gates telling you exactly what is and is not ready to ship.
+No prior MQL5 experience required. Wine and MetaEditor are **optional**
+for steps 1–4; they only matter when you want a real `.ex5` compile in
+step 5.
+
+A Vietnamese version of this guide lives at
+[`docs/QUICKSTART.vi.md`](QUICKSTART.vi.md).
+
+---
+
+## 1. Install (≈ 3 min)
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
-./scripts/setup-wine-metaeditor.sh        # ~3 minutes, requires Linux + Wine 8.0.2
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 python -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-## 2. Health check
+Confirm the kit imports cleanly. `--soft` reports environment probes as
+warnings instead of failures so you can keep going without Wine:
 
 ```bash
-python -m vibecodekit_mql5.doctor
+python -m vibecodekit_mql5.doctor --soft
 ```
 
-Expect every probe to report `ok: true`.  If `wine` or `metaeditor-bin`
-fails, re-run `setup-wine-metaeditor.sh`.
+---
 
-## 3. Build your first EA
+## 2. Scaffold your first EA (≈ 1 min)
 
 ```bash
-python -m vibecodekit_mql5.build stdlib \
-    --name FirstEA --symbol EURUSD --tf H1
+mql5-build stdlib \
+    --name SampleEA \
+    --symbol EURUSD --tf H1 \
+    --out runtime/reference-ea/SampleEA
 ```
 
-Generates `FirstEA.mq5` from the `stdlib/netting` scaffold (the default
-stack for `stdlib`). Pass `--stack hedging` or `--stack python-bridge`
-to pick another stack. Magic number is derived deterministically from
-`--name` (see `build._magic_for`); no `--magic` flag is needed.
+`stdlib` is the safest starting preset — netting account, single
+symbol, single entry per bar. Run `mql5-build --list` (or look at
+`scaffolds/`) for the full preset/stack matrix.
 
-## 4. Lint + compile
+![mql5-build stdlib output](quickstart/img/01-build.png)
+
+The generated `SampleEA.mq5` already includes `CPipNormalizer`,
+`CRiskGuard`, `CMagicRegistry`, `CSpreadGuard`, and `CSafeTradeManager`
+— the cross-broker pip math + risk caps + magic-number registry the
+kit's gates expect.
+
+---
+
+## 3. Lint (≈ 30 s)
 
 ```bash
-python -m vibecodekit_mql5.lint  FirstEA.mq5
-python -m vibecodekit_mql5.compile FirstEA.mq5
+mql5-lint runtime/reference-ea/SampleEA/SampleEA.mq5
 ```
 
-`compile` returns 0 + a path to the produced `.ex5` on success.
+![mql5-lint output](quickstart/img/02-lint.png)
 
-## 5. One-shot auto-build (recommended after first compile)
+A fresh scaffold reports `0 ERROR, 1 WARN` — the WARN is `AP-22`
+("signal logic is placeholder-only"). That's the kit reminding you the
+scaffold has no order-placing call yet: it's a skeleton, not a
+strategy. The 25 anti-pattern detectors are documented in
+[`AGENTS.md` § Rule ID → documentation table](../AGENTS.md#rule-id--documentation-table)
+and in `docs/anti-patterns-AVOID.md`.
 
-Once `doctor` and the manual `build → lint → compile` triple work, you
-can replace steps 3+4 with a single command. `mql5-auto-build` chains
-scan → build → lint → compile → permission-gate → dashboard, writes a
-structured `auto-build-report.json`, and (optionally) publishes the
-quality-matrix HTML to a public URL.
+---
+
+## 4. Trader-17 readiness check (≈ 30 s)
 
 ```bash
-# 5a. Free-text → schema-valid ea-spec.yaml (deterministic, no LLM call)
-mql5-spec-from-prompt "build EA trend EURUSD H1 risk 0.5%" \
-    --out ea-spec.yaml --explain
-
-# 5b. Drive the whole pipeline against that spec
-mql5-auto-build --spec ea-spec.yaml --out-dir build/FirstEA
-
-# 5c. Read the verdict + dashboard URL
-jq '{ok, stages: [.stages[] | {name, ok}], dashboard}' \
-    build/FirstEA/auto-build-report.json
+mql5-trader-check runtime/reference-ea/SampleEA/SampleEA.mq5
 ```
 
-The report is idempotent — rerunning with the same spec produces the
-same output. Configure `MQL5_DASHBOARD_PUBLISH_CMD` (or pass
-`--publish-cmd`) to publish the rendered `quality-matrix.html` to
-Vercel / S3 / scp+nginx; without it the dashboard exposes a `file://`
-URL only. See [`docs/devin-chat-driven-build.md`](devin-chat-driven-build.md)
-for the full chat-driven flow.
+![mql5-trader-check output](quickstart/img/03-trader-check.png)
 
-If an existing `.mq5` trips the 8 critical anti-patterns, run
-`mql5-auto-fix` to apply the transformer loop (AP-1, 3, 5, 15, 17, 18,
-20, 21) and re-lint in one go.
+The Trader-17 checklist is a 17-point pre-deployment heuristic this
+kit defines (see [`docs/references/59-trader-checklist.md`](references/59-trader-checklist.md)).
+The gate requires **≥ 15 / 17 PASS**; a fresh scaffold reports 6 PASS,
+3 WARN, 8 N/A — many checks (walk-forward, Monte-Carlo, multi-broker,
+overfit, VPS, news-session) require **external evidence** before they
+can score. The bare scaffold legitimately cannot pass yet, and that's
+the gate **working as intended**.
 
-## 6. Where to next?
+---
 
-- `docs/COMMANDS.md` — full 50-command catalog (Discovery → Plan → Build
-  → Verify → RRI → Review → Deploy → Ship → Other).
-- `docs/devin-chat-driven-build.md` — chat → spec → auto-build → PR
-  playbook for Devin.
-- `examples/ea-wizard-macd-sar-eurusd-h1-portfolio/README.md` — full
-  8-step worked example.
-- `docs/references/` — 29-document reference shelf.
+## 5. Permission pipeline (≈ 1 min)
+
+The 7-layer permission pipeline is a project-defined gate that runs
+source-lint → compile → AP-lint → Trader-17 → methodology →
+quality-matrix → broker-safety. It is **fail-fast** — the first failing
+layer stops the rest from running.
+
+```bash
+mql5-permission --mode personal \
+    runtime/reference-ea/SampleEA/SampleEA.mq5
+```
+
+![mql5-permission output](quickstart/img/04-permission.png)
+
+On a Linux box without Wine, layer 2 (compile) fails-fast because
+there is no MetaEditor binary to invoke. That is correct: the gate
+will not silently skip compile. To clear layer 2, install Wine +
+MetaEditor:
+
+```bash
+./scripts/setup-wine-metaeditor.sh   # ~3 min, Linux only
+```
+
+Once layer 2 is green, layer 4 (Trader-17) is the next to gate-fail on
+a bare scaffold — until you wire a real signal, the Trader-17 checks
+still score below the 15/17 threshold. Iterate by editing the signal
+block in `SampleEA.mq5`, then re-run the pipeline.
+
+---
+
+## 6. Iterate (the productive minutes)
+
+The build → lint → trader-check → permission loop is what you cycle
+on while writing your strategy. A one-shot version of the whole
+pipeline lives at:
+
+```bash
+mql5-auto-build --spec ea-spec.yaml --out-dir build/MyEA
+```
+
+…which chains scan → build → lint → compile → permission → dashboard
+and writes a single idempotent `auto-build-report.json`.
+
+To generate an `ea-spec.yaml` from a free-text idea:
+
+```bash
+mql5-spec-from-prompt "trend EA on EURUSD H1, risk 0.5% per trade" \
+    --out ea-spec.yaml
+```
+
+---
+
+## Where to next
+
+- [`README.md`](../README.md) — feature inventory + capabilities map.
+- [`AGENTS.md`](../AGENTS.md) — canonical contract for AI coding agents
+  (rule_id → doc table, JSON envelope schema, reference numbers).
+- [`docs/COMMANDS.md`](COMMANDS.md) — every CLI command grouped by
+  lifecycle stage.
+- [`docs/USER-GUIDE-en.md`](USER-GUIDE-en.md) — step-by-step
+  walkthroughs.
+- [`docs/reference-ea/REPORT.md`](reference-ea/REPORT.md) — honest
+  empirical numbers from the gates on a freshly scaffolded EA.
+- [`docs/anti-patterns-AVOID.md`](anti-patterns-AVOID.md) — the
+  architectural anti-patterns this kit refuses to ship.
+- [`docs/devin-chat-driven-build.md`](devin-chat-driven-build.md) —
+  chat → spec → auto-build → PR playbook for Devin.
+
+The numbers shown in this guide are reproducible — regenerate them
+yourself any time with:
+
+```bash
+bash scripts/tools/build_reference_report.sh
+python  scripts/tools/render_quickstart_screenshots.py
+```
