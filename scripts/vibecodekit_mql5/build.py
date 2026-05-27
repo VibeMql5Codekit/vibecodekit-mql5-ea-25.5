@@ -14,8 +14,13 @@ What it does:
     2. Render every file under it, substituting {{NAME}}, {{SYMBOL}}, {{TF}},
        {{MAGIC}} into both filenames and content.
     3. Refuse to overwrite an existing output dir unless --force.
-    4. Copy the 3 Include/ .mqh files next to the rendered .mq5 so the project
-       is self-contained and `mql5-compile` Just Works.
+    4. Copy every `Include/*.mqh` helper next to the rendered .mq5 so the
+       project is self-contained and `mql5-compile` Just Works. As of
+       v1.6.1 that is 10 headers (CAsyncTradeManager, CHistorySync,
+       CMagicRegistry, CMemorySafety, CMfeMaeLogger, COnnxLoader,
+       CPipNormalizer, CRiskGuard, CSafeTradeManager, CSpreadGuard); the
+       copy step is a `*.mqh` glob, so adding a new header to `Include/`
+       picks it up automatically.
 """
 from __future__ import annotations
 
