@@ -50,8 +50,8 @@ server**, **23 scaffold archetype**,
 ### 1.2. Linux (Ubuntu 22.04+)
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 
 # Cài Wine + MetaEditor headless qua wineboot (~3 phút)
 ./scripts/setup-wine-metaeditor.sh
@@ -92,8 +92,8 @@ brew install --cask wine-stable
 MetaEditor là native nên không cần Wine. Dùng PowerShell:
 
 ```powershell
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e .
@@ -1414,4 +1414,4 @@ pip install MetaTrader5  # chỉ chạy được trên Windows hoặc Wine với
 - [`examples/ea-wizard-macd-sar-eurusd-h1-portfolio/`](../examples/ea-wizard-macd-sar-eurusd-h1-portfolio/) — Worked example 4 tiếng
 
 Câu hỏi / báo lỗi → mở issue trên
-https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/issues
+https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/issues

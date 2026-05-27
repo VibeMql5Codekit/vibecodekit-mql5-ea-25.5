@@ -105,8 +105,8 @@ Docker), see [ENV-SETUP-vi.md](ENV-SETUP-vi.md).
 ### 1.2. Linux (Ubuntu 22.04+) — one shot
 
 ```bash
-git clone https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea
-cd vibecodekit-mql5-ea
+git clone https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5
+cd vibecodekit-mql5-ea-25.5
 
 # Wine + headless MetaEditor via wineboot (~3 min, idempotent)
 ./scripts/setup-wine-metaeditor.sh
@@ -957,5 +957,5 @@ Total: **49 CLI** + 1 meta router = **50 entries**.
   post-phase-E audit passes.
 
 For issues not in [section 7](#7-troubleshooting--faq), open one at
-<https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea/issues>
+<https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5/issues>
 with the output of `python -m vibecodekit_mql5.doctor`.

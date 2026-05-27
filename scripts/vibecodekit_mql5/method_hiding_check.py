@@ -182,7 +182,7 @@ def report_to_sarif(rep: CheckReport) -> dict:
             "tool": {
                 "driver": {
                     "name": "mql5-method-hiding-check",
-                    "informationUri": "https://github.com/BuildMqlCodekit-01/vibecodekit-mql5-ea",
+                    "informationUri": "https://github.com/VibeMql5Codekit/vibecodekit-mql5-ea-25.5",
                     "rules": [rule],
                 },
             },
